@@ -1,24 +1,19 @@
 #include <Arduino.h>
+#include "config.h"
 #include <WiFi.h>
 #include "web_interface.h"
 #include <WebSocketsServer.h>
 
 #include "AudioTools.h"
 
-const char* ssid = "Pumpkin";
-//const char* password = "pumpkin123";
 
-WebServer server(80);
-WebSocketsServer webSocket = WebSocketsServer(81);
+WebSocketsServer webSocket = WebSocketsServer(web_socket_port);
 
 // =========================
 // AUDIO
 // =========================
 
 I2SStream i2s;
-
-// Ring buffer
-const int BUFFER_SIZE = 32768;
 
 uint8_t* audioBuffer;
 
@@ -57,7 +52,7 @@ void webSocketEvent(uint8_t client_num,
 
                 writeIndex++;
 
-                if(writeIndex >= BUFFER_SIZE) {
+                if(writeIndex >= buffer_size) {
                     writeIndex = 0;
                 }
             }
@@ -75,17 +70,17 @@ void webSocketEvent(uint8_t client_num,
 
 void setup() {
 
-    Serial.begin(115200);
+    Serial.begin(baud_rate);
     while(!Serial);
 
-    audioBuffer = (uint8_t*)ps_malloc(BUFFER_SIZE);
+    audioBuffer = (uint8_t*)ps_malloc(buffer_size);
 
     if(audioBuffer == nullptr) {
         Serial.println("PSRAM allocation failed");
         while(true);
     }
 
-    memset(audioBuffer, 0, BUFFER_SIZE);
+    memset(audioBuffer, 0, buffer_size);
 
     WiFi.softAP(ssid);
     WiFi.setSleep(false);
@@ -99,14 +94,13 @@ void setup() {
 
     auto config = i2s.defaultConfig(TX_MODE);
 
-    config.sample_rate = 16000;
-    config.channels = 1;
-    config.bits_per_sample = 16;
+    config.sample_rate = sample_rate;
+    config.channels = channels;
+    config.bits_per_sample = bits_per_second;
 
-    config.pin_bck = 16;
-    config.pin_ws = 17;
-    config.pin_data = 18;
-
+    config.pin_bck = pin_bck;
+    config.pin_ws = pin_ws;
+    config.pin_data = pin_data;
     config.use_apll = false;
 
     if(!i2s.begin(config)) {
@@ -133,7 +127,7 @@ void loop() {
     if(writeIndex >= readIndex) {
         available = writeIndex - readIndex;
     } else {
-        available = BUFFER_SIZE - readIndex + writeIndex;
+        available = buffer_size - readIndex + writeIndex;
     }
 
     // Write chunks to I2S
@@ -147,7 +141,7 @@ void loop() {
 
             readIndex++;
 
-            if(readIndex >= BUFFER_SIZE) {
+            if(readIndex >= buffer_size) {
                 readIndex = 0;
             }
         }
