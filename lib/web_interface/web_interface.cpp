@@ -1,9 +1,15 @@
 #include "web_interface.h"
-#include "../../src/config.h"
+
+#include "audio.h"
+#include "config.h"
+
 #include <WebServer.h>
+#include <WebSocketsServer.h>
 
-const char webpage[] PROGMEM = R"rawliteral(
+static WebServer server(web_server_port);
+static WebSocketsServer webSocket(web_socket_port);
 
+static const char webpage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
@@ -37,35 +43,22 @@ async function startAudio() {
         });
 
         const workletCode = `
-
         class PCMProcessor extends AudioWorkletProcessor {
-
             process(inputs, outputs, parameters) {
-
                 const input = inputs[0];
-
                 if(input.length > 0) {
-
                     const samples = input[0];
-
                     let pcm = new Int16Array(samples.length);
-
                     for(let i = 0; i < samples.length; i++) {
-
                         let s = Math.max(-1, Math.min(1, samples[i]));
-
                         pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
                     }
-
                     this.port.postMessage(pcm.buffer, [pcm.buffer]);
                 }
-
                 return true;
             }
         }
-
         registerProcessor('pcm-processor', PCMProcessor);
-
         `;
 
         const blob = new Blob([workletCode], {
@@ -77,12 +70,9 @@ async function startAudio() {
         await audioContext.audioWorklet.addModule(workletURL);
 
         const source = audioContext.createMediaStreamSource(stream);
-
-        const processorNode =
-            new AudioWorkletNode(audioContext, 'pcm-processor');
+        const processorNode = new AudioWorkletNode(audioContext, 'pcm-processor');
 
         processorNode.port.onmessage = (event) => {
-
             if(socket.readyState === WebSocket.OPEN) {
                 socket.send(event.data);
             }
@@ -98,22 +88,47 @@ async function startAudio() {
 
 </body>
 </html>
-
 )rawliteral";
 
-WebServer server(web_server_port);
-
-
-void handleRoot() {
+static void handle_root_request()
+{
     server.send(200, "text/html", webpage);
 }
 
-void web_interface_init()
+static void web_socket_event(
+    uint8_t client_num,
+    WStype_t type,
+    uint8_t* payload,
+    size_t length)
 {
-    server.on("/", handleRoot);
-    server.begin();
+    switch(type) {
+        case WStype_CONNECTED:
+            Serial.println("Client connected");
+            break;
+
+        case WStype_DISCONNECTED:
+            Serial.println("Client disconnected");
+            break;
+
+        case WStype_BIN:
+            audioWrite(payload, length);
+            break;
+
+        default:
+            break;
+    }
 }
-void web_interface_loop()
-{
+
+void web_interface_init() {
+    server.on("/", handle_root_request);
+    server.begin();
+
+    webSocket.onEvent(web_socket_event);
+    webSocket.begin();
+    
+}
+
+void web_interface_loop() {
     server.handleClient();
+    webSocket.loop();
 }
