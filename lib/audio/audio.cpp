@@ -47,10 +47,7 @@ bool audio_init() {
     return true;
 }
 
-void audioWrite(const uint8_t* payload, size_t length) {
-    if(!audioReady || audioBuffer == nullptr || payload == nullptr || length == 0) {
-        return;
-    }
+void audio_write(const uint8_t* payload, size_t length) {
 
     for(size_t i = 0; i < length; i++) {
         audioBuffer[writeIndex] = payload[i];

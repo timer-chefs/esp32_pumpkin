@@ -111,7 +111,7 @@ static void web_socket_event(
             break;
 
         case WStype_BIN:
-            audioWrite(payload, length);
+            audio_write(payload, length);
             break;
 
         default:

@@ -4,4 +4,4 @@
 
 bool audio_init();
 void audioLoop();
-void audioWrite(const uint8_t* payload, size_t length);
+void audio_write(const uint8_t* payload, size_t length);
