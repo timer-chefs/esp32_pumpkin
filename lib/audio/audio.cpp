@@ -1,17 +1,14 @@
 #include "audio.h"
-
 #include <cstring>
-
 #include "AudioTools.h"
 #include "config.h"
 
 static I2SStream i2s;
-static uint8_t* audioBuffer = nullptr;
-static volatile uint32_t writeIndex = 0;
-static volatile uint32_t readIndex = 0;
-static bool audioReady = false;
+static uint8_t* audio_buffer = nullptr;
+static volatile uint32_t write_index = 0;
+static volatile uint32_t read_index = 0;
 
-static uint32_t nextIndex(uint32_t index) {
+static uint32_t next_index(uint32_t index) {
     index++;
     if(index >= buffer_size) {
         index = 0;
@@ -20,14 +17,13 @@ static uint32_t nextIndex(uint32_t index) {
 }
 
 bool audio_init() {
-    audioBuffer = static_cast<uint8_t*>(ps_malloc(buffer_size));
-
-    if(audioBuffer == nullptr) {
-        Serial.println("PSRAM allocation failed");
+    audio_buffer = static_cast<uint8_t*>(ps_malloc(buffer_size));
+    if(audio_buffer == nullptr) {
+        Serial.println("Audio buffer allocation failed");
         return false;
     }
 
-    std::memset(audioBuffer, 0, buffer_size);
+    std::memset(audio_buffer, 0, buffer_size);
 
     auto config = i2s.defaultConfig(TX_MODE);
     config.sample_rate = sample_rate;
@@ -39,45 +35,40 @@ bool audio_init() {
     config.use_apll = false;
 
     if(!i2s.begin(config)) {
-        Serial.println("I2S init failed");
+        Serial.println("I2S begin failed");
         return false;
     }
 
-    audioReady = true;
     return true;
 }
 
 void audio_write(const uint8_t* payload, size_t length) {
 
     for(size_t i = 0; i < length; i++) {
-        audioBuffer[writeIndex] = payload[i];
-        writeIndex = nextIndex(writeIndex);
+        audio_buffer[write_index] = payload[i];
+        write_index = next_index(write_index);
 
-        if(writeIndex == readIndex) {
-            readIndex = nextIndex(readIndex);
+        if(write_index == read_index) {
+            read_index = next_index(read_index);
         }
     }
 }
 
 void audioLoop() {
-    if(!audioReady || audioBuffer == nullptr) {
-        return;
-    }
-
     uint32_t available;
 
-    if(writeIndex >= readIndex) {
-        available = writeIndex - readIndex;
+    if(write_index >= read_index) {
+        available = write_index - read_index;
     } else {
-        available = buffer_size - readIndex + writeIndex;
+        available = buffer_size - read_index + write_index;
     }
 
     if(available >= 512) {
         uint8_t temp[512];
 
         for(int i = 0; i < 512; i++) {
-            temp[i] = audioBuffer[readIndex];
-            readIndex = nextIndex(readIndex);
+            temp[i] = audio_buffer[read_index];
+            read_index = next_index(read_index);
         }
 
         i2s.write(temp, 512);
