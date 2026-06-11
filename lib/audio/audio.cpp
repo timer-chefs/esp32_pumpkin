@@ -28,7 +28,7 @@ bool audio_init() {
     auto config = i2s.defaultConfig(TX_MODE);
     config.sample_rate = sample_rate;
     config.channels = channels;
-    config.bits_per_sample = bits_per_second;
+    config.bits_per_sample = bits_per_sample;
     config.pin_bck = pin_bck;
     config.pin_ws = pin_ws;
     config.pin_data = pin_data;
