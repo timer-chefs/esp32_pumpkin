@@ -6,6 +6,8 @@
 
 #include <WiFi.h>
 
+bool is_audio_ready = false;
+
 void setup()
 {
     Serial.begin(baud_rate);
@@ -18,7 +20,7 @@ void setup()
 
     web_interface_init();
 
-    bool is_audio_ready = audio_init();
+    is_audio_ready = audio_init();
     Serial.println(is_audio_ready ? "Audio ready" : "Audio init failed");
 
     Serial.println("System ready");
@@ -27,5 +29,9 @@ void setup()
 void loop()
 {
     web_interface_loop();
-    audioLoop();
+    if(is_audio_ready)
+    {
+        audioLoop();
+    }
+    
 }
