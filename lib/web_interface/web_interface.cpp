@@ -100,7 +100,6 @@ static void web_socket_event(
     uint8_t* payload,
     size_t length)
 {
-{
     (void)client_num;
     switch(type) {
         case WStype_CONNECTED:
