@@ -34,9 +34,8 @@ async function startAudio() {
 
     socket.onopen = async () => {
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            .catch(err => { console.error(err); alert("Microphone access failed (often requires HTTPS / secure context)."); socket.close(); throw err; });
 
         const audioContext = new AudioContext({
             sampleRate: 16000
