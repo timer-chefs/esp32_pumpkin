@@ -15,7 +15,7 @@ constexpr uint16_t sample_rate = 16000;
 constexpr uint8_t channels = 1;
 constexpr uint8_t bits_per_second = 16; 
 
-//Pins
+//Pins -> Same pin numbers as the silkscreen on the ESP32S3 board.
 constexpr uint8_t pin_bck = 16;
 constexpr uint8_t pin_ws = 17;
 constexpr uint8_t pin_data = 18;
