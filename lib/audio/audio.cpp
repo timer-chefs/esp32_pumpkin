@@ -54,7 +54,7 @@ void audio_write(const uint8_t* payload, size_t length) {
     }
 }
 
-void audioLoop() {
+void audio_service() {
     uint32_t available;
 
     if(write_index >= read_index) {
