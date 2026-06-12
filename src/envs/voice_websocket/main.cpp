@@ -21,7 +21,10 @@ void setup()
     web_interface_init();
 
     is_audio_ready = audio_init();
-    Serial.println(is_audio_ready ? "Audio ready" : "Audio init failed");
+    if(!is_audio_ready)
+    {
+        Serial.println("Audio init failed");
+    }
 
     Serial.println("System ready");
 }
