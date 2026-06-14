@@ -3,7 +3,7 @@
 #include "led_counter.h"
 //#include "event_queue.h"
 
-Led led0(GPIO_NUM_1), led1(GPIO_NUM_2), led2(GPIO_NUM_4);
+Led led0(pin_led0), led1(pin_led1), led2(pin_led2);
 Led* leds[] = {&led0, &led1, &led2};
 LedCounter led_counter(leds, 3);
 
