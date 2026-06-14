@@ -1,9 +1,14 @@
 #ifndef ESP32_PUMPKIN_CONFIG_H
 #define ESP32_PUMPKIN_CONFIG_H
 
+#include <Arduino.h>
 #include <stdint.h>
 
 constexpr const char* ssid = "Pumpkin";
+
+//Event Queue
+constexpr size_t max_event_queue_size = 64;
+
 
 //Web server
 constexpr uint8_t web_server_port = 80;
