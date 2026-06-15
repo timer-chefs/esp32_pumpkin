@@ -5,93 +5,53 @@
 
 #include <WebServer.h>
 #include <WebSocketsServer.h>
+#include <LittleFS.h>
 
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
 
-static const char webpage[] PROGMEM = R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Pumpkin Audio</title>
-</head>
-<body>
-
-<h1>Pumpkin Live Voice</h1>
-
-<button onclick="startAudio()">
-Start Microphone
-</button>
-
-<script>
-
-let socket;
-
-async function startAudio() {
-
-    socket = new WebSocket("ws://" + location.hostname + ":81/");
-    socket.binaryType = "arraybuffer";
-
-    socket.onopen = async () => {
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            .catch(err => { console.error(err); alert("Microphone access failed (often requires HTTPS / secure context)."); socket.close(); throw err; });
-
-        const audioContext = new AudioContext({
-            sampleRate: 16000
-        });
-
-        const workletCode = `
-        class PCMProcessor extends AudioWorkletProcessor {
-            process(inputs, outputs, parameters) {
-                const input = inputs[0];
-                if(input.length > 0) {
-                    const samples = input[0];
-                    let pcm = new Int16Array(samples.length);
-                    for(let i = 0; i < samples.length; i++) {
-                        let s = Math.max(-1, Math.min(1, samples[i]));
-                        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                    }
-                    this.port.postMessage(pcm.buffer, [pcm.buffer]);
-                }
-                return true;
-            }
-        }
-        registerProcessor('pcm-processor', PCMProcessor);
-        `;
-
-        const blob = new Blob([workletCode], {
-            type: 'application/javascript'
-        });
-
-        const workletURL = URL.createObjectURL(blob);
-
-        await audioContext.audioWorklet.addModule(workletURL);
-
-        const source = audioContext.createMediaStreamSource(stream);
-        const processorNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-
-        processorNode.port.onmessage = (event) => {
-            if(socket.readyState === WebSocket.OPEN) {
-                socket.send(event.data);
-            }
-        };
-
-        source.connect(processorNode);
-
-        console.log("Streaming microphone...");
-    };
+static void filesystem_init()
+{
+    if(!LittleFS.begin())
+    {
+        Serial.println("LittleFS Mount Failed");
+        return;
+    }
+    Serial.println("LittleFS Mounted Successfully");
 }
 
-</script>
+static void open_file(const char* path, const char* content_type)
+{
+    if(!LittleFS.exists(path))
+    {
+        server.send(404, "text/plain", "File not found");
+        return;
+    }
 
-</body>
-</html>
-)rawliteral";
+    File file = LittleFS.open(path, "r");
+    if(!file)
+    {
+        server.send(500, "text/plain", "Failed to open file");
+        return;
+    }
+
+    server.streamFile(file, content_type);
+    file.close();
+}
 
 static void handle_root_request()
 {
-    server.send(200, "text/html", webpage);
+    open_file("/index.html", "text/html");
+}
+
+static void handle_css_request()
+{
+    open_file("/styles.css", "text/css");
+}
+
+static void handle_js_request()
+{
+    open_file("/audio.js", "application/javascript");
 }
 
 static void web_socket_event(
@@ -118,13 +78,19 @@ static void web_socket_event(
     }
 }
 
-void web_interface_init() {
-    server.on("/", handle_root_request);
+void web_interface_init()
+{
+    filesystem_init();
+    
+    server.on("/", HTTP_GET, handle_root_request);
+    server.on("/styles.css", HTTP_GET, handle_css_request);
+    server.on("/audio.js", HTTP_GET, handle_js_request);
     server.begin();
 
     webSocket.onEvent(web_socket_event);
     webSocket.begin();
     
+    Serial.println("Web interface initialized");
 }
 
 void web_interface_service() {

@@ -14,3 +14,18 @@ It is meant to prototype the voice over wifi capability.
 4) Start talking on your phone. Your voice should be heard out of the device's speaker.
 
 Note: Microphone access typically requires a secure context (HTTPS), so this may not work over plain http:// on many mobile browsers unless you enable a browser exception.
+
+## LittleFS
+We are using LittleFS to create a lightweight filesystem in the MCU. This helps organize and store the webpage in different files in the folder `./data`. Then it is converted into a binary that is later uploaded into the microcontroller.
+
+### Command to create the binary.
+```
+pio run -t buildfs -e voice_webpsocket
+```
+> NOTE: Any environment works
+
+### Command to upload the binary to the MCU.
+```
+pio run -t uploadfs -e voice_websocket
+```
+> NOTE: Any environment works.
