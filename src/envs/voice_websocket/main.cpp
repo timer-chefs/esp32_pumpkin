@@ -31,7 +31,7 @@ void setup()
 
 void loop()
 {
-    web_interface_loop();
+    web_interface_service();
     if(is_audio_ready)
     {
         audio_service();

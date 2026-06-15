@@ -127,7 +127,7 @@ void web_interface_init() {
     
 }
 
-void web_interface_loop() {
+void web_interface_service() {
     server.handleClient();
     webSocket.loop();
 }
