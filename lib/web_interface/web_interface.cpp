@@ -68,6 +68,11 @@ static void handle_audio_ui_request()
     open_file("/audio_ui.js", "application/javascript");
 }
 
+static void handle_audio_socket_request()
+{
+    open_file("/audio_socket.js", "application/javascript");
+}
+
 static void web_socket_event(
     uint8_t client_num,
     WStype_t type,
@@ -109,6 +114,7 @@ void web_interface_init()
     server.on("/audio_ui.js", HTTP_GET, handle_audio_ui_request);
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
     server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
+    server.on("/audio_socket.js", HTTP_GET, handle_audio_socket_request);
     server.begin();
 
     webSocket.onEvent(web_socket_event);

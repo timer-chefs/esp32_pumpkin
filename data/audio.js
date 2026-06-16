@@ -15,6 +15,13 @@ import
     setStreamFileEnabled
 } from './audio_ui.js';
 
+import
+{
+    createAudioSocket,
+    isSocketOpen,
+    closeAudioSocket
+} from './audio_socket.js';
+
 let socket;
 let currentStream = null;
 let selectedFile = null;
@@ -28,18 +35,17 @@ async function switchToMicrophone() {
     showMicrophoneMode();
     
     try {
-        const ws = new WebSocket("ws://" + location.hostname + ":81/");
-        socket = ws;
-        ws.binaryType = "arraybuffer";
+        const audioWebSocket = createAudioSocket(location.hostname);
+        socket = audioWebSocket;
         let audioContext = null;
         let processorNode = null;
 
-        ws.onopen = async () => {
+        audioWebSocket.onopen = async () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
                 .catch(err => { 
                     console.error(err); 
                     alert("Microphone access failed."); 
-                    ws.close(); 
+                    closeAudioSocket(audioWebSocket); 
                     throw err; 
                 });
 
@@ -58,8 +64,8 @@ async function switchToMicrophone() {
             currentProcessorNode = processorNode;
 
             processorNode.port.onmessage = (event) => {
-                if(ws.readyState === WebSocket.OPEN) {
-                    ws.send(event.data);
+                if(isSocketOpen(audioWebSocket)) {
+                    audioWebSocket.send(event.data);
                 }
             };
 
@@ -68,11 +74,11 @@ async function switchToMicrophone() {
             console.log("Streaming microphone...");
         };
 
-        ws.onerror = (error) => {
+        audioWebSocket.onerror = (error) => {
             console.error("WebSocket error:", error);
         };
 
-        ws.onclose = () => {
+        audioWebSocket.onclose = () => {
             console.log("WebSocket closed");
             if(processorNode) {
                 processorNode.port.onmessage = null;
@@ -169,8 +175,8 @@ async function streamSelectedFile() {
 
 async function streamAudioData(audioBuffer) {
     return new Promise((resolve, reject) => {
-        socket = new WebSocket("ws://" + location.hostname + ":81/");
-        socket.binaryType = "arraybuffer";
+        const audioWebSocket = createAudioSocket(location.hostname);
+        socket = audioWebSocket;
         
         let bytesSent = 0;
         const startTime = Date.now();
@@ -187,7 +193,7 @@ async function streamAudioData(audioBuffer) {
             setFileStatus('<p>Streaming...</p>');
 
             const streamChunk = () => {
-                if(offset < data.length && socket.readyState === WebSocket.OPEN && isStreaming) {
+                if(offset < data.length && isSocketOpen(socket) && isStreaming) {
                     const chunk = data.slice(offset, Math.min(offset + chunkSize, data.length));
                     socket.send(chunk);
                     offset += chunkSize;
@@ -213,8 +219,8 @@ async function streamAudioData(audioBuffer) {
                     
                     // Keep socket open a bit longer to ensure all data is played
                     setTimeout(() => {
-                        if(socket.readyState === WebSocket.OPEN) {
-                            socket.close();
+                        if(isSocketOpen(socket)) {
+                            closeAudioSocket(socket);
                         }
                         resolve();
                     }, 500);
@@ -257,8 +263,9 @@ function stopAudio() {
         currentAudioContext = null;
     }
     
-    if(socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
+    if(socket && isSocketOpen(socket))
+    {
+        closeAudioSocket(socket);
     }
     socket = null;
     
