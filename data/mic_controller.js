@@ -13,8 +13,7 @@ import
 
 import
 {
-    audioState,
-    resetAudioState
+    audioState
 } from "./audio_state.js";
 
 import { stopAudio } from './audio_cleanup.js';

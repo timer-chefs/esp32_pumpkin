@@ -15,11 +15,21 @@ import {
     stopAudio
 } from "./audio_cleanup.js";
 
-
-
-window.switchToMicrophone = switchToMicrophone;
-window.stopMicrophone = stopMicrophone;
-window.switchToFile = switchToFile;
-window.onFileSelected = onFileSelected;
-window.streamSelectedFile = streamSelectedFile;
-window.stopAudio = stopAudio;
+document
+    .getElementById("btn-microphone")
+    .addEventListener("click", switchToMicrophone);
+document
+    .getElementById("btn-stop-microphone")
+    .addEventListener("click", stopMicrophone);
+document
+    .getElementById("btn-file")
+    .addEventListener("click", switchToFile);
+document
+    .getElementById("audio-file")
+    .addEventListener("change", onFileSelected);
+document
+    .getElementById("btn-stream")
+    .addEventListener("click", streamSelectedFile);
+document
+    .getElementById("btn-stop-file")
+    .addEventListener("click", stopAudio);
