@@ -5,6 +5,15 @@ import
     convertFloatToInt16
 } from './audio_file_utils.js';
 
+import
+{
+    showMicrophoneMode,
+    hideMicrophoneMode,
+    showFileMode,
+    setFileStatus,
+    clearFileStatus,
+    setStreamFileEnabled
+} from './audio_ui.js';
 
 let socket;
 let currentStream = null;
@@ -16,10 +25,7 @@ let currentProcessorNode = null;
 // ============ MICROPHONE MODE ============
 async function switchToMicrophone() {
     stopAudio();
-    document.getElementById('microphone-section').style.display = 'block';
-    document.getElementById('file-section').style.display = 'none';
-    document.getElementById('btn-microphone').disabled = true;
-    document.getElementById('btn-file').disabled = false;
+    showMicrophoneMode();
     
     try {
         const ws = new WebSocket("ws://" + location.hostname + ":81/");
@@ -81,28 +87,26 @@ async function switchToMicrophone() {
 
 function stopMicrophone() {
     stopAudio();
-    document.getElementById('microphone-section').style.display = 'none';
-    document.getElementById('btn-microphone').disabled = false;
+    hideMicrophoneMode();
 }
 
 // ============ FILE MODE ============
 function switchToFile() {
     stopAudio();
-    document.getElementById('file-section').style.display = 'block';
-    document.getElementById('btn-file').disabled = true;
-    document.getElementById('btn-microphone').disabled = false;
+    showFileMode();
 }
 
 function onFileSelected(event) {
     selectedFile = event.target.files[0];
-    if(selectedFile) {
+    if(selectedFile)
+    {
         const sizeMB = (selectedFile.size / 1024 / 1024).toFixed(2);
-        document.getElementById('file-status').innerHTML = 
-            `<p>Selected: <strong>${selectedFile.name}</strong> (${sizeMB} MB)</p>`;
-        document.getElementById('btn-stream').disabled = false;
-    } else {
-        document.getElementById('file-status').innerHTML = '';
-        document.getElementById('btn-stream').disabled = true;
+        setFileStatus(`<p>Selected: <strong>${selectedFile.name}</strong> (${sizeMB} MB)</p>`);
+        setStreamFileEnabled(true);
+    } else
+    {
+        clearFileStatus();
+        setStreamFileEnabled(false);
     }
 }
 
@@ -180,7 +184,7 @@ async function streamAudioData(audioBuffer) {
             let updateCount = 0;
 
             console.log(`Starting stream: ${data.length} bytes (${(data.length / 2)} Int16 samples)`);
-            document.getElementById('file-status').innerHTML = '<p>Streaming...</p>';
+            setFileStatus('<p>Streaming...</p>');
 
             const streamChunk = () => {
                 if(offset < data.length && socket.readyState === WebSocket.OPEN && isStreaming) {
@@ -193,8 +197,7 @@ async function streamAudioData(audioBuffer) {
                     if(updateCount++ % 50 === 0) {
                         const progress = Math.round((offset / data.length) * 100);
                         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                        document.getElementById('file-status').innerHTML = 
-                            `<p>Streaming: ${progress}% (${bytesSent} bytes, ${elapsed}s)</p>`;
+                        setFileStatus(`<p>Streaming: ${progress}% (${bytesSent} bytes, ${elapsed}s)</p>`);
                     }
                     
                     // Pace to the actual playback rate so latency does not keep growing.
@@ -205,8 +208,7 @@ async function streamAudioData(audioBuffer) {
                 } else if(offset >= data.length) {
                     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
                     console.log(`✓ Streaming complete! ${bytesSent} bytes in ${elapsed}s`);
-                    document.getElementById('file-status').innerHTML = 
-                        `<p style="color: green;">Complete! (${bytesSent} bytes in ${elapsed}s)</p>`;
+                    setFileStatus(`<p style="color: green;">Complete! (${bytesSent} bytes in ${elapsed}s)</p>`);
                     isStreaming = false;
                     
                     // Keep socket open a bit longer to ensure all data is played
@@ -260,7 +262,7 @@ function stopAudio() {
     }
     socket = null;
     
-    document.getElementById('file-status').innerHTML = '';
+    clearFileStatus();
     
     // Also try to reset buffer when stopping
     try {
