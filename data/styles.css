@@ -12,8 +12,6 @@ h1 {
 }
 
 button {
-    display: block;
-    margin: 20px auto;
     padding: 10px 20px;
     font-size: 16px;
     background-color: #ff9800;
@@ -21,8 +19,56 @@ button {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    margin: 5px;
+    transition: background-color 0.3s;
 }
 
-button:hover {
+button:hover:not(:disabled) {
     background-color: #e68900;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+#audio-mode {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+#microphone-section, #file-section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#microphone-section p, #file-section p {
+    margin: 10px 0;
+    color: #333;
+}
+
+#file-status {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-left: 4px solid #ff9800;
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+input[type="file"] {
+    display: block;
+    margin: 15px 0;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
 }

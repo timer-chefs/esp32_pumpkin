@@ -33,5 +33,6 @@ constexpr uint8_t pin_led2 = GPIO_NUM_4;
 
 //Serial
 constexpr uint32_t baud_rate = 115200;
+constexpr bool enable_audio_stats_logging = false;
 
 #endif // ESP32_PUMPKIN_CONFIG_H
