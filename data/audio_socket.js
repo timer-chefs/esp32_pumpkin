@@ -26,7 +26,11 @@ export function isSocketOpen(socket)
 
 export function closeAudioSocket(socket)
 {
-    if(isSocketOpen(socket))
+    if(!socket) {
+        return;
+    }
+
+    if(socket.readyState !== WebSocket.CLOSED)
     {
         socket.close();
     }
