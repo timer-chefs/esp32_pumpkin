@@ -53,6 +53,11 @@ static void handle_js_request()
     open_file("/audio.js", "application/javascript");
 }
 
+static void handle_audio_file_utils_request()
+{
+    open_file("/audio_file_utils.js", "application/javascript");
+}
+
 static void handle_worklet_processor()
 {
     open_file("/worklet_processor.js", "application/javascript");
@@ -95,6 +100,7 @@ void web_interface_init()
     server.on("/", HTTP_GET, handle_root_request);
     server.on("/styles.css", HTTP_GET, handle_css_request);
     server.on("/audio.js", HTTP_GET, handle_js_request);
+    server.on("/audio_file_utils.js", HTTP_GET, handle_audio_file_utils_request);
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
     server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
     server.begin();

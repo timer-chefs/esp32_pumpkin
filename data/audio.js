@@ -1,3 +1,11 @@
+import
+{
+    mixToMono,
+    resampleAudioHighQuality,
+    convertFloatToInt16
+} from './audio_file_utils.js';
+
+
 let socket;
 let currentStream = null;
 let selectedFile = null;
@@ -119,24 +127,9 @@ async function streamSelectedFile() {
         const audioContext = new (window.AudioContext)();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         
-        console.log(`Audio decodedd`);
+        console.log(`Audio decoded`);
         
-        // Handle multiple channels - mix down to mono if needed
-        let monoData;
-        if(audioBuffer.numberOfChannels === 1) {
-            monoData = audioBuffer.getChannelData(0);
-        } else if(audioBuffer.numberOfChannels === 2) {
-            // Mix stereo to mono
-            const left = audioBuffer.getChannelData(0);
-            const right = audioBuffer.getChannelData(1);
-            monoData = new Float32Array(left.length);
-            for(let i = 0; i < left.length; i++) {
-                monoData[i] = (left[i] + right[i]) * 0.5;
-            }
-        } else {
-            // For multi-channel, just use first channel
-            monoData = audioBuffer.getChannelData(0);
-        }
+        let monoData = mixToMono(audioBuffer);
         
         const sampleRate = audioBuffer.sampleRate;
         
@@ -151,29 +144,14 @@ async function streamSelectedFile() {
                 sampleRate,
                 targetSampleRate);
         }
-        
-        // Convert float to Int16 with dithering for better quality
-        const int16Data = new Int16Array(resampledData.length);
-        let peak = 0;
-        
-        for(let i = 0; i < resampledData.length; i++) {
-            let s = Math.max(-1, Math.min(1, resampledData[i]));
-            
-            // Add tiny dither noise to reduce quantization artifacts
-            const dither = (Math.random() - 0.5) * 0.0001;
-            s = Math.max(-1, Math.min(1, s + dither));
-            
-            const int16 = s < 0 ? s * 0x8000 : s * 0x7FFF;
-            int16Data[i] = int16;
-            peak = Math.max(peak, Math.abs(s));
-        }
-        
+
+        const {int16Data, peak} = convertFloatToInt16(resampledData);
         console.log(`Converted to Int16: ${int16Data.length} samples, peak level: ${(peak * 100).toFixed(1)}%`);
-        
-        if(peak < 0.1) {
+        if(peak < 0.1)
+        {
             console.warn("⚠️ Warning: Audio level very quiet (peak < 10%). File might be silent or very compressed.");
         }
-        
+
         // Open WebSocket and stream
         await streamAudioData(int16Data.buffer);
         
@@ -183,32 +161,7 @@ async function streamSelectedFile() {
     }
 }
 
-function resampleAudioHighQuality(data, fromSampleRate, toSampleRate) {
-    if(fromSampleRate === toSampleRate) return data;
-    
-    const ratio = toSampleRate / fromSampleRate;
-    const newLength = Math.round(data.length * ratio);
-    const result = new Float32Array(newLength);
-    
-    // Use cubic interpolation for better quality
-    for(let i = 0; i < newLength; i++) {
-        const index = i / ratio;
-        const lower = Math.floor(index);
-        const upper = Math.ceil(index);
-        const weight = index - lower;
-        
-        if(upper >= data.length) {
-            result[i] = data[lower] || 0;
-        } else if(lower === upper) {
-            result[i] = data[lower];
-        } else {
-            // Linear interpolation (simpler but effective)
-            result[i] = data[lower] * (1 - weight) + data[upper] * weight;
-        }
-    }
-    
-    return result;
-}
+
 
 async function streamAudioData(audioBuffer) {
     return new Promise((resolve, reject) => {
@@ -316,3 +269,10 @@ function stopAudio() {
         // Ignore errors
     }
 }
+
+window.switchToMicrophone = switchToMicrophone;
+window.stopMicrophone = stopMicrophone;
+window.switchToFile = switchToFile;
+window.onFileSelected = onFileSelected;
+window.streamSelectedFile = streamSelectedFile;
+window.stopAudio = stopAudio;
