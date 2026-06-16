@@ -88,6 +88,11 @@ static void handle_audio_cleanup_request()
     open_file("/audio_cleanup.js", "application/javascript");
 }
 
+static void handle_file_controller_request()
+{
+    open_file("/file_controller.js", "application/javascript");
+}
+
 static void web_socket_event(
     uint8_t client_num,
     WStype_t type,
@@ -133,6 +138,7 @@ void web_interface_init()
     server.on("/audio_state.js", HTTP_GET, handle_audio_state_request);
     server.on("/mic_controller.js", HTTP_GET, handle_mic_controller_request);
     server.on("/audio_cleanup.js", HTTP_GET, handle_audio_cleanup_request);
+    server.on("/file_controller.js", HTTP_GET, handle_file_controller_request);
     server.begin();
 
     webSocket.onEvent(web_socket_event);
