@@ -50,7 +50,7 @@ static void handle_css_request()
 
 static void handle_js_request()
 {
-    open_file("/audio.js", "application/javascript");
+    open_file("/main.js", "application/javascript");
 }
 
 static void handle_audio_file_utils_request()
@@ -124,7 +124,7 @@ void web_interface_init()
     
     server.on("/", HTTP_GET, handle_root_request);
     server.on("/styles.css", HTTP_GET, handle_css_request);
-    server.on("/audio.js", HTTP_GET, handle_js_request);
+    server.on("/main.js", HTTP_GET, handle_js_request);
     server.on("/audio_file_utils.js", HTTP_GET, handle_audio_file_utils_request);
     server.on("/audio_ui.js", HTTP_GET, handle_audio_ui_request);
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
