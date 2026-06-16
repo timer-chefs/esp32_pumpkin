@@ -22,12 +22,11 @@ import
     closeAudioSocket
 } from './audio_socket.js';
 
-let socket;
-let currentStream = null;
-let selectedFile = null;
-let isStreaming = false;
-let currentAudioContext = null;
-let currentProcessorNode = null;
+import
+{
+    audioState,
+    resetAudioState
+} from "./audio_state.js";
 
 // ============ MICROPHONE MODE ============
 async function switchToMicrophone() {
@@ -35,55 +34,54 @@ async function switchToMicrophone() {
     showMicrophoneMode();
     
     try {
-        const audioWebSocket = createAudioSocket(location.hostname);
-        socket = audioWebSocket;
+        audioState.socket = createAudioSocket(location.hostname);
         let audioContext = null;
         let processorNode = null;
 
-        audioWebSocket.onopen = async () => {
+        audioState.socket.onopen = async () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
                 .catch(err => { 
                     console.error(err); 
                     alert("Microphone access failed."); 
-                    closeAudioSocket(audioWebSocket); 
+                    closeAudioSocket(audioState.socket); 
                     throw err; 
                 });
 
-            currentStream = stream;
+            audioState.currentStream = stream;
 
             audioContext = new AudioContext({
                 sampleRate: 16000
             });
-            currentAudioContext = audioContext;
+            audioState.currentAudioContext = audioContext;
 
             await audioContext.audioWorklet.addModule('/worklet_processor.js');
 
             const source = audioContext.createMediaStreamSource(stream);
             console.log(`Microphone AudioContext sample rate: ${audioContext.sampleRate}Hz`);
             processorNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-            currentProcessorNode = processorNode;
+            audioState.currentProcessorNode = processorNode;
 
             processorNode.port.onmessage = (event) => {
-                if(isSocketOpen(audioWebSocket)) {
-                    audioWebSocket.send(event.data);
+                if(isSocketOpen(audioState.socket)) {
+                    audioState.socket.send(event.data);
                 }
             };
 
             source.connect(processorNode);
-            isStreaming = true;
+            audioState.isStreaming = true;
             console.log("Streaming microphone...");
         };
 
-        audioWebSocket.onerror = (error) => {
+        audioState.socket.onerror = (error) => {
             console.error("WebSocket error:", error);
         };
 
-        audioWebSocket.onclose = () => {
+        audioState.socket.onclose = () => {
             console.log("WebSocket closed");
             if(processorNode) {
                 processorNode.port.onmessage = null;
             }
-            isStreaming = false;
+            audioState.isStreaming = false;
         };
     } catch (err) {
         console.error("Error:", err);
@@ -103,11 +101,11 @@ function switchToFile() {
 }
 
 function onFileSelected(event) {
-    selectedFile = event.target.files[0];
-    if(selectedFile)
+    audioState.selectedFile = event.target.files[0];
+    if(audioState.selectedFile)
     {
-        const sizeMB = (selectedFile.size / 1024 / 1024).toFixed(2);
-        setFileStatus(`<p>Selected: <strong>${selectedFile.name}</strong> (${sizeMB} MB)</p>`);
+        const sizeMB = (audioState.selectedFile.size / 1024 / 1024).toFixed(2);
+        setFileStatus(`<p>Selected: <strong>${audioState.selectedFile.name}</strong> (${sizeMB} MB)</p>`);
         setStreamFileEnabled(true);
     } else
     {
@@ -117,7 +115,7 @@ function onFileSelected(event) {
 }
 
 async function streamSelectedFile() {
-    if(!selectedFile) {
+    if(!audioState.selectedFile) {
         alert("Please select an audio file first");
         return;
     }
@@ -130,7 +128,7 @@ async function streamSelectedFile() {
     }
 
     // Read file as ArrayBuffer
-    const arrayBuffer = await selectedFile.arrayBuffer();
+    const arrayBuffer = await audioState.selectedFile.arrayBuffer();
     
     // Decode audio to PCM 16-bit
     try {
@@ -175,13 +173,12 @@ async function streamSelectedFile() {
 
 async function streamAudioData(audioBuffer) {
     return new Promise((resolve, reject) => {
-        const audioWebSocket = createAudioSocket(location.hostname);
-        socket = audioWebSocket;
+        audioState.socket = createAudioSocket(location.hostname);
         
         let bytesSent = 0;
         const startTime = Date.now();
 
-        socket.onopen = () => {
+        audioState.socket.onopen = () => {
             const chunkSize = 512; // Match I2S write size for better timing
             const bytesPerSecond = 16000 * 2;
             const bytesPerMillisecond = bytesPerSecond / 1000;
@@ -193,9 +190,9 @@ async function streamAudioData(audioBuffer) {
             setFileStatus('<p>Streaming...</p>');
 
             const streamChunk = () => {
-                if(offset < data.length && isSocketOpen(socket) && isStreaming) {
+                if(offset < data.length && isSocketOpen(audioState.socket) && audioState.isStreaming) {
                     const chunk = data.slice(offset, Math.min(offset + chunkSize, data.length));
-                    socket.send(chunk);
+                    audioState.socket.send(chunk);
                     offset += chunkSize;
                     bytesSent += chunk.length;
                     
@@ -215,59 +212,59 @@ async function streamAudioData(audioBuffer) {
                     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
                     console.log(`✓ Streaming complete! ${bytesSent} bytes in ${elapsed}s`);
                     setFileStatus(`<p style="color: green;">Complete! (${bytesSent} bytes in ${elapsed}s)</p>`);
-                    isStreaming = false;
+                    audioState.isStreaming = false;
                     
                     // Keep socket open a bit longer to ensure all data is played
                     setTimeout(() => {
-                        if(isSocketOpen(socket)) {
-                            closeAudioSocket(socket);
+                        if(isSocketOpen(audioState.socket)) {
+                            closeAudioSocket(audioState.socket);
                         }
                         resolve();
                     }, 500);
                 }
             };
 
-            isStreaming = true;
+            audioState.isStreaming = true;
             streamChunk();
         };
 
-        socket.onerror = (error) => {
+        audioState.socket.onerror = (error) => {
             console.error("WebSocket error:", error);
-            isStreaming = false;
+            audioState.isStreaming = false;
             reject(error);
         };
 
-        socket.onclose = () => {
+        audioState.socket.onclose = () => {
             console.log("WebSocket closed after streaming");
-            isStreaming = false;
+            audioState.isStreaming = false;
         };
     });
 }
 
 function stopAudio() {
-    isStreaming = false;
+    audioState.isStreaming = false;
     
-    if(currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-        currentStream = null;
+    if(audioState.currentStream) {
+        audioState.currentStream.getTracks().forEach(track => track.stop());
+        audioState.currentStream = null;
     }
 
-    if(currentProcessorNode) {
-        currentProcessorNode.port.onmessage = null;
-        currentProcessorNode.disconnect();
-        currentProcessorNode = null;
+    if(audioState.currentProcessorNode) {
+        audioState.currentProcessorNode.port.onmessage = null;
+        audioState.currentProcessorNode.disconnect();
+        audioState.currentProcessorNode = null;
     }
 
-    if(currentAudioContext) {
-        currentAudioContext.close().catch(() => {});
-        currentAudioContext = null;
+    if(audioState.currentAudioContext) {
+        audioState.currentAudioContext.close().catch(() => {});
+        audioState.currentAudioContext = null;
     }
     
-    if(socket && isSocketOpen(socket))
+    if(audioState.socket && isSocketOpen(audioState.socket))
     {
-        closeAudioSocket(socket);
+        closeAudioSocket(audioState.socket);
     }
-    socket = null;
+    audioState.socket = null;
     
     clearFileStatus();
     
