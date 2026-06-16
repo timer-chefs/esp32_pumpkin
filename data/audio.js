@@ -17,36 +17,14 @@ async function startAudio() {
             const audioContext = new AudioContext({
                 sampleRate: 16000
             });
+            currentAudioContext = audioContext;
 
-            const workletCode = `
-            class PCMProcessor extends AudioWorkletProcessor {
-                process(inputs, outputs, parameters) {
-                    const input = inputs[0];
-                    if(input.length > 0) {
-                        const samples = input[0];
-                        let pcm = new Int16Array(samples.length);
-                        for(let i = 0; i < samples.length; i++) {
-                            let s = Math.max(-1, Math.min(1, samples[i]));
-                            pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                        }
-                        this.port.postMessage(pcm.buffer, [pcm.buffer]);
-                    }
-                    return true;
-                }
-            }
-            registerProcessor('pcm-processor', PCMProcessor);
-            `;
-
-            const blob = new Blob([workletCode], {
-                type: 'application/javascript'
-            });
-
-            const workletURL = URL.createObjectURL(blob);
-
-            await audioContext.audioWorklet.addModule(workletURL);
+            await audioContext.audioWorklet.addModule('/worklet_processor.js');
 
             const source = audioContext.createMediaStreamSource(stream);
-            const processorNode = new AudioWorkletNode(audioContext, 'pcm-processor');
+            console.log(`Microphone AudioContext sample rate: ${audioContext.sampleRate}Hz`);
+            processorNode = new AudioWorkletNode(audioContext, 'pcm-processor');
+            currentProcessorNode = processorNode;
 
             processorNode.port.onmessage = (event) => {
                 if(socket.readyState === WebSocket.OPEN) {

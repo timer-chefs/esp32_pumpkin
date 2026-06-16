@@ -54,6 +54,11 @@ static void handle_js_request()
     open_file("/audio.js", "application/javascript");
 }
 
+static void handle_worklet_processor()
+{
+    open_file("/worklet_processor.js", "application/javascript");
+}
+
 static void web_socket_event(
     uint8_t client_num,
     WStype_t type,
@@ -85,6 +90,7 @@ void web_interface_init()
     server.on("/", HTTP_GET, handle_root_request);
     server.on("/styles.css", HTTP_GET, handle_css_request);
     server.on("/audio.js", HTTP_GET, handle_js_request);
+    server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
     server.begin();
 
     webSocket.onEvent(web_socket_event);
