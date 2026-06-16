@@ -28,71 +28,13 @@ import
     resetAudioState
 } from "./audio_state.js";
 
-// ============ MICROPHONE MODE ============
-async function switchToMicrophone() {
-    stopAudio();
-    showMicrophoneMode();
-    
-    try {
-        audioState.socket = createAudioSocket(location.hostname);
-        let audioContext = null;
-        let processorNode = null;
+import
+{
+    switchToMicrophone,
+    stopMicrophone
+} from "./mic_controller.js";
 
-        audioState.socket.onopen = async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-                .catch(err => { 
-                    console.error(err); 
-                    alert("Microphone access failed."); 
-                    closeAudioSocket(audioState.socket); 
-                    throw err; 
-                });
-
-            audioState.currentStream = stream;
-
-            audioContext = new AudioContext({
-                sampleRate: 16000
-            });
-            audioState.currentAudioContext = audioContext;
-
-            await audioContext.audioWorklet.addModule('/worklet_processor.js');
-
-            const source = audioContext.createMediaStreamSource(stream);
-            console.log(`Microphone AudioContext sample rate: ${audioContext.sampleRate}Hz`);
-            processorNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-            audioState.currentProcessorNode = processorNode;
-
-            processorNode.port.onmessage = (event) => {
-                if(isSocketOpen(audioState.socket)) {
-                    audioState.socket.send(event.data);
-                }
-            };
-
-            source.connect(processorNode);
-            audioState.isStreaming = true;
-            console.log("Streaming microphone...");
-        };
-
-        audioState.socket.onerror = (error) => {
-            console.error("WebSocket error:", error);
-        };
-
-        audioState.socket.onclose = () => {
-            console.log("WebSocket closed");
-            if(processorNode) {
-                processorNode.port.onmessage = null;
-            }
-            audioState.isStreaming = false;
-        };
-    } catch (err) {
-        console.error("Error:", err);
-        document.getElementById('btn-microphone').disabled = false;
-    }
-}
-
-function stopMicrophone() {
-    stopAudio();
-    hideMicrophoneMode();
-}
+import { stopAudio } from "./audio_cleanup.js";
 
 // ============ FILE MODE ============
 function switchToFile() {
@@ -241,40 +183,7 @@ async function streamAudioData(audioBuffer) {
     });
 }
 
-function stopAudio() {
-    audioState.isStreaming = false;
-    
-    if(audioState.currentStream) {
-        audioState.currentStream.getTracks().forEach(track => track.stop());
-        audioState.currentStream = null;
-    }
 
-    if(audioState.currentProcessorNode) {
-        audioState.currentProcessorNode.port.onmessage = null;
-        audioState.currentProcessorNode.disconnect();
-        audioState.currentProcessorNode = null;
-    }
-
-    if(audioState.currentAudioContext) {
-        audioState.currentAudioContext.close().catch(() => {});
-        audioState.currentAudioContext = null;
-    }
-    
-    if(audioState.socket && isSocketOpen(audioState.socket))
-    {
-        closeAudioSocket(audioState.socket);
-    }
-    audioState.socket = null;
-    
-    clearFileStatus();
-    
-    // Also try to reset buffer when stopping
-    try {
-        fetch('/api/audio/reset').catch(() => {});
-    } catch(err) {
-        // Ignore errors
-    }
-}
 
 window.switchToMicrophone = switchToMicrophone;
 window.stopMicrophone = stopMicrophone;
