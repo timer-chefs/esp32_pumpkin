@@ -48,7 +48,7 @@ export async function processAudioFile(file)
     } catch(err)
     {
         console.error("Error processing audio:", err);
-        alert("Failed to process audio file. Make sure it's a valid audio file.");
+        throw err;
     }
 
 }

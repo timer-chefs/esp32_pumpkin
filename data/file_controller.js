@@ -59,9 +59,15 @@ export async function streamSelectedFile() {
         console.warn("Could not reset audio buffer:", err);
     }
 
-    const int16Data = await processAudioFile(audioState.selectedFile);
-
-    await streamAudioData(int16Data.buffer);
+    try
+    {
+        const int16Data = await processAudioFile(audioState.selectedFile);
+        await streamAudioData(int16Data.buffer);
+    }
+    catch(err)
+    {
+        alert("Failed to process audio file. Make sure it's a valid audio file.");
+    }
 }
 
 
