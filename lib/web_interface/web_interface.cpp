@@ -98,6 +98,11 @@ static void handle_audio_file_processor_request()
     open_file("/audio_file_processor.js", "application/javascript");
 }
 
+static void handle_audio_streamer_request()
+{
+    open_file("/audio_streamer.js", "application/javascript");
+}
+
 static void web_socket_event(
     uint8_t client_num,
     WStype_t type,
@@ -145,6 +150,7 @@ void web_interface_init()
     server.on("/audio_cleanup.js", HTTP_GET, handle_audio_cleanup_request);
     server.on("/file_controller.js", HTTP_GET, handle_file_controller_request);
     server.on("/audio_file_processor.js", HTTP_GET, handle_audio_file_processor_request);
+    server.on("/audio_streamer.js", HTTP_GET, handle_audio_streamer_request);
     server.begin();
 
     webSocket.onEvent(web_socket_event);
