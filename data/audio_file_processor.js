@@ -11,14 +11,15 @@ export async function processAudioFile(file)
     const arrayBuffer = await file.arrayBuffer();
     
     // Decode audio to PCM 16-bit
+    let audioContext;
     try
     {
-        const audioContext = new (window.AudioContext)();
+        audioContext = new window.AudioContext(); 
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         
         console.log(`Audio decoded`);
         
-        let monoData = mixToMono(audioBuffer);
+        const monoData = mixToMono(audioBuffer);
         
         const sampleRate = audioBuffer.sampleRate;
         
@@ -49,6 +50,11 @@ export async function processAudioFile(file)
     {
         console.error("Error processing audio:", err);
         throw err;
+    } finally
+    {
+        if(audioContext)
+        {
+            await audioContext.close();
+        }
     }
-
 }
