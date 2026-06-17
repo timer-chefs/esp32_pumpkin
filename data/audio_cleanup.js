@@ -11,7 +11,9 @@ import
 
 import
 {
-    clearFileStatus
+    clearFileStatus,
+    setCurrentMode,
+    setCurrentStreamingEnabled
 } from './audio_ui.js';
 
 export function stopAudio() {
@@ -40,6 +42,9 @@ export function stopAudio() {
     audioState.socket = null;
     
     clearFileStatus();
+
+    setCurrentMode("Idle");
+    setCurrentStreamingEnabled(false);
     
     // Also try to reset buffer when stopping
     try {

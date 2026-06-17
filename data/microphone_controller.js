@@ -8,7 +8,9 @@ import
 import
 {
     showMicrophoneMode,
-    hideMicrophoneMode
+    hideMicrophoneMode,
+    setCurrentMode,
+    setCurrentStreaming
 } from './audio_ui.js';
 
 import
@@ -59,6 +61,9 @@ export async function switchToMicrophone() {
             source.connect(processorNode);
             audioState.isStreaming = true;
             console.log("Streaming microphone...");
+            
+            setCurrentMode("Microphone");
+            setCurrentStreaming("Microphone");
         };
 
         audioState.socket.onerror = (error) => {

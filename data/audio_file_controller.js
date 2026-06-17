@@ -12,7 +12,9 @@ import
     showFileMode,
     setFileStatus,
     clearFileStatus,
-    setStreamFileEnabled
+    setStreamFileEnabled,
+    setCurrentMode,
+    setCurrentStreaming
 } from "./audio_ui.js";
 
 import
@@ -27,6 +29,7 @@ import {
 export function switchToFile() {
     stopAudio();
     showFileMode();
+    setCurrentMode("Audio File");
 }
 
 export function onFileSelected(event) {
@@ -60,6 +63,8 @@ export async function streamSelectedFile() {
     {
         const int16Data = await processAudioFile(audioState.selectedFile);
         await streamAudioData(int16Data.buffer);
+        
+        setCurrentStreaming(audioState.selectedFile);
     }
     catch(err)
     {

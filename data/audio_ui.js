@@ -34,3 +34,19 @@ export function setStreamFileEnabled(enabled)
 {
     document.getElementById('btn-stream').disabled = !enabled;
 }
+
+export function setCurrentMode(html)
+{
+    document.getElementById('current-mode').innerHTML = "Current Mode: " + html;
+}
+
+export function setCurrentStreamingEnabled(enabled)
+{
+    document.getElementById("current-streaming").enabled = enabled;
+}
+
+export function setCurrentStreaming(html)
+{
+    setCurrentStreamingEnabled(true);
+    document.getElementById("current-streaming").innerHTML = "Current Streaming: " + html;
+}
