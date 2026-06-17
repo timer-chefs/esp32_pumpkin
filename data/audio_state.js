@@ -7,11 +7,3 @@ export const audioState = {
     currentProcessorNode: null,
 };
 
-export function resetAudioState() {
-    audioState.socket = null;
-    audioState.currentStream = null;
-    audioState.selectedFile = null;
-    audioState.isStreaming = false;
-    audioState.currentAudioContext = null;
-    audioState.currentProcessorNode = null;
-}
