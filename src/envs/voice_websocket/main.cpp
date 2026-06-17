@@ -35,10 +35,6 @@ void loop()
     if(is_audio_ready)
     {
         audio_service();
-        if(enable_audio_stats_logging)
-        {
-            audio_log_stats();
-        }
     }
     
 }

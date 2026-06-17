@@ -122,34 +122,4 @@ void audio_reset() {
     Serial.println("Audio buffer reset");
 }
 
-void audio_log_stats() {
-    const uint32_t now = millis();
-    if(now - last_stats_millis < 1000) {
-        return;
-    }
 
-    uint32_t buffered;
-    if(write_index >= read_index) {
-        buffered = write_index - read_index;
-    } else {
-        buffered = buffer_size - read_index + write_index;
-    }
-
-    const uint32_t rx_delta = bytes_received - last_stats_bytes_received;
-    const uint32_t tx_delta = bytes_written - last_stats_bytes_written;
-
-    Serial.printf(
-        "audio stats: buffered=%lu rx=%luB/s tx=%luB/s i2s_free=%d started=%d overruns=%lu underruns=%lu\n",
-        static_cast<unsigned long>(buffered),
-        static_cast<unsigned long>(rx_delta),
-        static_cast<unsigned long>(tx_delta),
-        i2s.availableForWrite(),
-        playback_started ? 1 : 0,
-        static_cast<unsigned long>(overrun_count),
-        static_cast<unsigned long>(underrun_count)
-    );
-
-    last_stats_millis = now;
-    last_stats_bytes_received = bytes_received;
-    last_stats_bytes_written = bytes_written;
-}
