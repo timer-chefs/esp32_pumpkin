@@ -17,17 +17,15 @@ import
 
 import
 {
-    mixToMono,
-    resampleAudioHighQuality,
-    convertFloatToInt16
-} from "./audio_file_utils.js";
-
-import
-{
     createAudioSocket,
     isSocketOpen,
     closeAudioSocket
 } from "./audio_socket.js";
+
+import
+{
+    processAudioFile
+} from "./audio_file_processor.js";
 
 export function switchToFile() {
     stopAudio();
@@ -61,46 +59,9 @@ export async function streamSelectedFile() {
         console.warn("Could not reset audio buffer:", err);
     }
 
-    // Read file as ArrayBuffer
-    const arrayBuffer = await audioState.selectedFile.arrayBuffer();
-    
-    // Decode audio to PCM 16-bit
-    try {
-        const audioContext = new (window.AudioContext)();
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        
-        console.log(`Audio decoded`);
-        
-        let monoData = mixToMono(audioBuffer);
-        
-        const sampleRate = audioBuffer.sampleRate;
-        
-        // Resample to 16000 Hz if needed (typical for I2S on ESP32)
-        const targetSampleRate = 16000;
-        let resampledData;
-        
-        if(sampleRate === targetSampleRate) {
-            resampledData = monoData;
-        } else {
-            resampledData = resampleAudioHighQuality(monoData,
-                sampleRate,
-                targetSampleRate);
-        }
+    const int16Data = await processAudioFile(audioState.selectedFile);
 
-        const {int16Data, peak} = convertFloatToInt16(resampledData);
-        console.log(`Converted to Int16: ${int16Data.length} samples, peak level: ${(peak * 100).toFixed(1)}%`);
-        if(peak < 0.1)
-        {
-            console.warn("⚠️ Warning: Audio level very quiet (peak < 10%). File might be silent or very compressed.");
-        }
-
-        // Open WebSocket and stream
-        await streamAudioData(int16Data.buffer);
-        
-    } catch(err) {
-        console.error("Error processing audio:", err);
-        alert("Failed to process audio file. Make sure it's a valid audio file.");
-    }
+    await streamAudioData(int16Data.buffer);
 }
 
 
