@@ -2,14 +2,14 @@ import
 {
     switchToMicrophone,
     stopMicrophone
-} from "./mic_controller.js";
+} from "./microphone_controller.js";
 
 import
 {
     switchToFile,
     onFileSelected,
     streamSelectedFile,
-} from "./file_controller.js";
+} from "./audio_file_controller.js";
 
 import {
     stopAudio

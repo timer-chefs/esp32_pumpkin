@@ -78,9 +78,9 @@ static void handle_audio_state_request()
     open_file("/audio_state.js", "application/javascript");
 }
 
-static void handle_mic_controller_request()
+static void handle_microphone_controller_request()
 {
-    open_file("/mic_controller.js", "application/javascript");
+    open_file("/microphone_controller.js", "application/javascript");
 }
 
 static void handle_audio_cleanup_request()
@@ -88,9 +88,9 @@ static void handle_audio_cleanup_request()
     open_file("/audio_cleanup.js", "application/javascript");
 }
 
-static void handle_file_controller_request()
+static void handle_audio_file_controller_request()
 {
-    open_file("/file_controller.js", "application/javascript");
+    open_file("/audio_file_controller.js", "application/javascript");
 }
 
 static void handle_audio_file_processor_request()
@@ -146,9 +146,9 @@ void web_interface_init()
     server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
     server.on("/audio_socket.js", HTTP_GET, handle_audio_socket_request);
     server.on("/audio_state.js", HTTP_GET, handle_audio_state_request);
-    server.on("/mic_controller.js", HTTP_GET, handle_mic_controller_request);
+    server.on("/microphone_controller.js", HTTP_GET, handle_microphone_controller_request);
     server.on("/audio_cleanup.js", HTTP_GET, handle_audio_cleanup_request);
-    server.on("/file_controller.js", HTTP_GET, handle_file_controller_request);
+    server.on("/audio_file_controller.js", HTTP_GET, handle_audio_file_controller_request);
     server.on("/audio_file_processor.js", HTTP_GET, handle_audio_file_processor_request);
     server.on("/audio_streamer.js", HTTP_GET, handle_audio_streamer_request);
     server.begin();
