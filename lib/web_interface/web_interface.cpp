@@ -193,7 +193,7 @@ void web_interface_init()
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
     server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
     server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
-    server.on("/api/audio/volume", HTTP_POST, handle_get_volume);
+    server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
     server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
     server.on("/audio_socket.js", HTTP_GET, handle_audio_socket_request);
     server.on("/audio_state.js", HTTP_GET, handle_audio_state_request);
