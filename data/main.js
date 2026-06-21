@@ -11,9 +11,17 @@ import
     streamSelectedFile,
 } from "./audio_file_controller.js";
 
-import {
+import
+{
     stopAudio
 } from "./audio_cleanup.js";
+
+import
+{
+    increase_volume,
+    decrease_volume,
+    load_volume
+} from "./audio_volume_control.js";
 
 document
     .getElementById("btn-microphone")
@@ -33,3 +41,11 @@ document
 document
     .getElementById("btn-stop-file")
     .addEventListener("click", stopAudio);
+document
+    .getElementById("btn-volume-up")
+    .addEventListener("click", increase_volume);
+document
+    .getElementById("btn-volume-down")
+    .addEventListener("click", decrease_volume);
+
+load_volume();

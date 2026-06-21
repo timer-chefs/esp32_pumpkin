@@ -4,7 +4,8 @@
 
 static RingBufferStream audio_buffer(buffer_size);
 static I2SStream i2s;
-static StreamCopy copier(i2s, audio_buffer);
+VolumeStream volume(i2s);
+static StreamCopy copier(volume, audio_buffer);
 
 static constexpr size_t i2s_chunk_size = 512;
 static bool playback_started = false;
@@ -12,22 +13,34 @@ static constexpr size_t playback_start_threshold = 4096;
 
 bool audio_init()
 {
-    auto config = i2s.defaultConfig(TX_MODE);
-    config.sample_rate = sample_rate;
-    config.channels = channels;
-    config.bits_per_sample = bits_per_sample;
-    config.pin_bck = pin_bck;
-    config.pin_ws = pin_ws;
-    config.pin_data = pin_data;
-    config.use_apll = true;         //Use APLL for better accuracy
-    config.fixed_mclk = 0;          //Auto claculate MCLK
-    config.buffer_size = 512;       // DMA buffer size in samples
-    config.buffer_count = 4;        // Number of DMA buffers
+    auto i2s_config = i2s.defaultConfig(TX_MODE);
+    i2s_config.sample_rate = sample_rate;
+    i2s_config.channels = channels;
+    i2s_config.bits_per_sample = bits_per_sample;
+    i2s_config.pin_bck = pin_bck;
+    i2s_config.pin_ws = pin_ws;
+    i2s_config.pin_data = pin_data;
+    i2s_config.use_apll = true;         //Use APLL for better accuracy
+    i2s_config.fixed_mclk = 0;          //Auto claculate MCLK
+    i2s_config.buffer_size = 512;       // DMA buffer size in samples
+    i2s_config.buffer_count = 4;        // Number of DMA buffers
 
-    if(!i2s.begin(config)) {
+    if(!i2s.begin(i2s_config)) {
         Serial.println("I2S begin failed");
         return false;
     }
+
+    auto volume_config = volume.defaultConfig();
+    volume_config.copyFrom(i2s_config);
+
+    if(!volume.begin(volume_config))
+    {
+        Serial.println("Volume begin failed");
+        return false;
+    }
+
+    volume.setVolume(0.2f);
+
     return true;
 }
 
@@ -62,4 +75,14 @@ void audio_service()
 
 void audio_reset() {
     playback_started = false;
+}
+
+void set_volume(float volume_level)
+{
+    volume.setVolume(volume_level);
+}
+
+float get_volume()
+{
+    return volume.volume();
 }

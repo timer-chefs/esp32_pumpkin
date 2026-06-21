@@ -103,6 +103,11 @@ static void handle_audio_streamer_request()
     open_file("/audio_streamer.js", "application/javascript");
 }
 
+static void handle_audio_volume_control_request()
+{
+    open_file("/audio_volume_control.js", "application/javascript");
+}
+
 static void web_socket_event(
     uint8_t client_num,
     WStype_t type,
@@ -133,6 +138,49 @@ static void handle_audio_reset()
     server.send(200, "application/json", "{\"status\":\"reset\"}");
 }
 
+static void handle_volume_up()
+{
+    float volume = get_volume();
+
+    volume += 0.1f;
+    if(volume > 1.0f)
+    {
+        volume = 1.0f;
+    }
+
+    set_volume(volume);
+
+    server.send(200, "application/json", String("{\"volume\":") + volume + "}");
+}
+
+static void handle_volume_down()
+{
+    float volume = get_volume();
+
+    volume -= 0.1f;
+    if(volume < 0.0f)
+    {
+        volume = 0.0f;
+    }
+
+    set_volume(volume);
+
+    server.send(
+        200,
+        "application/json",
+        String("{\"volume\":") + volume + "}");
+}
+
+static void handle_get_volume()
+{
+    float volume = get_volume();
+
+    server.send(
+        200,
+        "application/json",
+        String("{\"volume\":") + volume + "}");
+}
+
 void web_interface_init()
 {
     filesystem_init();
@@ -143,6 +191,9 @@ void web_interface_init()
     server.on("/audio_file_utils.js", HTTP_GET, handle_audio_file_utils_request);
     server.on("/audio_ui.js", HTTP_GET, handle_audio_ui_request);
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
+    server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
+    server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
+    server.on("/api/audio/volume", HTTP_POST, handle_get_volume);
     server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
     server.on("/audio_socket.js", HTTP_GET, handle_audio_socket_request);
     server.on("/audio_state.js", HTTP_GET, handle_audio_state_request);
@@ -151,6 +202,7 @@ void web_interface_init()
     server.on("/audio_file_controller.js", HTTP_GET, handle_audio_file_controller_request);
     server.on("/audio_file_processor.js", HTTP_GET, handle_audio_file_processor_request);
     server.on("/audio_streamer.js", HTTP_GET, handle_audio_streamer_request);
+    server.on("/audio_volume_control.js", HTTP_GET, handle_audio_volume_control_request);
     server.begin();
 
     webSocket.onEvent(web_socket_event);
