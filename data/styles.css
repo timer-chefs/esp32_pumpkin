@@ -1,8 +1,10 @@
 body {
     font-family: Arial, sans-serif;
     max-width: 800px;
-    margin: 50px auto;
-    padding: 20px;
+    width: 100%;
+    margin: 0px auto;
+    padding: 16px;
+    box-sizing: border-box;
     background-color: #f0f0f0;
 }
 
@@ -12,8 +14,9 @@ h1 {
 }
 
 button {
-    padding: 10px 20px;
-    font-size: 16px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    min-height: 48px;
     background-color: #ff9800;
     color: white;
     border: none;
@@ -53,6 +56,14 @@ button:disabled {
     color: #333;
 }
 
+#volume-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
 #file-status {
     margin-top: 10px;
     padding: 10px;
@@ -60,6 +71,13 @@ button:disabled {
     border-left: 4px solid #ff9800;
     border-radius: 4px;
     min-height: 20px;
+}
+
+#btn-volume-up,
+#btn-volume-down {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
 }
 
 input[type="file"] {
