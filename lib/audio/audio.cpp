@@ -1,6 +1,7 @@
 #include "audio.h"
 #include "AudioTools.h"
 #include "config.h"
+#include "fft.h"
 
 static RingBufferStream audio_buffer(buffer_size);
 static I2SStream i2s;
@@ -38,14 +39,16 @@ bool audio_init()
         Serial.println("Volume begin failed");
         return false;
     }
-
     volume.setVolume(0.2f);
+
+    fft_init();
 
     return true;
 }
 
 void audio_write(const uint8_t* payload, size_t length)
 {
+    write_to_fft(payload, length);
     size_t bytes_written = audio_buffer.write(payload, length);
 }
 

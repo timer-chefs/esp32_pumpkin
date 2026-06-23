@@ -20,6 +20,15 @@ constexpr uint16_t sample_rate = 16000;
 constexpr uint8_t channels = 1;
 constexpr uint8_t bits_per_sample = 16;
 
+// LED strip
+constexpr uint8_t pin_led_strip = GPIO_NUM_48;
+constexpr uint8_t num_leds = 2;
+constexpr uint8_t max_brightness = 255;
+constexpr uint16_t brightness_scaling_factor = 50;
+
+//FFT library
+constexpr uint16_t num_of_samples_per_analysis_block = 256;
+
 //Pins -> Same pin numbers as the silkscreen on the ESP32S3 board.
 //Audio Pins
 constexpr uint8_t pin_bck = GPIO_NUM_16;
