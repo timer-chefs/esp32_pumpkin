@@ -6,7 +6,9 @@
 bool audio_init();
 void audio_write(const uint8_t* payload, size_t length);
 void audio_service();
-void audio_reset();
+void audio_started();
+void audio_stoped();
+bool is_audio_running();
 
 void set_volume(float volume_level);
 float get_volume();

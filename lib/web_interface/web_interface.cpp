@@ -108,19 +108,33 @@ static void handle_audio_volume_control_request()
     open_file("/audio_volume_control.js", "application/javascript");
 }
 
-static void web_socket_event(
-    uint8_t client_num,
-    WStype_t type,
-    uint8_t* payload,
-    size_t length)
+static void web_socket_event(uint8_t client_num, WStype_t type, 
+    uint8_t* payload, size_t length)
 {
-    (void)client_num;
-    switch(type) {
+    (void)client_num;       //This is to indicate that client_num is not used.
+    
+    String command((char *)payload, length);
+    switch(type)
+    {
         case WStype_CONNECTED:
             Serial.println("Client connected");
             break;
         case WStype_DISCONNECTED:
             Serial.println("Client disconnected");
+            break;
+        
+        case WStype_TEXT:
+        
+
+            if(command == "PLAY")
+            {
+                audio_started();
+            }
+            else if(command == "STOP")
+            {
+                audio_stoped();
+            }
+
             break;
 
         case WStype_BIN:
@@ -134,7 +148,7 @@ static void web_socket_event(
 
 static void handle_audio_reset()
 {
-    audio_reset();
+    audio_stoped();
     server.send(200, "application/json", "{\"status\":\"reset\"}");
 }
 

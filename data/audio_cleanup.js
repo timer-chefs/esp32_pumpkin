@@ -37,7 +37,11 @@ export function stopAudio() {
     
     if(audioState.socket && isSocketOpen(audioState.socket))
     {
-        closeAudioSocket(audioState.socket);
+        audioState.socket.send("STOP");
+
+        setTimeout(() => {
+            closeAudioSocket(audioState.socket);
+        }, 100);
     }
     audioState.socket = null;
     

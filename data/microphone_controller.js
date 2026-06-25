@@ -30,6 +30,8 @@ export async function switchToMicrophone() {
         let processorNode = null;
 
         audioState.socket.onopen = async () => {
+            audioState.socket.send("PLAY");
+
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
                 .catch(err => { 
                     console.error(err); 

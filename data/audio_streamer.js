@@ -24,6 +24,8 @@ export async function streamAudioData(audioBuffer) {
         const startTime = Date.now();
 
         audioState.socket.onopen = () => {
+            audioState.socket.send("PLAY");
+            
             const chunkSize = 512; // Match I2S write size for better timing
             const bytesPerSecond = 16000 * 2;
             const bytesPerMillisecond = bytesPerSecond / 1000;
@@ -62,9 +64,13 @@ export async function streamAudioData(audioBuffer) {
                     // Keep socket open a bit longer to ensure all data is played
                     setTimeout(() => {
                         if(isSocketOpen(audioState.socket)) {
-                            closeAudioSocket(audioState.socket);
+                            audioState.socket.send("STOP");
+                            
                         }
-                        resolve();
+
+                        setTimeout(() => {
+                            closeAudioSocket(audioState.socket);
+                        }, 100);
                     }, 500);
                 }
             };

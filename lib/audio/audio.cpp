@@ -9,7 +9,7 @@ VolumeStream volume(i2s);
 static StreamCopy copier(volume, audio_buffer);
 
 static constexpr size_t i2s_chunk_size = 512;
-static bool playback_started = false;
+static bool is_playback_running = false;
 static constexpr size_t playback_start_threshold = 4096;
 
 bool audio_init()
@@ -52,32 +52,27 @@ void audio_write(const uint8_t* payload, size_t length)
     size_t bytes_written = audio_buffer.write(payload, length);
 }
 
+void audio_started()
+{
+    is_playback_running = true;
+}
+
+void audio_stoped()
+{
+    is_playback_running = false;
+}
+
+bool is_audio_running()
+{
+    return is_playback_running;
+}
 
 void audio_service()
 {
-    uint32_t available = audio_buffer.available();
-
-    if (!playback_started)
+    if(is_playback_running)    
     {
-        if (available < playback_start_threshold)
-        {
-            return;
-        }
-
-        playback_started = true;
+        copier.copy();
     }
-
-    copier.copy();
-
-    if (audio_buffer.available() == 0)
-    {
-        playback_started = false;
-    }
-}
-
-
-void audio_reset() {
-    playback_started = false;
 }
 
 void set_volume(float volume_level)
