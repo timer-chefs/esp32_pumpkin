@@ -1,5 +1,5 @@
 #ifndef CANDLE_EFFECT_H
-#define CANCLE_EFFECT_H
+#define CANDLE_EFFECT_H
 
 #include <Arduino.h>
 #include "light_effect.h"
