@@ -25,9 +25,22 @@ static float calculate_envelope(float level)
     return envelope;
 }
 
-void led_strip_service(bool is_audio_ready, CRGB color)
+
+static void candle_light_effect()
 {
-    if(is_audio_ready)
+    uint16_t time = millis() * 5;
+    for (int i = 0; i < num_leds; i++)
+    {
+        uint8_t noise = inoise8(i * 40, time);
+        uint8_t brightness = map(noise, 0, 255, 25, 40); 
+        uint8_t hue = map(noise, 0, 255, 120, 255);
+        led_strip[i] = CHSV(hue, 255, brightness);
+    }
+}
+
+void led_strip_service(bool is_playback_running, CRGB color)
+{
+    if(is_playback_running)
     {
         float level = get_fft_energy();
         float envelope = calculate_envelope(level);
@@ -39,7 +52,7 @@ void led_strip_service(bool is_audio_ready, CRGB color)
     }
     else
     {
-        fill_solid(led_strip, num_leds, CRGB::Black);
+        candle_light_effect();
     }
     FastLED.show();
 }
