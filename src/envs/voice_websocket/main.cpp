@@ -38,7 +38,6 @@ void loop()
     if(is_audio_ready)
     {
         audio_service();
-        led_strip_service();
     }
+    led_strip_service(is_audio_ready, CRGB::White);
 }
-
