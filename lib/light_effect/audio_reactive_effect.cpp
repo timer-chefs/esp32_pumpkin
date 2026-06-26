@@ -13,7 +13,7 @@ void AudioReactiveEffect::update(CRGB* led_strip, uint8_t num_leds)
     fill_solid(led_strip, num_leds, color);
 }
 
-void AudioReactiveEffect::set_color(CRGB color)
+void AudioReactiveEffect::set_color(const CRGB& color)
 {
     this->color = color;
 }

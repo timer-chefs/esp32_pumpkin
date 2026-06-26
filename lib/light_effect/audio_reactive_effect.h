@@ -8,7 +8,7 @@ class AudioReactiveEffect : public LightEffect
 {
 public:
     void update(CRGB* led_strip, uint8_t num_leds) override;
-    void set_color(CRGB color);
+    void set_color(const CRGB& color);
 private:
     CRGB color;
     float calculate_embelope();
