@@ -19,6 +19,7 @@ void EffectManager::set_effect(EffectId effect_id)
         {
             current_effect = &audio_reactive_effect;
             audio_reactive_effect.set_color(CRGB::Purple);  //This line should be temporary.
+            break;
         }
     }
 }
