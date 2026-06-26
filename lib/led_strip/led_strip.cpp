@@ -16,7 +16,6 @@ void led_strip_service(bool is_playback_running, CRGB color)
 {
     if(is_playback_running)
     {
-        effect_manager.set_color(CRGB::Purple);
         effect_manager.set_effect(EffectId::AudioReactive); 
     }
     else

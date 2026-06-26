@@ -16,7 +16,6 @@ public:
     EffectManager();
     void set_effect(EffectId);
     void update(CRGB* led_strip, uint8_t num_leds);
-    void set_color(CRGB color);
 
 private:
     LightEffect* current_effect;
