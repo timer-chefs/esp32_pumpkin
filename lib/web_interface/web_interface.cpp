@@ -6,6 +6,7 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include <LittleFS.h>
+#include <ArduinoJson.h>
 
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
@@ -108,38 +109,63 @@ static void handle_audio_volume_control_request()
     open_file("/audio_volume_control.js", "application/javascript");
 }
 
+static void handle_command_sender_requrest()
+{
+    open_file("/command_sender.js", "application/javascript");
+}
+
 static void web_socket_event(uint8_t client_num, WStype_t type, 
     uint8_t* payload, size_t length)
 {
     (void)client_num;       //This is to indicate that client_num is not used.
     
-    String command((char *)payload, length);
     switch(type)
     {
         case WStype_CONNECTED:
+        {
             Serial.println("Client connected");
             break;
+        }
+
         case WStype_DISCONNECTED:
+        {
             Serial.println("Client disconnected");
             break;
-        
-        case WStype_TEXT:
+        }
         
 
-            if(command == "PLAY")
+        case WStype_TEXT:
+        {
+            JsonDocument doc;
+            DeserializationError error =
+                deserializeJson(doc, payload, length);
+
+            if(error)
+            {
+                Serial.println("Invalid JSON");
+                break;
+            }
+
+            const char* command = doc["command"] | "";
+
+            if(strcmp(command, "START_AUDIO_STREAM") == 0)
             {
                 audio_started();
             }
-            else if(command == "STOP")
+            else if(strcmp(command, "STOP_AUDIO_STREAM") == 0)
             {
                 audio_stoped();
             }
 
             break;
+        }
 
         case WStype_BIN:
+        {
             audio_write(payload, length);
             break;
+        }
+        
 
         default:
             break;
@@ -217,6 +243,7 @@ void web_interface_init()
     server.on("/audio_file_processor.js", HTTP_GET, handle_audio_file_processor_request);
     server.on("/audio_streamer.js", HTTP_GET, handle_audio_streamer_request);
     server.on("/audio_volume_control.js", HTTP_GET, handle_audio_volume_control_request);
+    server.on("/command_sender.js", HTTP_GET, handle_command_sender_requrest);
     server.begin();
 
     webSocket.onEvent(web_socket_event);

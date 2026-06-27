@@ -14,6 +14,7 @@ import
 {
     setFileStatus,
 } from "./audio_ui.js";
+import { sendCommand } from "./command_sender.js";
 
 
 export async function streamAudioData(audioBuffer) {
@@ -24,7 +25,10 @@ export async function streamAudioData(audioBuffer) {
         const startTime = Date.now();
 
         audioState.socket.onopen = () => {
-            audioState.socket.send("PLAY");
+            sendCommand(audioState.socket,
+                {
+                    command: "START_AUDIO_STREAM"
+                });
             
             const chunkSize = 512; // Match I2S write size for better timing
             const bytesPerSecond = 16000 * 2;
@@ -64,8 +68,10 @@ export async function streamAudioData(audioBuffer) {
                     // Keep socket open a bit longer to ensure all data is played
                     setTimeout(() => {
                         if(isSocketOpen(audioState.socket)) {
-                            audioState.socket.send("STOP");
-                            
+                            sendCommand(audioState.socket,
+                                {
+                                    command: "STOP_AUDIO_STREAM"
+                                });
                         }
 
                         setTimeout(() => {

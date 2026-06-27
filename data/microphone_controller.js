@@ -19,6 +19,7 @@ import
 } from "./audio_state.js";
 
 import { stopAudio } from './audio_cleanup.js';
+import { sendCommand } from './command_sender.js';
 
 export async function switchToMicrophone() {
     stopAudio();
@@ -30,7 +31,10 @@ export async function switchToMicrophone() {
         let processorNode = null;
 
         audioState.socket.onopen = async () => {
-            audioState.socket.send("PLAY");
+            sendCommand(audioState.socket,
+                {
+                    command: "START_AUDIO_STREAM"
+                })
 
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
                 .catch(err => { 

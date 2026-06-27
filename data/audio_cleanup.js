@@ -15,6 +15,7 @@ import
     setCurrentMode,
     setCurrentStreamingEnabled
 } from './audio_ui.js';
+import { sendCommand } from "./command_sender.js";
 
 export function stopAudio() {
     audioState.isStreaming = false;
@@ -37,7 +38,10 @@ export function stopAudio() {
     
     if(audioState.socket && isSocketOpen(audioState.socket))
     {
-        audioState.socket.send("STOP");
+        sendCommand(audioState.socket,
+            {
+                command: "STOP_AUDIO_STREAM"
+            });
 
         setTimeout(() => {
             closeAudioSocket(audioState.socket);
