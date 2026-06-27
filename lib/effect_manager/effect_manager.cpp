@@ -27,4 +27,5 @@ void EffectManager::set_effect(EffectId effect_id)
 void EffectManager::update(CRGB* led_strip, uint8_t num_leds)
 {
     current_effect->update(led_strip, num_leds);
+    
 }
