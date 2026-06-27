@@ -2,6 +2,7 @@
 
 #include "audio.h"
 #include "config.h"
+#include "command_handler.h"
 
 #include <WebServer.h>
 #include <WebSocketsServer.h>
@@ -10,6 +11,9 @@
 
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
+
+static EffectManager effect_manager;
+static CommandHandler command_handler(effect_manager);
 
 static void filesystem_init()
 {
@@ -146,17 +150,7 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
                 break;
             }
 
-            const char* command = doc["command"] | "";
-
-            if(strcmp(command, "START_AUDIO_STREAM") == 0)
-            {
-                audio_started();
-            }
-            else if(strcmp(command, "STOP_AUDIO_STREAM") == 0)
-            {
-                audio_stoped();
-            }
-
+            command_handler.handle(doc);
             break;
         }
 
