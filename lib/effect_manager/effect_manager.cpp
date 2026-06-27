@@ -18,10 +18,14 @@ void EffectManager::set_effect(EffectId effect_id)
         case EffectId::AudioReactive:
         {
             current_effect = &audio_reactive_effect;
-            current_effect->set_color(CRGB::White);   //This line should be temporary.
             break;
         }
     }
+}
+
+void EffectManager::set_color(const CRGB& color)
+{
+    current_effect->set_color(color);
 }
 
 void EffectManager::update(CRGB* led_strip, uint8_t num_leds)

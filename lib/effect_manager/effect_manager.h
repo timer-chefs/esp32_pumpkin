@@ -15,6 +15,7 @@ class EffectManager
 public:
     EffectManager();
     void set_effect(EffectId);
+    void set_color(const CRGB& color);
     void update(CRGB* led_strip, uint8_t num_leds);
 
 private:

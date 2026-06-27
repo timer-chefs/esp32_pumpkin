@@ -4,10 +4,15 @@
 #include "audio.h"
 #include "led_strip.h"
 #include "web_interface.h"
+#include "show_manager.h"
+#include "preset_shows.h"
 
 #include <WiFi.h>
 
 bool is_audio_ready = false;
+
+EffectManager effect_manager;
+ShowManager show_manager(effect_manager);
 
 void setup()
 {
@@ -38,6 +43,15 @@ void loop()
     if(is_audio_ready)
     {
         audio_service();
-        led_strip_service(is_audio_running(), CRGB::White);
+        if(is_audio_running())
+        {
+            show_manager.play(preset_shows[1]);
+        }
+        else
+        {
+            show_manager.play(preset_shows[0]);
+        }
+        effect_manager.update(led_strip, num_leds);
+        FastLED.show();
     }
 }
