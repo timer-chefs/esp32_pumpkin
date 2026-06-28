@@ -12,8 +12,7 @@
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
 
-static EffectManager effect_manager;
-static CommandHandler command_handler(effect_manager);
+extern CommandHandler command_handler;
 
 static void filesystem_init()
 {
@@ -118,6 +117,11 @@ static void handle_command_sender_requrest()
     open_file("/command_sender.js", "application/javascript");
 }
 
+static void handle_show_controller()
+{
+    open_file("/show_controller.js", "application/javascript");
+}
+
 static void web_socket_event(uint8_t client_num, WStype_t type, 
     uint8_t* payload, size_t length)
 {
@@ -151,6 +155,7 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
             }
 
             command_handler.handle(doc);
+
             break;
         }
 
@@ -214,11 +219,9 @@ static void handle_get_volume()
         "application/json",
         String("{\"volume\":") + volume + "}");
 }
-
 void web_interface_init()
 {
     filesystem_init();
-    
     server.on("/", HTTP_GET, handle_root_request);
     server.on("/styles.css", HTTP_GET, handle_css_request);
     server.on("/main.js", HTTP_GET, handle_js_request);
@@ -238,6 +241,7 @@ void web_interface_init()
     server.on("/audio_streamer.js", HTTP_GET, handle_audio_streamer_request);
     server.on("/audio_volume_control.js", HTTP_GET, handle_audio_volume_control_request);
     server.on("/command_sender.js", HTTP_GET, handle_command_sender_requrest);
+    server.on("/show_controller.js", HTTP_GET, handle_show_controller);
     server.begin();
 
     webSocket.onEvent(web_socket_event);

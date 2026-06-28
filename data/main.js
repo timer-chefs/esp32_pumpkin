@@ -23,6 +23,11 @@ import
     load_volume
 } from "./audio_volume_control.js";
 
+import
+{
+    playShow
+} from "./show_controller.js";
+
 document
     .getElementById("btn-microphone")
     .addEventListener("click", switchToMicrophone);
@@ -47,5 +52,8 @@ document
 document
     .getElementById("btn-volume-down")
     .addEventListener("click", decrease_volume);
+document
+    .getElementById("btn-show-ghost")
+    .addEventListener("click", playShow.bind(null,0)); //.bind defers the execution until click
 
 load_volume();

@@ -3,7 +3,7 @@ import
     createAudioSocket,
     isSocketOpen,
     closeAudioSocket
-} from './audio_socket.js';
+} from "./audio_socket.js";
 
 import
 {
@@ -11,15 +11,15 @@ import
     hideMicrophoneMode,
     setCurrentMode,
     setCurrentStreaming
-} from './audio_ui.js';
+} from "./audio_ui.js";
 
 import
 {
     audioState
 } from "./audio_state.js";
 
-import { stopAudio } from './audio_cleanup.js';
-import { sendCommand } from './command_sender.js';
+import { stopAudio } from "./audio_cleanup.js";
+import { sendCommand } from "./command_sender.js";
 
 export async function switchToMicrophone() {
     stopAudio();

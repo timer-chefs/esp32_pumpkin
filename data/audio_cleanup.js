@@ -41,7 +41,8 @@ export function stopAudio() {
         sendCommand(audioState.socket,
             {
                 command: "STOP_AUDIO_STREAM"
-            });
+            }
+        );
 
         setTimeout(() => {
             closeAudioSocket(audioState.socket);

@@ -2,16 +2,16 @@
 #define COMMAND_HANDLER_H
 
 #include <Arduino.h>
-#include "effect_manager.h"
+#include "show_manager.h"
 #include <ArduinoJson.h>
 
 class CommandHandler
 {
 public:
-    CommandHandler(EffectManager& effect_manager);
+    CommandHandler(ShowManager& show_manager);
     void handle(const JsonDocument& doc);
 private:    
-    EffectManager& effect_manager;
+    ShowManager& show_manager;
 };
 
 #endif //COMMAND_HANDLER_H
