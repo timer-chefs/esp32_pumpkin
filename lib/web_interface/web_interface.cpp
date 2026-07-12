@@ -122,6 +122,21 @@ static void handle_show_controller()
     open_file("/show_controller.js", "application/javascript");
 }
 
+static void handle_preset_shows()
+{
+    open_file("/preset_shows.js", "application/javascript");
+}
+
+static void handle_show_audio()
+{
+    open_file("/show_audio.js", "application/javascript");
+}
+
+static void handle_folder_manager()
+{
+    open_file("/folder_manager.js", "application/javascript");
+}
+
 static void web_socket_event(uint8_t client_num, WStype_t type, 
     uint8_t* payload, size_t length)
 {
@@ -222,15 +237,13 @@ static void handle_get_volume()
 void web_interface_init()
 {
     filesystem_init();
+
+    //Serve pages:
     server.on("/", HTTP_GET, handle_root_request);
     server.on("/styles.css", HTTP_GET, handle_css_request);
     server.on("/main.js", HTTP_GET, handle_js_request);
     server.on("/audio_file_utils.js", HTTP_GET, handle_audio_file_utils_request);
     server.on("/audio_ui.js", HTTP_GET, handle_audio_ui_request);
-    server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
-    server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
-    server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
-    server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
     server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
     server.on("/audio_socket.js", HTTP_GET, handle_audio_socket_request);
     server.on("/audio_state.js", HTTP_GET, handle_audio_state_request);
@@ -242,6 +255,16 @@ void web_interface_init()
     server.on("/audio_volume_control.js", HTTP_GET, handle_audio_volume_control_request);
     server.on("/command_sender.js", HTTP_GET, handle_command_sender_requrest);
     server.on("/show_controller.js", HTTP_GET, handle_show_controller);
+    server.on("/preset_shows.js", HTTP_GET, handle_preset_shows);
+    server.on("/show_audio.js", HTTP_GET, handle_show_audio);
+    server.on("/folder_manager.js", HTTP_GET, handle_folder_manager);
+
+    //Serve commands:
+    server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
+    server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
+    server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
+    server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
+
     server.begin();
 
     webSocket.onEvent(web_socket_event);

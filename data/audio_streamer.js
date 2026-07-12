@@ -14,7 +14,16 @@ import
 {
     setFileStatus,
 } from "./audio_ui.js";
-import { sendCommand } from "./command_sender.js";
+
+import
+{
+    sendCommand
+} from "./command_sender.js";
+
+import
+{
+    processAudioFile
+} from "./audio_file_processor.js";
 
 
 export async function streamAudioData(audioBuffer) {
@@ -97,3 +106,4 @@ export async function streamAudioData(audioBuffer) {
         };
     });
 }
+

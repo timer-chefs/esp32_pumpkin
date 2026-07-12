@@ -11,7 +11,7 @@ const Show preset_shows[] =
 
     {
         1,
-        "Music",
+        "Ghost",
         EffectId::AudioReactive,
         CRGB::Purple
     }

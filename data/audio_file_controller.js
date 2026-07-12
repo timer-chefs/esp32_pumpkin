@@ -71,3 +71,10 @@ export async function streamSelectedFile() {
         alert("Failed to process audio file. Make sure it's a valid audio file.");
     }
 }
+
+
+export async function streamAudioFile(file)
+{
+    const pcm = await processAudioFile(file);
+    await streamAudioData(pcm.buffer);
+}

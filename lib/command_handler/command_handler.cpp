@@ -16,11 +16,12 @@ void CommandHandler::handle(const JsonDocument& doc)
     else if(strcmp(command, "STOP_AUDIO_STREAM") == 0)
     {
         audio_stoped();
+        show_manager.set_current_show(0);
     }
     else if (strcmp(command, "PLAY_SHOW") == 0)
     {
         uint16_t show_id = doc["show"];
-        show_manager.play(show_id);
+        show_manager.set_current_show(show_id);
     }
     else
     {

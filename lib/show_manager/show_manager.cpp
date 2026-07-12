@@ -9,7 +9,7 @@ const Show* ShowManager::get_current_show() const
     return current_show;
 }
 
-void ShowManager::play(uint16_t show_id)
+void ShowManager::set_current_show(uint16_t show_id)
 {
     Serial.printf("Show ID: %d\n", show_id);
     const Show* show = find_show(show_id);

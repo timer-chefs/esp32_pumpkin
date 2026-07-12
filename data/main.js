@@ -28,6 +28,16 @@ import
     playShow
 } from "./show_controller.js";
 
+import
+{
+    presetShows
+} from "./preset_shows.js";
+
+import
+{
+    handleSelectAudioFolder
+} from "./folder_manager.js";
+
 document
     .getElementById("btn-microphone")
     .addEventListener("click", switchToMicrophone);
@@ -54,6 +64,9 @@ document
     .addEventListener("click", decrease_volume);
 document
     .getElementById("btn-show-ghost")
-    .addEventListener("click", playShow.bind(null,0)); //.bind defers the execution until click
+    .addEventListener("click", playShow.bind(null, presetShows[0]));    
+document
+    .getElementById("btn-select-audio-folder")
+    .addEventListener("click", handleSelectAudioFolder);
 
 load_volume();

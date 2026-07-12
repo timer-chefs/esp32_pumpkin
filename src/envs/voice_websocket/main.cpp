@@ -42,20 +42,11 @@ void setup()
 void loop()
 {
     web_interface_service();
-    /*
+    
     if(is_audio_ready)
     {
         audio_service();
-        if(is_audio_running())
-        {
-            show_manager.play(1);
-        }
-        else
-        {
-            show_manager.play(0);
-        }
         effect_manager.update(led_strip, num_leds);
         FastLED.show();
     }
-    */
 }

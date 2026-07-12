@@ -8,7 +8,7 @@ class ShowManager
 {
 public:
     explicit ShowManager(EffectManager& effect_manager);
-    void play(uint16_t show_id);
+    void set_current_show(uint16_t show_id);
 
     const Show* get_current_show() const;
 

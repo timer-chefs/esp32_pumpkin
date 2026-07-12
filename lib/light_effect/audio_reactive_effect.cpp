@@ -5,12 +5,13 @@
 void AudioReactiveEffect::update(CRGB* led_strip, uint8_t num_leds)
 {
     float envelope = calculate_embelope();
-
-    uint8_t brightness = constrain(envelope * brightness_scaling_factor,
-        0, max_brightness); //brightness_scaling_factor is calibrated
+    uint8_t brightness = constrain(envelope * brightness_scaling_factor, 0, max_brightness);
     
-    color.nscale8_video(brightness);
-    fill_solid(led_strip, num_leds, color);
+    // Create a copy of the color and scale it
+    CRGB scaled_color = color;
+    scaled_color.nscale8_video(brightness);
+    
+    fill_solid(led_strip, num_leds, scaled_color);
 }
 
 void AudioReactiveEffect::set_color(const CRGB& color)
