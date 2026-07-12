@@ -1,13 +1,13 @@
 export const presetShows =
 [
     {
-        id: 1,
-        name: "Ghost",
+        id: 0,
+        name: "Candle",
         file: "ghost.wav"
     },
     {
-        id: 2,
-        name: "Music",
-        file: "music.wav"
+        id: 1,
+        name: "Ghost",
+        file: "ghost.wav"
     }
 ];

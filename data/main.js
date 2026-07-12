@@ -64,7 +64,7 @@ document
     .addEventListener("click", decrease_volume);
 document
     .getElementById("btn-show-ghost")
-    .addEventListener("click", playShow.bind(null, presetShows[0]));    
+    .addEventListener("click", playShow.bind(null, presetShows[1]));    
 document
     .getElementById("btn-select-audio-folder")
     .addEventListener("click", handleSelectAudioFolder);
