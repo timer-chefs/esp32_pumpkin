@@ -1,76 +1,86 @@
 #include "audio.h"
-#include <cstring>
 #include "AudioTools.h"
 #include "config.h"
+#include "fft.h"
 
+static RingBufferStream audio_buffer(buffer_size);
 static I2SStream i2s;
-static uint8_t* audio_buffer = nullptr;
-static volatile uint32_t write_index = 0;
-static volatile uint32_t read_index = 0;
+VolumeStream volume(i2s);
+static StreamCopy copier(volume, audio_buffer);
 
-static uint32_t next_index(uint32_t index) {
-    index++;
-    if(index >= buffer_size) {
-        index = 0;
-    }
-    return index;
-}
+static constexpr size_t i2s_chunk_size = 512;
+static bool is_playback_running = false;
+static constexpr size_t playback_start_threshold = 4096;
 
-bool audio_init() {
-    audio_buffer = static_cast<uint8_t*>(ps_malloc(buffer_size));
-    if(audio_buffer == nullptr) {
-        Serial.println("Audio buffer allocation failed");
-        return false;
-    }
+bool audio_init()
+{
+    auto i2s_config = i2s.defaultConfig(TX_MODE);
+    i2s_config.sample_rate = sample_rate;
+    i2s_config.channels = channels;
+    i2s_config.bits_per_sample = bits_per_sample;
+    i2s_config.pin_bck = pin_bck;
+    i2s_config.pin_ws = pin_ws;
+    i2s_config.pin_data = pin_data;
+    i2s_config.use_apll = true;         //Use APLL for better accuracy
+    i2s_config.fixed_mclk = 0;          //Auto claculate MCLK
+    i2s_config.buffer_size = 512;       // DMA buffer size in samples
+    i2s_config.buffer_count = 4;        // Number of DMA buffers
 
-    std::memset(audio_buffer, 0, buffer_size);
-
-    auto config = i2s.defaultConfig(TX_MODE);
-    config.sample_rate = sample_rate;
-    config.channels = channels;
-    config.bits_per_sample = bits_per_sample;
-    config.pin_bck = pin_bck;
-    config.pin_ws = pin_ws;
-    config.pin_data = pin_data;
-    config.use_apll = false;
-
-    if(!i2s.begin(config)) {
+    if(!i2s.begin(i2s_config)) {
         Serial.println("I2S begin failed");
         return false;
     }
 
+    auto volume_config = volume.defaultConfig();
+    volume_config.copyFrom(i2s_config);
+
+    if(!volume.begin(volume_config))
+    {
+        Serial.println("Volume begin failed");
+        return false;
+    }
+    volume.setVolume(0.2f);
+
+    fft_init();
+
     return true;
 }
 
-void audio_write(const uint8_t* payload, size_t length) {
+void audio_write(const uint8_t* payload, size_t length)
+{
+    write_to_fft(payload, length);
+    size_t bytes_written = audio_buffer.write(payload, length);
+}
 
-    for(size_t i = 0; i < length; i++) {
-        audio_buffer[write_index] = payload[i];
-        write_index = next_index(write_index);
+void audio_started()
+{
+    is_playback_running = true;
+}
 
-        if(write_index == read_index) {
-            read_index = next_index(read_index);
-        }
+void audio_stoped()
+{
+    is_playback_running = false;
+}
+
+bool is_audio_running()
+{
+    return is_playback_running;
+}
+
+void audio_service()
+{
+    if(is_playback_running)    
+    {
+        copier.copy();
     }
 }
 
-void audio_service() {
-    uint32_t available;
+void set_volume(float volume_level)
+{
+    volume.setVolume(volume_level);
+}
 
-    if(write_index >= read_index) {
-        available = write_index - read_index;
-    } else {
-        available = buffer_size - read_index + write_index;
-    }
-
-    if(available >= 512) {
-        uint8_t temp[512];
-
-        for(int i = 0; i < 512; i++) {
-            temp[i] = audio_buffer[read_index];
-            read_index = next_index(read_index);
-        }
-
-        i2s.write(temp, 512);
-    }
+float get_volume()
+{
+    return volume.volume();
 }

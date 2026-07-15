@@ -2,132 +2,278 @@
 
 #include "audio.h"
 #include "config.h"
+#include "command_handler.h"
 
 #include <WebServer.h>
 #include <WebSocketsServer.h>
+#include <LittleFS.h>
+#include <ArduinoJson.h>
 
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
 
-static const char webpage[] PROGMEM = R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Pumpkin Audio</title>
-</head>
-<body>
+extern CommandHandler command_handler;
 
-<h1>Pumpkin Live Voice</h1>
-
-<button onclick="startAudio()">
-Start Microphone
-</button>
-
-<script>
-
-let socket;
-
-async function startAudio() {
-
-    socket = new WebSocket("ws://" + location.hostname + ":81/");
-    socket.binaryType = "arraybuffer";
-
-    socket.onopen = async () => {
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            .catch(err => { console.error(err); alert("Microphone access failed (often requires HTTPS / secure context)."); socket.close(); throw err; });
-
-        const audioContext = new AudioContext({
-            sampleRate: 16000
-        });
-
-        const workletCode = `
-        class PCMProcessor extends AudioWorkletProcessor {
-            process(inputs, outputs, parameters) {
-                const input = inputs[0];
-                if(input.length > 0) {
-                    const samples = input[0];
-                    let pcm = new Int16Array(samples.length);
-                    for(let i = 0; i < samples.length; i++) {
-                        let s = Math.max(-1, Math.min(1, samples[i]));
-                        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                    }
-                    this.port.postMessage(pcm.buffer, [pcm.buffer]);
-                }
-                return true;
-            }
-        }
-        registerProcessor('pcm-processor', PCMProcessor);
-        `;
-
-        const blob = new Blob([workletCode], {
-            type: 'application/javascript'
-        });
-
-        const workletURL = URL.createObjectURL(blob);
-
-        await audioContext.audioWorklet.addModule(workletURL);
-
-        const source = audioContext.createMediaStreamSource(stream);
-        const processorNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-
-        processorNode.port.onmessage = (event) => {
-            if(socket.readyState === WebSocket.OPEN) {
-                socket.send(event.data);
-            }
-        };
-
-        source.connect(processorNode);
-
-        console.log("Streaming microphone...");
-    };
+static void filesystem_init()
+{
+    if(!LittleFS.begin())
+    {
+        Serial.println("LittleFS Mount Failed");
+        return;
+    }
 }
 
-</script>
+static void open_file(const char* path, const char* content_type)
+{
+    if(!LittleFS.exists(path))
+    {
+        server.send(404, "text/plain", "File not found");
+        return;
+    }
 
-</body>
-</html>
-)rawliteral";
+    File file = LittleFS.open(path, "r");
+    if(!file)
+    {
+        server.send(500, "text/plain", "Failed to open file");
+        return;
+    }
+
+    server.streamFile(file, content_type);
+    file.close();
+}
 
 static void handle_root_request()
 {
-    server.send(200, "text/html", webpage);
+    open_file("/index.html", "text/html");
 }
 
-static void web_socket_event(
-    uint8_t client_num,
-    WStype_t type,
-    uint8_t* payload,
-    size_t length)
+static void handle_css_request()
 {
-    (void)client_num;
-    switch(type) {
+    open_file("/styles.css", "text/css");
+}
+
+static void handle_js_request()
+{
+    open_file("/main.js", "application/javascript");
+}
+
+static void handle_audio_file_utils_request()
+{
+    open_file("/audio_file_utils.js", "application/javascript");
+}
+
+static void handle_worklet_processor()
+{
+    open_file("/worklet_processor.js", "application/javascript");
+}
+
+static void handle_audio_ui_request()
+{
+    open_file("/audio_ui.js", "application/javascript");
+}
+
+static void handle_audio_socket_request()
+{
+    open_file("/audio_socket.js", "application/javascript");
+}
+
+static void handle_audio_state_request()
+{
+    open_file("/audio_state.js", "application/javascript");
+}
+
+static void handle_microphone_controller_request()
+{
+    open_file("/microphone_controller.js", "application/javascript");
+}
+
+static void handle_audio_cleanup_request()
+{
+    open_file("/audio_cleanup.js", "application/javascript");
+}
+
+static void handle_audio_file_controller_request()
+{
+    open_file("/audio_file_controller.js", "application/javascript");
+}
+
+static void handle_audio_file_processor_request()
+{
+    open_file("/audio_file_processor.js", "application/javascript");
+}
+
+static void handle_audio_streamer_request()
+{
+    open_file("/audio_streamer.js", "application/javascript");
+}
+
+static void handle_audio_volume_control_request()
+{
+    open_file("/audio_volume_control.js", "application/javascript");
+}
+
+static void handle_command_sender_requrest()
+{
+    open_file("/command_sender.js", "application/javascript");
+}
+
+static void handle_show_controller()
+{
+    open_file("/show_controller.js", "application/javascript");
+}
+
+static void handle_preset_shows()
+{
+    open_file("/preset_shows.js", "application/javascript");
+}
+
+static void handle_show_audio()
+{
+    open_file("/show_audio.js", "application/javascript");
+}
+
+static void handle_folder_manager()
+{
+    open_file("/folder_manager.js", "application/javascript");
+}
+
+static void web_socket_event(uint8_t client_num, WStype_t type, 
+    uint8_t* payload, size_t length)
+{
+    (void)client_num;       //This is to indicate that client_num is not used.
+    
+    switch(type)
+    {
         case WStype_CONNECTED:
+        {
             Serial.println("Client connected");
             break;
+        }
+
         case WStype_DISCONNECTED:
+        {
             Serial.println("Client disconnected");
             break;
+        }
+        
+
+        case WStype_TEXT:
+        {
+            JsonDocument doc;
+            DeserializationError error =
+                deserializeJson(doc, payload, length);
+
+            if(error)
+            {
+                Serial.println("Invalid JSON");
+                break;
+            }
+
+            command_handler.handle(doc);
+
+            break;
+        }
 
         case WStype_BIN:
+        {
             audio_write(payload, length);
             break;
+        }
+        
 
         default:
             break;
     }
 }
 
-void web_interface_init() {
-    server.on("/", handle_root_request);
+static void handle_audio_reset()
+{
+    audio_stoped();
+    server.send(200, "application/json", "{\"status\":\"reset\"}");
+}
+
+static void handle_volume_up()
+{
+    float volume = get_volume();
+
+    volume += 0.1f;
+    if(volume > 1.0f)
+    {
+        volume = 1.0f;
+    }
+
+    set_volume(volume);
+
+    server.send(200, "application/json", String("{\"volume\":") + volume + "}");
+}
+
+static void handle_volume_down()
+{
+    float volume = get_volume();
+
+    volume -= 0.1f;
+    if(volume < 0.0f)
+    {
+        volume = 0.0f;
+    }
+
+    set_volume(volume);
+
+    server.send(
+        200,
+        "application/json",
+        String("{\"volume\":") + volume + "}");
+}
+
+static void handle_get_volume()
+{
+    float volume = get_volume();
+
+    server.send(
+        200,
+        "application/json",
+        String("{\"volume\":") + volume + "}");
+}
+void web_interface_init()
+{
+    filesystem_init();
+
+    //Serve pages:
+    server.on("/", HTTP_GET, handle_root_request);
+    server.on("/styles.css", HTTP_GET, handle_css_request);
+    server.on("/main.js", HTTP_GET, handle_js_request);
+    server.on("/audio_file_utils.js", HTTP_GET, handle_audio_file_utils_request);
+    server.on("/audio_ui.js", HTTP_GET, handle_audio_ui_request);
+    server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
+    server.on("/audio_socket.js", HTTP_GET, handle_audio_socket_request);
+    server.on("/audio_state.js", HTTP_GET, handle_audio_state_request);
+    server.on("/microphone_controller.js", HTTP_GET, handle_microphone_controller_request);
+    server.on("/audio_cleanup.js", HTTP_GET, handle_audio_cleanup_request);
+    server.on("/audio_file_controller.js", HTTP_GET, handle_audio_file_controller_request);
+    server.on("/audio_file_processor.js", HTTP_GET, handle_audio_file_processor_request);
+    server.on("/audio_streamer.js", HTTP_GET, handle_audio_streamer_request);
+    server.on("/audio_volume_control.js", HTTP_GET, handle_audio_volume_control_request);
+    server.on("/command_sender.js", HTTP_GET, handle_command_sender_requrest);
+    server.on("/show_controller.js", HTTP_GET, handle_show_controller);
+    server.on("/preset_shows.js", HTTP_GET, handle_preset_shows);
+    server.on("/show_audio.js", HTTP_GET, handle_show_audio);
+    server.on("/folder_manager.js", HTTP_GET, handle_folder_manager);
+
+    //Serve commands:
+    server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
+    server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
+    server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
+    server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
+
     server.begin();
 
     webSocket.onEvent(web_socket_event);
     webSocket.begin();
     
+    Serial.println("Web interface initialized");
 }
 
-void web_interface_loop() {
+void web_interface_service() {
     server.handleClient();
     webSocket.loop();
 }

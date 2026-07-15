@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Pumpkin Audio</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <h1>Pumpkin Audio Control</h1>
+   
+    <div id="system-status">
+        <div id="current-mode">Current Mode: Idle</div>
+        <div id="current-streaming"></div>
+    </div>
+
+    <div id="audio-mode">
+        <button id="btn-microphone">Start Microphone</button>
+        <button id="btn-file">Stream Audio File</button>
+        
+    </div>
+
+    <div id="volume-section">
+         <button id="btn-volume-up">+</button>
+         <span id="volume-display">100%</span>
+         <button id="btn-volume-down">-</button>
+    </div>
+
+    <div id="shows-section">
+        <h2>Preset Shows</h2>
+        <button id="btn-select-audio-folder">Select Audio Folder</button>
+        <div id="folder-status"></div>
+        <button id="btn-show-ghost">Ghost</button>
+    </div>
+
+    <div id="microphone-section" style="display:none; margin-top: 20px;">
+        <p>Streaming microphone audio...</p>
+        <button id="btn-stop-microphone" style="background-color: #ff6b6b;">Stop</button>
+    </div>
+
+    <div id="file-section" style="display:none; margin-top: 20px;">
+        <input type="file" id="audio-file" accept="audio/*">
+        <div id="file-status"></div>
+        <div style="margin-top: 10px;">
+            <button id="btn-stream" disabled>Stream File</button>
+            <button id="btn-stop-file" style="background-color: #ff6b6b;">Stop</button>
+        </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+</body>
+</html>
