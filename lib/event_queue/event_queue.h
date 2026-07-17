@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <queue>
-#include "../events.h"
+#include "events.h"
 #include "config.h"
 
 struct returned_event_t
