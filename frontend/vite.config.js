@@ -7,7 +7,7 @@ export default defineConfig({
     root: ".",
     publicDir: "public",
     build: {
-        outDir: "../data",
+        outDir: "../.littlefs",
         emptyOutDir: true,
         rollupOptions: {
             output: {
