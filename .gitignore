@@ -3,5 +3,7 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+/data/
+/frontend/node_modules/
 esp32_pumpkin.code-workspace
 
