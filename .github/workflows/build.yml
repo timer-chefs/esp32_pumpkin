@@ -9,8 +9,24 @@ on:
       - synchronize
 
 jobs:
-  build:
+  detect-envs:
     runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.get-envs.outputs.environments }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: get-envs
+        run: |
+          envs=$(grep -oP '(?<=^\[env:)[^\]]+' platformio.ini | jq -Rsc 'split("\n") | map(select(. != ""))')
+          echo "environments=$envs" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: detect-envs
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.detect-envs.outputs.environments) }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/cache@v6
@@ -25,5 +41,5 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
-      - name: Build PlatformIO Project
-        run: pio run
+      - name: Build ${{ matrix.environment }}
+        run: pio run -e ${{ matrix.environment }}
