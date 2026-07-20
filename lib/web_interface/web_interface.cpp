@@ -23,45 +23,6 @@ static void filesystem_init()
     }
 }
 
-static void open_file(const char* path, const char* content_type)
-{
-    if(!LittleFS.exists(path))
-    {
-        server.send(404, "text/plain", "File not found");
-        return;
-    }
-
-    File file = LittleFS.open(path, "r");
-    if(!file)
-    {
-        server.send(500, "text/plain", "Failed to open file");
-        return;
-    }
-
-    server.streamFile(file, content_type);
-    file.close();
-}
-
-static void handle_root_request()
-{
-    open_file("/index.html", "text/html");
-}
-
-static void handle_css_request()
-{
-    open_file("/styles.css", "text/css");
-}
-
-static void handle_js_request()
-{
-    open_file("/main.js", "application/javascript");
-}
-
-static void handle_worklet_processor()
-{
-    open_file("/worklet_processor.js", "application/javascript");
-}
-
 static void web_socket_event(uint8_t client_num, WStype_t type, 
     uint8_t* payload, size_t length)
 {
@@ -163,17 +124,15 @@ void web_interface_init()
 {
     filesystem_init();
 
-    //Serve pages:
-    server.on("/", HTTP_GET, handle_root_request);
-    server.on("/styles.css", HTTP_GET, handle_css_request);
-    server.on("/main.js", HTTP_GET, handle_js_request);
-    server.on("/worklet_processor.js", HTTP_GET, handle_worklet_processor);
-
     //Serve commands:
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
     server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
     server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
     server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
+
+    //Serve static files from LittleFS:
+    server.serveStatic("/", LittleFS, "/index.html");
+    server.serveStatic("/", LittleFS, "/", NULL);
 
     server.begin();
 
