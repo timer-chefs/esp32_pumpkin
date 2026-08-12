@@ -8,7 +8,7 @@
 #include "command_handler.h"
 #include "preset_shows.h"
 
-#include <WiFi.h>
+#include <WiFiManager.h>
 
 bool is_audio_ready = false;
 
@@ -22,11 +22,9 @@ void setup()
 
     led_strip_init();
 
-    WiFi.softAP(ssid);
-    WiFi.setSleep(false);
-
-    IPAddress web_page_ip_address = WiFi.softAPIP();
-    Serial.println(web_page_ip_address);
+    WiFi.mode(WIFI_STA);
+    WiFiManager wm;
+    wm.autoConnect("Pumpkin", "pumpkin2");
 
     web_interface_init();
 
