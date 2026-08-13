@@ -90,7 +90,7 @@ static void handle_volume_up()
 
     set_volume(volume);
 
-    server.send(200, "application/json", String("{\"volume\":") + volume + "}");
+    server.send(200, "application/json", String("{\"volume\":") + String(volume) + "}");
 }
 
 static void handle_volume_down()
@@ -108,7 +108,7 @@ static void handle_volume_down()
     server.send(
         200,
         "application/json",
-        String("{\"volume\":") + volume + "}");
+        String("{\"volume\":") + String(volume) + "}");
 }
 
 static void handle_get_volume()
@@ -118,7 +118,7 @@ static void handle_get_volume()
     server.send(
         200,
         "application/json",
-        String("{\"volume\":") + volume + "}");
+        String("{\"volume\":") + String(volume) + "}");
 }
 void web_interface_init()
 {
