@@ -9,15 +9,6 @@ export default defineConfig({
     build: {
         outDir: "../.littlefs",
         emptyOutDir: true,
-        rollupOptions: {
-            output: {
-                // TODO: Remove file name overrides once we can serve any file
-                // name from the ESP32
-                entryFileNames: "main.js",
-                chunkFileNames: "[name].js",
-                assetFileNames: "styles.[ext]",
-            },
-        },
     },
     server: {
         proxy: {
