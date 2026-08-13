@@ -1,6 +1,9 @@
 export function createAudioSocket(hostname, handlers = {})
 {
-    const socket = new WebSocket(`ws://${hostname}:81/`);
+    const wsUrl = import.meta.env.DEV
+        ? `ws://${hostname}:${location.port}/ws`
+        : `ws://${hostname}:81/`;
+    const socket = new WebSocket(wsUrl);
     socket.binaryType = "arraybuffer";
 
     if(handlers.onOpen)

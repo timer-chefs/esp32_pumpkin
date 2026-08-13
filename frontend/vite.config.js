@@ -28,6 +28,7 @@ export default defineConfig({
             "/ws": {
                 target: `ws://${ESP32_HOST}:81`,
                 ws: true,
+                rewriteWsOrigin: true,
             },
         },
     },
