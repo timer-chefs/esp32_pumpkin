@@ -10,6 +10,8 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
+void wifi_redirect_stop(void);
+
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
 
@@ -24,11 +26,11 @@ static void filesystem_init()
     }
 }
 
-static void web_socket_event(uint8_t client_num, WStype_t type, 
+static void web_socket_event(uint8_t client_num, WStype_t type,
     uint8_t* payload, size_t length)
 {
     (void)client_num;       //This is to indicate that client_num is not used.
-    
+
     switch(type)
     {
         case WStype_CONNECTED:
@@ -42,7 +44,7 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
             Serial.println("Client disconnected");
             break;
         }
-        
+
 
         case WStype_TEXT:
         {
@@ -66,7 +68,7 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
             audio_write(payload, length);
             break;
         }
-        
+
 
         default:
             break;
@@ -127,6 +129,12 @@ static void handle_get_ip()
     server.send(200, "text/plain", WiFi.localIP().toString());
 }
 
+static void handle_redirect_done()
+{
+    server.send(200, "text/plain", "ok");
+    wifi_redirect_stop();
+}
+
 static const char redirect_page[] PROGMEM =
     "<!DOCTYPE html><html><head>"
     "<meta name='viewport' content='width=device-width,initial-scale=1'>"
@@ -137,7 +145,7 @@ static const char redirect_page[] PROGMEM =
     "cursor:pointer;}"
     "#status{margin-top:1em;font-style:italic;}</style></head><body>"
     "<h1>Pumpkin</h1>"
-    "<p>Press the button to go to your pumpkin.</p>"
+    "<p>Press the button to go to your pumpkin and close the redirect portal.</p>"
     "<button id='btn'>Open Pumpkin</button>"
     "<p id='status'></p>"
     "<script>"
@@ -147,7 +155,11 @@ static const char redirect_page[] PROGMEM =
     "  this.disabled=true;"
     "  fetch('/api/ip').then(function(r){return r.text();})"
     "  .then(function(ip){"
-    "    if(ip){window.location.href='http://'+ip;}"
+    "    if(ip){"
+    "      fetch('/api/redirect/done').then(function(){"
+    "        window.location.href='http://'+ip;"
+    "      });"
+    "    }"
     "  });"
     "};"
     "</script>"
@@ -193,12 +205,13 @@ void web_interface_init()
     server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
     server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
     server.on("/api/ip", HTTP_GET, handle_get_ip);
+    server.on("/api/redirect/done", HTTP_GET, handle_redirect_done);
 
     //Serve static files from LittleFS:
     server.serveStatic("/", LittleFS, "/", NULL);
 
     webSocket.onEvent(web_socket_event);
-    
+
     Serial.println("Web interface initialized");
 }
 
