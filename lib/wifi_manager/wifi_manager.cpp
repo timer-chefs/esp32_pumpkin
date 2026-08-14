@@ -15,6 +15,7 @@ static WiFiState wifi_state = WiFiState::NORMAL;
 volatile bool wifi_config_request = false;
 
 static WiFiManager wm;
+static bool ip_already_served = false;
 
 static void setup_wm_ip_display()
 {
@@ -23,6 +24,7 @@ static void setup_wm_ip_display()
             if(WiFi.status() == WL_CONNECTED)
             {
                 wm.server->send(200, "text/plain", WiFi.localIP().toString());
+                ip_already_served = true;
             }
             else
             {
@@ -151,7 +153,11 @@ void wifi_manager_init() {
     else{
         Serial.println("WiFi is connected");
         Serial.println(String("IP: ") + WiFi.localIP().toString());
-        start_ip_info_portal();
+        if(!ip_already_served)
+        {
+            start_ip_info_portal();
+        }
+        ip_already_served = false;
     }
 }
 
@@ -181,7 +187,11 @@ void wifi_provisioning_handling(){
             else{
                 Serial.println("WiFi connected");
                 Serial.println(String("IP: ") + WiFi.localIP().toString());
-                start_ip_info_portal();
+                if(!ip_already_served)
+                {
+                    start_ip_info_portal();
+                }
+                ip_already_served = false;
             }
 
             web_interface_start();
