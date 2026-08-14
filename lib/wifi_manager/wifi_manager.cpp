@@ -16,6 +16,44 @@ static volatile bool wifi_config_requested = false;
 
 static WiFiManager wm;
 
+static void setup_wm_ip_display()
+{
+    wm.setWebServerCallback([&]() {
+        wm.server->on("/api/ip", HTTP_GET, []() {
+            if(WiFi.status() == WL_CONNECTED)
+            {
+                wm.server->send(200, "text/plain", WiFi.localIP().toString());
+            }
+            else
+            {
+                wm.server->send(200, "text/plain", "");
+            }
+        });
+    });
+
+    wm.setCustomHeadElement(
+        "<script>"
+        "document.addEventListener('DOMContentLoaded',function(){"
+        "  var t=setInterval(function(){"
+        "    fetch('/api/ip').then(function(r){return r.text();})"
+        "    .then(function(ip){"
+        "      if(ip){"
+        "        clearInterval(t);"
+        "        var d=document.createElement('div');"
+        "        d.style.cssText='text-align:center;padding:1em;margin:1em 0;"
+        "          background:#e8f5e9;border-radius:8px;';"
+        "        d.innerHTML='<h2>Connected!</h2>"
+        "          <p>Your pumpkin is at:</p>"
+        "          <h2 style=\"word-break:break-all;\">http://'+ip+'</h2>';"
+        "        document.body.insertBefore(d,document.body.firstChild);"
+        "      }"
+        "    }).catch(function(){});"
+        "  },2000);"
+        "});"
+        "</script>"
+    );
+}
+
 static void IRAM_ATTR config_button_ISR() {
     wifi_config_requested = true;
 }
@@ -42,11 +80,15 @@ static void start_ip_info_portal()
                   "<p>Connect to your hotspot and navigate to this address.</p>"
                   "</body></html>";
 
-    bool page_visited = false;
+    bool ip_fetched = false;
 
     info_server.on("/", [&]() {
         info_server.send(200, "text/html", page);
-        page_visited = true;
+    });
+
+    info_server.on("/api/ip", HTTP_GET, [&]() {
+        info_server.send(200, "text/plain", station_ip.toString());
+        ip_fetched = true;
     });
 
     info_server.onNotFound([&]() {
@@ -59,14 +101,14 @@ static void start_ip_info_portal()
 
     unsigned long start_time = millis();
 
-    while(!page_visited && (millis() - start_time < ip_info_portal_timeout_ms))
+    while(!ip_fetched && (millis() - start_time < ip_info_portal_timeout_ms))
     {
         dns_server.processNextRequest();
         info_server.handleClient();
         delay(1);
     }
 
-    if(page_visited)
+    if(ip_fetched)
     {
         unsigned long render_end = millis() + 3000;
         while(millis() < render_end)
@@ -95,6 +137,8 @@ void wifi_manager_init() {
 
     WiFi.mode(WIFI_STA);
     WiFi.setHostname(mdns_hostname);
+
+    setup_wm_ip_display();
 
     bool is_wifi_connected = wm.autoConnect(wifi_provisioning_ssid);
     if(!is_wifi_connected){
