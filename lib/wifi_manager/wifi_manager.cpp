@@ -39,13 +39,16 @@ static void setup_wm_ip_display()
         "    .then(function(ip){"
         "      if(ip){"
         "        clearInterval(t);"
+        "        var url='http://'+ip;"
         "        var d=document.createElement('div');"
         "        d.style.cssText='text-align:center;padding:1em;margin:1em 0;"
         "          background:#e8f5e9;border-radius:8px;';"
         "        d.innerHTML='<h2>Connected!</h2>"
         "          <p>Your pumpkin is at:</p>"
-        "          <h2 style=\"word-break:break-all;\">http://'+ip+'</h2>';"
+        "          <h2><a href=\"'+url+'\">'+url+'</a></h2>"
+        "          <p>Redirecting in 5 seconds...</p>';"
         "        document.body.insertBefore(d,document.body.firstChild);"
+        "        setTimeout(function(){window.location.href=url;},5000);"
         "      }"
         "    }).catch(function(){});"
         "  },2000);"
@@ -63,7 +66,7 @@ static void start_ip_info_portal()
     IPAddress station_ip = WiFi.localIP();
 
     WiFi.mode(WIFI_AP_STA);
-    WiFi.softAP(wifi_provisioning_ssid);
+    WiFi.softAP("Pumpkin-redirect");
 
     DNSServer dns_server;
     WebServer info_server(80);
@@ -76,7 +79,8 @@ static void start_ip_info_portal()
                   "h2{color:#333;}a{font-size:1.5em;}</style></head><body>"
                   "<h1>Pumpkin</h1>"
                   "<p>Connected! Your pumpkin is at:</p>"
-                  "<h2>http://" + station_ip.toString() + "</h2>"
+                  "<h2><a href='http://" + station_ip.toString() + "'>"
+                  "http://" + station_ip.toString() + "</a></h2>"
                   "<p>Connect to your hotspot and navigate to this address.</p>"
                   "</body></html>";
 
