@@ -10,8 +10,6 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
-void wifi_redirect_stop(void);
-
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
 
@@ -129,15 +127,9 @@ static void handle_get_ip()
     server.send(200, "text/plain", WiFi.localIP().toString());
 }
 
-static void handle_redirect_done()
-{
-    server.send(200, "text/plain", "ok");
-    wifi_redirect_stop();
-}
-
 static const char redirect_page[] PROGMEM =
 #include "redirect_page.html"
-;
+    ; // Intentionally a semicolon here. The include file expands to a raw_string(...)
 
 static bool is_softap_client()
 {
@@ -179,7 +171,6 @@ void web_interface_init()
     server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
     server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
     server.on("/api/ip", HTTP_GET, handle_get_ip);
-    server.on("/api/redirect/done", HTTP_GET, handle_redirect_done);
 
     //Serve static files from LittleFS:
     server.serveStatic("/", LittleFS, "/", NULL);
