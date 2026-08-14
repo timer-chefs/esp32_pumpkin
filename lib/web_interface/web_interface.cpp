@@ -4,6 +4,7 @@
 #include "config.h"
 #include "command_handler.h"
 
+#include <WiFi.h>
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include <LittleFS.h>
@@ -120,18 +121,80 @@ static void handle_get_volume()
         "application/json",
         String("{\"volume\":") + String(volume) + "}");
 }
+
+static void handle_get_ip()
+{
+    server.send(200, "text/plain", WiFi.localIP().toString());
+}
+
+static const char redirect_page[] PROGMEM =
+    "<!DOCTYPE html><html><head>"
+    "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+    "<style>body{font-family:sans-serif;text-align:center;padding:2em;}"
+    "h2{color:#333;}"
+    "button{font-size:1.5em;padding:0.5em 1.5em;margin-top:1em;"
+    "border:none;border-radius:8px;background:#4CAF50;color:white;"
+    "cursor:pointer;}"
+    "#status{margin-top:1em;font-style:italic;}</style></head><body>"
+    "<h1>Pumpkin</h1>"
+    "<p>Press the button to go to your pumpkin.</p>"
+    "<button id='btn'>Open Pumpkin</button>"
+    "<p id='status'></p>"
+    "<script>"
+    "document.getElementById('btn').onclick=function(){"
+    "  var s=document.getElementById('status');"
+    "  s.textContent='Redirecting...';"
+    "  this.disabled=true;"
+    "  fetch('/api/ip').then(function(r){return r.text();})"
+    "  .then(function(ip){"
+    "    if(ip){window.location.href='http://'+ip;}"
+    "  });"
+    "};"
+    "</script>"
+    "</body></html>";
+
+static bool is_softap_client()
+{
+    IPAddress client_ip = server.client().remoteIP();
+    IPAddress ap_ip = WiFi.softAPIP();
+
+    return client_ip[0] == ap_ip[0] &&
+           client_ip[1] == ap_ip[1] &&
+           client_ip[2] == ap_ip[2];
+}
+
+static void handle_root()
+{
+    if(is_softap_client())
+    {
+        server.send(200, "text/html", redirect_page);
+        return;
+    }
+
+    File file = LittleFS.open("/index.html", "r");
+    if(!file)
+    {
+        server.send(404, "text/plain", "Not found");
+        return;
+    }
+
+    server.streamFile(file, "text/html");
+    file.close();
+}
+
 void web_interface_init()
 {
     filesystem_init();
 
     //Register HTTP routes
+    server.on("/", HTTP_GET, handle_root);
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
     server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
     server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
     server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
+    server.on("/api/ip", HTTP_GET, handle_get_ip);
 
     //Serve static files from LittleFS:
-    server.serveStatic("/", LittleFS, "/index.html");
     server.serveStatic("/", LittleFS, "/", NULL);
 
     webSocket.onEvent(web_socket_event);
