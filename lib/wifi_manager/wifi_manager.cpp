@@ -1,7 +1,6 @@
 #include "wifi_manager.h"
 #include <WiFiManager.h>
 #include <DNSServer.h>
-#include <WebServer.h>
 #include "config.h"
 #include "web_interface.h"
 
@@ -16,6 +15,10 @@ volatile bool wifi_config_request = false;
 
 static WiFiManager wm;
 static bool ip_already_served = false;
+
+static DNSServer redirect_dns;
+static bool redirect_active = false;
+static unsigned long redirect_start_time = 0;
 
 static void setup_wm_ip_display()
 {
@@ -63,93 +66,46 @@ static void IRAM_ATTR config_button_ISR() {
     wifi_config_request = true;
 }
 
-static void start_ip_info_portal()
+void start_ip_info_portal(void)
 {
-    IPAddress station_ip = WiFi.localIP();
-
     WiFi.mode(WIFI_AP_STA);
     WiFi.softAP("Pumpkin-redirect");
 
-    DNSServer dns_server;
-    WebServer info_server(80);
+    redirect_dns.start(53, "*", WiFi.softAPIP());
+    redirect_active = true;
+    redirect_start_time = millis();
 
-    dns_server.start(53, "*", WiFi.softAPIP());
+    Serial.println("Redirect portal started on SoftAP");
+}
 
-    String page = "<!DOCTYPE html><html><head>"
-                  "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-                  "<style>body{font-family:sans-serif;text-align:center;padding:2em;}"
-                  "h2{color:#333;}"
-                  "button{font-size:1.5em;padding:0.5em 1.5em;margin-top:1em;"
-                  "border:none;border-radius:8px;background:#4CAF50;color:white;"
-                  "cursor:pointer;}"
-                  "#status{margin-top:1em;font-style:italic;}</style></head><body>"
-                  "<h1>Pumpkin</h1>"
-                  "<p>Press the button to go to your pumpkin.</p>"
-                  "<button id='btn'>Open Pumpkin</button>"
-                  "<p id='status'></p>"
-                  "<script>"
-                  "document.getElementById('btn').onclick=function(){"
-                  "  var s=document.getElementById('status');"
-                  "  s.textContent='Starting pumpkin...';"
-                  "  this.disabled=true;"
-                  "  fetch('/api/ip').then(function(r){return r.text();})"
-                  "  .then(function(ip){"
-                  "    if(!ip)return;"
-                  "    var url='http://'+ip;"
-                  "    var t=setInterval(function(){"
-                  "      fetch(url,{mode:'no-cors',cache:'no-store'})"
-                  "      .then(function(){clearInterval(t);window.location.href=url;})"
-                  "      .catch(function(){s.textContent='Waiting for server...';});"
-                  "    },1000);"
-                  "  });"
-                  "};"
-                  "</script>"
-                  "</body></html>";
-
-    bool ip_fetched = false;
-
-    info_server.on("/", [&]() {
-        info_server.send(200, "text/html", page);
-    });
-
-    info_server.on("/api/ip", HTTP_GET, [&]() {
-        info_server.send(200, "text/plain", station_ip.toString());
-        ip_fetched = true;
-    });
-
-    info_server.onNotFound([&]() {
-        info_server.send(204);
-    });
-
-    info_server.begin();
-
-    Serial.println("IP info portal started on SoftAP");
-
-    unsigned long start_time = millis();
-
-    while(!ip_fetched && (millis() - start_time < ip_info_portal_timeout_ms))
+void wifi_redirect_service()
+{
+    if(!redirect_active)
     {
-        dns_server.processNextRequest();
-        info_server.handleClient();
-        delay(1);
+        return;
     }
 
-    if(ip_fetched)
+    redirect_dns.processNextRequest();
+
+    if(millis() - redirect_start_time > ip_info_portal_timeout_ms)
     {
-        unsigned long render_end = millis() + 3000;
-        while(millis() < render_end)
-        {
-            info_server.handleClient();
-            delay(1);
-        }
+        wifi_redirect_stop();
+    }
+}
+
+void wifi_redirect_stop()
+{
+    if(!redirect_active)
+    {
+        return;
     }
 
-    info_server.stop();
-    dns_server.stop();
+    redirect_active = false;
+    redirect_dns.stop();
     WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_STA);
 
-    Serial.println("IP info portal closed");
+    Serial.println("Redirect portal closed");
 }
 
 void wifi_manager_init() {
@@ -173,10 +129,6 @@ void wifi_manager_init() {
     else{
         Serial.println("WiFi is connected");
         Serial.println(String("IP: ") + WiFi.localIP().toString());
-        if(!ip_already_served)
-        {
-            start_ip_info_portal();
-        }
         ip_already_served = false;
     }
 }
@@ -207,10 +159,6 @@ void wifi_provisioning_handling(){
             else{
                 Serial.println("WiFi connected");
                 Serial.println(String("IP: ") + WiFi.localIP().toString());
-                if(!ip_already_served)
-                {
-                    start_ip_info_portal();
-                }
                 ip_already_served = false;
             }
 

@@ -36,6 +36,7 @@ void setup()
 
     web_interface_init();
     web_interface_start();
+    start_ip_info_portal();
 
     is_audio_ready = audio_init();
     if(!is_audio_ready)
@@ -49,6 +50,7 @@ void setup()
 void loop()
 {
     wifi_provisioning_handling();
+    wifi_redirect_service();
 
     web_interface_service();
     
