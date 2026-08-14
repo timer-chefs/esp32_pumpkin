@@ -4,7 +4,11 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-constexpr const char* ssid = "Pumpkin";
+constexpr const char* wifi_provisioning_ssid = "Pumpkin-WiFi_Provisioning";
+
+//WiFi Provisioning
+constexpr uint8_t pin_wifi_provisioning_btn = 3;
+constexpr uint8_t wifi_provisioning_timeout = 120;
 
 //Event Queue
 constexpr size_t max_event_queue_size = 64;
