@@ -10,6 +10,7 @@ constexpr const char* mdns_hostname = "pumpkin";
 //WiFi Provisioning
 constexpr uint8_t pin_wifi_provisioning_btn = 3;
 constexpr uint8_t wifi_provisioning_timeout = 120;
+constexpr unsigned long ip_info_portal_timeout_ms = 60000;
 
 //Event Queue
 constexpr size_t max_event_queue_size = 64;
