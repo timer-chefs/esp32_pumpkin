@@ -90,7 +90,7 @@ static void handle_volume_up()
 
     set_volume(volume);
 
-    server.send(200, "application/json", String("{\"volume\":") + volume + "}");
+    server.send(200, "application/json", String("{\"volume\":") + String(volume) + "}");
 }
 
 static void handle_volume_down()
@@ -108,7 +108,7 @@ static void handle_volume_down()
     server.send(
         200,
         "application/json",
-        String("{\"volume\":") + volume + "}");
+        String("{\"volume\":") + String(volume) + "}");
 }
 
 static void handle_get_volume()
@@ -118,13 +118,13 @@ static void handle_get_volume()
     server.send(
         200,
         "application/json",
-        String("{\"volume\":") + volume + "}");
+        String("{\"volume\":") + String(volume) + "}");
 }
 void web_interface_init()
 {
     filesystem_init();
 
-    //Serve commands:
+    //Register HTTP routes
     server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
     server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
     server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
@@ -134,12 +134,25 @@ void web_interface_init()
     server.serveStatic("/", LittleFS, "/index.html");
     server.serveStatic("/", LittleFS, "/", NULL);
 
-    server.begin();
-
     webSocket.onEvent(web_socket_event);
-    webSocket.begin();
     
     Serial.println("Web interface initialized");
+}
+
+void web_interface_start()
+{
+    server.begin();
+    webSocket.begin();
+
+    Serial.println("Web interface started");
+}
+
+void web_interface_stop()
+{
+    server.stop();
+    webSocket.close();
+
+    Serial.println("Web interface stopped");
 }
 
 void web_interface_service() {

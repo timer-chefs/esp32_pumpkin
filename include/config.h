@@ -4,7 +4,10 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-constexpr const char* ssid = "Pumpkin";
+constexpr const char* wifi_provisioning_ssid = "Pumpkin-WiFi_Provisioning";
+
+//WiFi Provisioning
+constexpr uint8_t wifi_provisioning_timeout = 120; // seconds
 
 //Event Queue
 constexpr size_t max_event_queue_size = 64;
@@ -39,6 +42,9 @@ constexpr uint8_t pin_data = GPIO_NUM_18;
 constexpr uint8_t pin_led0 = GPIO_NUM_1;
 constexpr uint8_t pin_led1 = GPIO_NUM_2;
 constexpr uint8_t pin_led2 = GPIO_NUM_4;
+
+//WiFi Provisioning Pins:
+constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_3;
 
 //Serial
 constexpr uint32_t baud_rate = 115200;
