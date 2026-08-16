@@ -10,8 +10,9 @@ GPIO 16 | BCK | Bit Clock
 GPIO 17 | LCK | Left/Right Clock (Word Select)
 GPIO 18 | DIN | Data In
 GND | GND | Ground
-GND | SCK | Tie to GND (uses internal PLL for master clock)
-3.3V / 5V | VIN | Most modules have an onboard regulator
+\- | SCK | Leave floating
+3.3V | VIN | Most modules have an onboard regulator
+3.3V | XSMT | Un-mute
 
 ### LED Strip
 
