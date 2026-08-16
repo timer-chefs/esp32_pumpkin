@@ -28,7 +28,7 @@ GPIO 2 | LED 1
 GPIO 4 | LED 2
 
 ### WiFi Provisioning Button
-This button triggeres the wifi provisioning functionality. This allows the user to change the network to wich the system connects to.
+This button triggeres the wifi provisioning functionality. This allows the user to change the network to which the system connects to.
 
 ESP32-S3 Pin | Connection
 --- | ---
