@@ -106,6 +106,14 @@ static esp_err_t handle_static_file(httpd_req_t* request)
     }
     if(file == nullptr)
     {
+        if(uri == "/index.html")
+        {
+            httpd_resp_set_status(request, "503 Service Unavailable");
+            httpd_resp_set_type(request, "text/plain");
+            return httpd_resp_sendstr(
+                request,
+                "Web assets are not installed; run PlatformIO uploadfs");
+        }
         return httpd_resp_send_err(request, HTTPD_404_NOT_FOUND, "Not found");
     }
 
@@ -195,13 +203,28 @@ void web_interface_init()
         .base_path = "/littlefs",
         .partition_label = "littlefs",
         .partition = nullptr,
-        .format_if_mount_failed = false,
-        .read_only = true,
+        .format_if_mount_failed = true,
+        .read_only = false,
         .dont_mount = false,
         .grow_on_mount = false,
     };
-    ESP_ERROR_CHECK(esp_vfs_littlefs_register(&filesystem_config));
-    ESP_LOGI(tag, "LittleFS mounted");
+    const esp_err_t result = esp_vfs_littlefs_register(&filesystem_config);
+    if(result != ESP_OK)
+    {
+        ESP_LOGE(tag, "LittleFS unavailable: %s", esp_err_to_name(result));
+        return;
+    }
+
+    size_t total_bytes = 0;
+    size_t used_bytes = 0;
+    if(esp_littlefs_info("littlefs", &total_bytes, &used_bytes) == ESP_OK)
+    {
+        ESP_LOGI(
+            tag,
+            "LittleFS mounted: %u/%u bytes used",
+            static_cast<unsigned>(used_bytes),
+            static_cast<unsigned>(total_bytes));
+    }
 }
 
 void web_interface_start()

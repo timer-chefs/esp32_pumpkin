@@ -13,7 +13,13 @@ WebSocket, Wi-Fi provisioning, mDNS, NVS, and LittleFS.
 ./venv/bin/platformio device monitor -b 115200
 ```
 
-The `uploadfs` step installs the compressed web application from `.littlefs`.
+Both upload commands are required after the first ESP-IDF installation or any
+partition-table change. The firmware upload does not include the filesystem;
+`uploadfs` installs the compressed web application from `.littlefs`.
+
+An uninitialized or corrupt LittleFS partition is formatted automatically so
+it cannot cause a reboot loop. Until `uploadfs` is run, REST and WebSocket APIs
+remain available but `/` reports that web assets are not installed.
 
 ## Wi-Fi provisioning
 
