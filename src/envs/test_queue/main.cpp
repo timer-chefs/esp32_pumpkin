@@ -1,4 +1,6 @@
-#include <Arduino.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #include "led_counter.h"
 #include "event_queue.h"
@@ -10,40 +12,36 @@ LedCounter led_counter(leds, 3);
 
 EventQueue event_queue;
 
-void setup()
+static const char* tag = "test_queue";
+
+extern "C" void app_main()
 {
-  Serial.begin(baud_rate);
-  
   led_counter.init();
   led_counter.reset();
   
-  Serial.println("=== Event Queue Test ===");
+  ESP_LOGI(tag, "Event Queue Test");
   
   // Push 10 events
-  Serial.println("Pushing 10 events...");
+  ESP_LOGI(tag, "Pushing 10 events...");
   for (int i = 0; i < 10; i++) {
     event_queue.push(Event::boot_request);
     led_counter.increment();
-    delay(500);
-    Serial.println(led_counter.getValue());
+    vTaskDelay(pdMS_TO_TICKS(500));
+    ESP_LOGI(tag, "LED count: %u", led_counter.getValue());
   }
   
-  delay(2000);
+  vTaskDelay(pdMS_TO_TICKS(2000));
   
   // Pop 10 events
-  Serial.println("Popping 10 events...");
+  ESP_LOGI(tag, "Popping 10 events...");
   for (int i = 0; i < 10; i++) {
     returned_event_t result = event_queue.pop();
     if (result.is_valid) {
       led_counter.decrement();
-      delay(500);
-      Serial.println(led_counter.getValue());
+      vTaskDelay(pdMS_TO_TICKS(500));
+      ESP_LOGI(tag, "LED count: %u", led_counter.getValue());
     }
   }
   
-  Serial.println("Test complete!");
-}
-
-void loop()
-{
+  ESP_LOGI(tag, "Test complete!");
 }

@@ -110,11 +110,17 @@ static bool provision(bool reset_credentials)
     return (result & connected_bit) != 0;
 }
 
-static void start_station()
+static bool start_station()
 {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
-    xEventGroupWaitBits(wifi_events, connected_bit, pdFALSE, pdTRUE, portMAX_DELAY);
+    const EventBits_t result = xEventGroupWaitBits(
+        wifi_events,
+        connected_bit,
+        pdFALSE,
+        pdTRUE,
+        pdMS_TO_TICKS(30000));
+    return (result & connected_bit) != 0;
 }
 
 static void IRAM_ATTR config_button_isr(void*)
@@ -165,7 +171,16 @@ void wifi_manager_init()
     {
         wifi_prov_mgr_deinit();
         provisioning_manager_initialized = false;
-        start_station();
+        if(!start_station())
+        {
+            ESP_LOGW(tag, "Saved Wi-Fi unavailable; starting provisioning");
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            if(!provision(true))
+            {
+                ESP_LOGE(tag, "Provisioning timed out");
+                esp_restart();
+            }
+        }
     }
     else if(!provision(false))
     {
@@ -195,14 +210,3 @@ void wifi_provisioning_handling()
     web_interface_start();
 }
 
-void wifi_redirect_service()
-{
-}
-
-void wifi_redirect_stop()
-{
-}
-
-void start_ip_info_portal()
-{
-}

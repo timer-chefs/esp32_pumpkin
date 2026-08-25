@@ -10,12 +10,12 @@ bool EventQueue::push(const Event& event_element)
     return false;
 }
 
-const bool EventQueue::is_empty()
+bool EventQueue::is_empty()
 {
     return member_queue.empty();
 }
 
-const bool EventQueue::is_full()
+bool EventQueue::is_full()
 {
     return member_queue.size() >= event_queue_size;
 }

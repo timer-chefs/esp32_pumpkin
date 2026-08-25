@@ -17,8 +17,8 @@ class EventQueue
 {
 public:
     bool push(const Event& event_element);
-    const bool is_empty();
-    const bool is_full();
+    bool is_empty();
+    bool is_full();
     returned_event_t pop();
     void clear();
     

@@ -1,5 +1,37 @@
 # ESP32 Pumpkin
 
+The firmware uses native ESP-IDF 5.5 through PlatformIO. Its hardware and
+networking layers use Espressif components for I2S, FFT, LED output, HTTP,
+WebSocket, Wi-Fi provisioning, mDNS, NVS, and LittleFS.
+
+## Build and upload
+
+```sh
+./venv/bin/platformio run -e voice_websocket
+./venv/bin/platformio run -e voice_websocket -t upload
+./venv/bin/platformio run -e voice_websocket -t uploadfs
+./venv/bin/platformio device monitor -b 115200
+```
+
+The `uploadfs` step installs the compressed web application from `.littlefs`.
+
+## Wi-Fi provisioning
+
+On first boot, or after pressing the provisioning button on GPIO 3, connect
+with Espressif's ESP SoftAP Provisioning client:
+
+- Service name: `Pumpkin-WiFi_Provisioning`
+- Proof of possession: `pumpkin1`
+
+Saved credentials are stored in NVS. If the saved network remains unavailable
+for 30 seconds, the device returns to provisioning mode automatically.
+
+## Test firmware
+
+```sh
+./venv/bin/platformio run -e test_queue
+```
+
 ## Pinout
 
 ### Audio (PCM5102A DAC)

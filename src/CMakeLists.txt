@@ -1,5 +1,11 @@
+if("$ENV{PIOENV}" STREQUAL "test_queue")
+    set(PUMPKIN_ENV "test_queue")
+else()
+    set(PUMPKIN_ENV "voice_websocket")
+endif()
+
 file(GLOB_RECURSE PUMPKIN_SOURCES
-    "envs/voice_websocket/*.cpp"
+    "envs/${PUMPKIN_ENV}/*.cpp"
     "../lib/*.cpp"
 )
 

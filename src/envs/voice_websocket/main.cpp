@@ -50,7 +50,6 @@ extern "C" void app_main()
     while(true)
     {
         wifi_provisioning_handling();
-        wifi_redirect_service();
         web_interface_service();
 
         if(is_audio_ready)
