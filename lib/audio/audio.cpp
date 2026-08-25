@@ -6,15 +6,32 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/ringbuf.h"
+#include "freertos/semphr.h"
 
 #include <algorithm>
+#include <atomic>
 
 static constexpr size_t i2s_chunk_size = 512;
-static bool is_playback_running = false;
+static std::atomic<bool> is_playback_running{false};
 static float volume = 0.2f;
 static i2s_chan_handle_t tx_channel = nullptr;
 static RingbufHandle_t audio_buffer = nullptr;
+static SemaphoreHandle_t audio_mutex = nullptr;
 static const char* tag = "audio";
+
+static void clear_audio_buffer()
+{
+    size_t received_size = 0;
+    void* data = nullptr;
+    while((data = xRingbufferReceiveUpTo(
+        audio_buffer,
+        &received_size,
+        0,
+        i2s_chunk_size)) != nullptr)
+    {
+        vRingbufferReturnItem(audio_buffer, data);
+    }
+}
 
 bool audio_init()
 {
@@ -25,9 +42,17 @@ bool audio_init()
         return false;
     }
 
+    audio_mutex = xSemaphoreCreateMutex();
+    if(audio_mutex == nullptr)
+    {
+        ESP_LOGE(tag, "Audio mutex allocation failed");
+        return false;
+    }
+
     i2s_chan_config_t channel_config = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
     channel_config.dma_desc_num = 4;
     channel_config.dma_frame_num = i2s_chunk_size / sizeof(int16_t);
+    channel_config.auto_clear_after_cb = true;
 
     if(i2s_new_channel(&channel_config, &tx_channel, nullptr) != ESP_OK)
     {
@@ -54,8 +79,7 @@ bool audio_init()
         },
     };
 
-    if(i2s_channel_init_std_mode(tx_channel, &standard_config) != ESP_OK ||
-       i2s_channel_enable(tx_channel) != ESP_OK)
+    if(i2s_channel_init_std_mode(tx_channel, &standard_config) != ESP_OK)
     {
         ESP_LOGE(tag, "I2S initialization failed");
         return false;
@@ -68,6 +92,11 @@ bool audio_init()
 
 void audio_write(const uint8_t* payload, size_t length)
 {
+    if(!is_playback_running.load(std::memory_order_acquire) || audio_buffer == nullptr)
+    {
+        return;
+    }
+
     write_to_fft(payload, length);
     if(xRingbufferSend(audio_buffer, payload, length, 0) != pdTRUE)
     {
@@ -77,23 +106,60 @@ void audio_write(const uint8_t* payload, size_t length)
 
 void audio_started()
 {
-    is_playback_running = true;
+    if(audio_mutex == nullptr || tx_channel == nullptr)
+    {
+        return;
+    }
+
+    xSemaphoreTake(audio_mutex, portMAX_DELAY);
+    clear_audio_buffer();
+    if(i2s_channel_enable(tx_channel) == ESP_OK)
+    {
+        is_playback_running.store(true, std::memory_order_release);
+    }
+    else
+    {
+        ESP_LOGE(tag, "Failed to start I2S channel");
+    }
+    xSemaphoreGive(audio_mutex);
 }
 
 void audio_stoped()
 {
-    is_playback_running = false;
+    is_playback_running.store(false, std::memory_order_release);
+    if(audio_mutex == nullptr || tx_channel == nullptr)
+    {
+        return;
+    }
+
+    xSemaphoreTake(audio_mutex, portMAX_DELAY);
+    const esp_err_t result = i2s_channel_disable(tx_channel);
+    if(result != ESP_OK && result != ESP_ERR_INVALID_STATE)
+    {
+        ESP_LOGW(tag, "Failed to stop I2S channel: %s", esp_err_to_name(result));
+    }
+    clear_audio_buffer();
+    xSemaphoreGive(audio_mutex);
 }
 
 bool is_audio_running()
 {
-    return is_playback_running;
+    return is_playback_running.load(std::memory_order_acquire);
 }
 
 void audio_service()
 {
-    if(!is_playback_running || audio_buffer == nullptr)
+    if(!is_playback_running.load(std::memory_order_acquire) ||
+       audio_buffer == nullptr ||
+       audio_mutex == nullptr)
     {
+        return;
+    }
+
+    xSemaphoreTake(audio_mutex, portMAX_DELAY);
+    if(!is_playback_running.load(std::memory_order_acquire))
+    {
+        xSemaphoreGive(audio_mutex);
         return;
     }
 
@@ -105,6 +171,7 @@ void audio_service()
         i2s_chunk_size));
     if(data == nullptr)
     {
+        xSemaphoreGive(audio_mutex);
         return;
     }
 
@@ -117,6 +184,7 @@ void audio_service()
     size_t bytes_written = 0;
     i2s_channel_write(tx_channel, data, received_size, &bytes_written, portMAX_DELAY);
     vRingbufferReturnItem(audio_buffer, data);
+    xSemaphoreGive(audio_mutex);
 }
 
 void set_volume(float volume_level)
