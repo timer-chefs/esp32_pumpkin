@@ -1,6 +1,10 @@
 #include "show_manager.h"
 #include "preset_shows.h"
 
+#include "esp_log.h"
+
+static const char* tag = "show_manager";
+
 ShowManager::ShowManager(EffectManager& effect_manager)
     : effect_manager(effect_manager) {}
 
@@ -11,11 +15,11 @@ const Show* ShowManager::get_current_show() const
 
 void ShowManager::set_current_show(uint16_t show_id)
 {
-    Serial.printf("Show ID: %d\n", show_id);
+    ESP_LOGI(tag, "Show ID: %u", show_id);
     const Show* show = find_show(show_id);
     if(show == nullptr)
     {
-        Serial.printf("Unknown show: %u\n", show_id);
+        ESP_LOGW(tag, "Unknown show: %u", show_id);
         return;
     }
     current_show = show;

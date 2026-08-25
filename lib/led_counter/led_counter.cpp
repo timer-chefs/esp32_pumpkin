@@ -1,5 +1,7 @@
 #include "led_counter.h"
 
+#include "driver/gpio.h"
+
 Led::Led(uint8_t pin)
 {
     this -> pin = pin;
@@ -8,20 +10,20 @@ Led::Led(uint8_t pin)
 
 void Led::init()
 {
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
+    gpio_set_direction(static_cast<gpio_num_t>(pin), GPIO_MODE_OUTPUT);
+    gpio_set_level(static_cast<gpio_num_t>(pin), 0);
     state = false;
 }
 
 void Led::on()
 {
-    digitalWrite(pin, HIGH);
+    gpio_set_level(static_cast<gpio_num_t>(pin), 1);
     state = true;
 }
 
 void Led::off()
 {
-    digitalWrite(pin, LOW);
+    gpio_set_level(static_cast<gpio_num_t>(pin), 0);
     state = false;
 }
 

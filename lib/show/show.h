@@ -1,8 +1,8 @@
 #ifndef SHOW_H
 #define SHOW_H
 
-#include <FastLED.h>
 #include "effect_manager.h"
+#include "rgb_color.h"
 
 struct Show
 {
@@ -12,7 +12,7 @@ struct Show
 
     EffectId effect;
 
-    CRGB color;
+    RgbColor color;
 };
 
 #endif //SHOW_H

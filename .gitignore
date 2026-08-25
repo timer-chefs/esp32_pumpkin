@@ -8,3 +8,4 @@
 esp32_pumpkin.code-workspace
 
 .envrc
+/managed_components

@@ -1,202 +1,252 @@
 #include "web_interface.h"
 
 #include "audio.h"
-#include "config.h"
 #include "command_handler.h"
+#include "config.h"
 
-#include <WiFi.h>
-#include <WebServer.h>
-#include <WebSocketsServer.h>
-#include <LittleFS.h>
-#include <ArduinoJson.h>
+#include "cJSON.h"
+#include "esp_http_server.h"
+#include "esp_littlefs.h"
+#include "esp_log.h"
+#include "esp_netif.h"
 
-static WebServer server(web_server_port);
-static WebSocketsServer webSocket(web_socket_port);
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
+
+static httpd_handle_t web_server = nullptr;
+static httpd_handle_t socket_server = nullptr;
+static const char* tag = "web_interface";
 
 extern CommandHandler command_handler;
 
-static void filesystem_init()
+static esp_err_t send_volume(httpd_req_t* request)
 {
-    if(!LittleFS.begin())
-    {
-        Serial.println("LittleFS Mount Failed");
-        return;
-    }
+    char response[32];
+    snprintf(response, sizeof(response), "{\"volume\":%.2f}", get_volume());
+    httpd_resp_set_type(request, "application/json");
+    return httpd_resp_sendstr(request, response);
 }
 
-static void web_socket_event(uint8_t client_num, WStype_t type,
-    uint8_t* payload, size_t length)
-{
-    (void)client_num;       //This is to indicate that client_num is not used.
-
-    switch(type)
-    {
-        case WStype_CONNECTED:
-        {
-            Serial.println("Client connected");
-            break;
-        }
-
-        case WStype_DISCONNECTED:
-        {
-            Serial.println("Client disconnected");
-            break;
-        }
-
-
-        case WStype_TEXT:
-        {
-            JsonDocument doc;
-            DeserializationError error =
-                deserializeJson(doc, payload, length);
-
-            if(error)
-            {
-                Serial.println("Invalid JSON");
-                break;
-            }
-
-            command_handler.handle(doc);
-
-            break;
-        }
-
-        case WStype_BIN:
-        {
-            audio_write(payload, length);
-            break;
-        }
-
-
-        default:
-            break;
-    }
-}
-
-static void handle_audio_reset()
+static esp_err_t handle_audio_reset(httpd_req_t* request)
 {
     audio_stoped();
-    server.send(200, "application/json", "{\"status\":\"reset\"}");
+    httpd_resp_set_type(request, "application/json");
+    return httpd_resp_sendstr(request, "{\"status\":\"reset\"}");
 }
 
-static void handle_volume_up()
+static esp_err_t handle_volume_up(httpd_req_t* request)
 {
-    float volume = get_volume();
+    set_volume(get_volume() + 0.1f);
+    return send_volume(request);
+}
 
-    volume += 0.1f;
-    if(volume > 1.0f)
+static esp_err_t handle_volume_down(httpd_req_t* request)
+{
+    set_volume(get_volume() - 0.1f);
+    return send_volume(request);
+}
+
+static esp_err_t handle_get_volume(httpd_req_t* request)
+{
+    return send_volume(request);
+}
+
+static esp_err_t handle_get_ip(httpd_req_t* request)
+{
+    esp_netif_t* station = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    esp_netif_ip_info_t ip_info = {};
+    char address[16] = {};
+
+    if(station != nullptr && esp_netif_get_ip_info(station, &ip_info) == ESP_OK)
     {
-        volume = 1.0f;
+        snprintf(address, sizeof(address), IPSTR, IP2STR(&ip_info.ip));
     }
 
-    set_volume(volume);
-
-    server.send(200, "application/json", String("{\"volume\":") + String(volume) + "}");
+    httpd_resp_set_type(request, "text/plain");
+    return httpd_resp_sendstr(request, address);
 }
 
-static void handle_volume_down()
+static const char* content_type(const char* path)
 {
-    float volume = get_volume();
+    if(strstr(path, ".html") != nullptr) return "text/html";
+    if(strstr(path, ".js") != nullptr) return "text/javascript";
+    if(strstr(path, ".css") != nullptr) return "text/css";
+    if(strstr(path, ".json") != nullptr) return "application/json";
+    return "application/octet-stream";
+}
 
-    volume -= 0.1f;
-    if(volume < 0.0f)
+static esp_err_t handle_static_file(httpd_req_t* request)
+{
+    std::string uri = request->uri;
+    const size_t query_start = uri.find('?');
+    if(query_start != std::string::npos)
     {
-        volume = 0.0f;
+        uri.resize(query_start);
+    }
+    if(uri == "/")
+    {
+        uri = "/index.html";
+    }
+    if(uri.find("..") != std::string::npos)
+    {
+        return httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, "Invalid path");
     }
 
-    set_volume(volume);
-
-    server.send(
-        200,
-        "application/json",
-        String("{\"volume\":") + String(volume) + "}");
-}
-
-static void handle_get_volume()
-{
-    float volume = get_volume();
-
-    server.send(
-        200,
-        "application/json",
-        String("{\"volume\":") + String(volume) + "}");
-}
-
-static void handle_get_ip()
-{
-    server.send(200, "text/plain", WiFi.localIP().toString());
-}
-
-static const char redirect_page[] PROGMEM =
-#include "redirect_page.html"
-    ; // Intentionally a semicolon here. The include file expands to a raw_string(...)
-
-static bool is_softap_client()
-{
-    IPAddress client_ip = server.client().remoteIP();
-    IPAddress ap_ip = WiFi.softAPIP();
-
-    return client_ip[0] == ap_ip[0] &&
-           client_ip[1] == ap_ip[1] &&
-           client_ip[2] == ap_ip[2];
-}
-
-static void handle_root()
-{
-    if(is_softap_client())
+    const std::string content_path = "/littlefs" + uri;
+    std::string file_path = content_path;
+    FILE* file = fopen(file_path.c_str(), "rb");
+    bool compressed = false;
+    if(file == nullptr)
     {
-        server.send(200, "text/html", redirect_page);
-        return;
+        file_path += ".gz";
+        file = fopen(file_path.c_str(), "rb");
+        compressed = file != nullptr;
+    }
+    if(file == nullptr)
+    {
+        return httpd_resp_send_err(request, HTTPD_404_NOT_FOUND, "Not found");
     }
 
-    File file = LittleFS.open("/index.html", "r");
-    if(!file)
+    httpd_resp_set_type(request, content_type(content_path.c_str()));
+    if(compressed)
     {
-        server.send(404, "text/plain", "Not found");
-        return;
+        httpd_resp_set_hdr(request, "Content-Encoding", "gzip");
     }
 
-    server.streamFile(file, "text/html");
-    file.close();
+    char buffer[1024];
+    size_t bytes_read = 0;
+    esp_err_t result = ESP_OK;
+    while((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0)
+    {
+        result = httpd_resp_send_chunk(request, buffer, bytes_read);
+        if(result != ESP_OK)
+        {
+            break;
+        }
+    }
+    fclose(file);
+    httpd_resp_send_chunk(request, nullptr, 0);
+    return result;
+}
+
+static esp_err_t handle_websocket(httpd_req_t* request)
+{
+    if(request->method == HTTP_GET)
+    {
+        ESP_LOGI(tag, "WebSocket client connected");
+        return ESP_OK;
+    }
+
+    httpd_ws_frame_t frame = {};
+    esp_err_t result = httpd_ws_recv_frame(request, &frame, 0);
+    if(result != ESP_OK || frame.len == 0)
+    {
+        return result;
+    }
+
+    std::vector<uint8_t> payload(frame.len + 1);
+    frame.payload = payload.data();
+    result = httpd_ws_recv_frame(request, &frame, frame.len);
+    if(result != ESP_OK)
+    {
+        return result;
+    }
+
+    if(frame.type == HTTPD_WS_TYPE_TEXT)
+    {
+        payload[frame.len] = '\0';
+        cJSON* document = cJSON_ParseWithLength(
+            reinterpret_cast<const char*>(payload.data()),
+            frame.len);
+        if(document == nullptr)
+        {
+            ESP_LOGW(tag, "Invalid JSON command");
+            return ESP_OK;
+        }
+        command_handler.handle(document);
+        cJSON_Delete(document);
+    }
+    else if(frame.type == HTTPD_WS_TYPE_BINARY)
+    {
+        audio_write(payload.data(), frame.len);
+    }
+
+    return ESP_OK;
+}
+
+static void register_uri(
+    httpd_handle_t server,
+    const char* uri,
+    httpd_method_t method,
+    esp_err_t (*handler)(httpd_req_t*))
+{
+    httpd_uri_t definition = {};
+    definition.uri = uri;
+    definition.method = method;
+    definition.handler = handler;
+    ESP_ERROR_CHECK(httpd_register_uri_handler(server, &definition));
 }
 
 void web_interface_init()
 {
-    filesystem_init();
-
-    //Register HTTP routs:
-    server.on("/", HTTP_GET, handle_root);
-    server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
-    server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
-    server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
-    server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
-    server.on("/api/ip", HTTP_GET, handle_get_ip);
-
-    //Serve static files from LittleFS:
-    server.serveStatic("/", LittleFS, "/", NULL);
-
-    webSocket.onEvent(web_socket_event);
-
-    Serial.println("Web interface initialized");
+    const esp_vfs_littlefs_conf_t filesystem_config = {
+        .base_path = "/littlefs",
+        .partition_label = "littlefs",
+        .partition = nullptr,
+        .format_if_mount_failed = false,
+        .read_only = true,
+        .dont_mount = false,
+        .grow_on_mount = false,
+    };
+    ESP_ERROR_CHECK(esp_vfs_littlefs_register(&filesystem_config));
+    ESP_LOGI(tag, "LittleFS mounted");
 }
 
 void web_interface_start()
 {
-    server.begin();
-    webSocket.begin();
+    httpd_config_t web_config = HTTPD_DEFAULT_CONFIG();
+    web_config.server_port = web_server_port;
+    web_config.uri_match_fn = httpd_uri_match_wildcard;
+    ESP_ERROR_CHECK(httpd_start(&web_server, &web_config));
 
-    Serial.println("Web interface started");
+    register_uri(web_server, "/api/audio/reset", HTTP_GET, handle_audio_reset);
+    register_uri(web_server, "/api/audio/volume/up", HTTP_POST, handle_volume_up);
+    register_uri(web_server, "/api/audio/volume/down", HTTP_POST, handle_volume_down);
+    register_uri(web_server, "/api/audio/volume", HTTP_GET, handle_get_volume);
+    register_uri(web_server, "/api/ip", HTTP_GET, handle_get_ip);
+    register_uri(web_server, "/*", HTTP_GET, handle_static_file);
+
+    httpd_config_t socket_config = HTTPD_DEFAULT_CONFIG();
+    socket_config.server_port = web_socket_port;
+    socket_config.ctrl_port += 1;
+    ESP_ERROR_CHECK(httpd_start(&socket_server, &socket_config));
+
+    httpd_uri_t websocket_uri = {};
+    websocket_uri.uri = "/";
+    websocket_uri.method = HTTP_GET;
+    websocket_uri.handler = handle_websocket;
+    websocket_uri.is_websocket = true;
+    ESP_ERROR_CHECK(httpd_register_uri_handler(socket_server, &websocket_uri));
+
+    ESP_LOGI(tag, "HTTP and WebSocket servers started");
 }
 
 void web_interface_stop()
 {
-    server.stop();
-    webSocket.close();
-
-    Serial.println("Web interface stopped");
+    if(web_server != nullptr)
+    {
+        httpd_stop(web_server);
+        web_server = nullptr;
+    }
+    if(socket_server != nullptr)
+    {
+        httpd_stop(socket_server);
+        socket_server = nullptr;
+    }
 }
 
-void web_interface_service() {
-    server.handleClient();
-    webSocket.loop();
+void web_interface_service()
+{
 }

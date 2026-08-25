@@ -1,7 +1,8 @@
 #ifndef EVENT_QUEUE_H
 #define EVENT_QUEUE_H
 
-#include <Arduino.h>
+#include <cstddef>
+#include <cstdint>
 #include <queue>
 #include "events.h"
 #include "config.h"

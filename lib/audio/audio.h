@@ -1,7 +1,8 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include <Arduino.h>
+#include <cstddef>
+#include <cstdint>
 
 bool audio_init();
 void audio_write(const uint8_t* payload, size_t length);

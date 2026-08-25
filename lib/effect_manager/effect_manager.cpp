@@ -23,12 +23,12 @@ void EffectManager::set_effect(EffectId effect_id)
     }
 }
 
-void EffectManager::set_color(const CRGB& color)
+void EffectManager::set_color(const RgbColor& color)
 {
     current_effect->set_color(color);
 }
 
-void EffectManager::update(CRGB* led_strip, uint8_t num_leds)
+void EffectManager::update(RgbColor* led_strip, uint8_t num_leds)
 {
     current_effect->update(led_strip, num_leds);
     

@@ -6,14 +6,14 @@ const Show preset_shows[] =
         0,
         "Candle",
         EffectId::Candle,
-        CRGB::Orange
+        RgbColor::orange()
     },
 
     {
         1,
         "Ghost",
         EffectId::AudioReactive,
-        CRGB::Purple
+        RgbColor::purple()
     }
 };
 

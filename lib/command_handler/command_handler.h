@@ -1,15 +1,14 @@
 #ifndef COMMAND_HANDLER_H
 #define COMMAND_HANDLER_H
 
-#include <Arduino.h>
+#include "cJSON.h"
 #include "show_manager.h"
-#include <ArduinoJson.h>
 
 class CommandHandler
 {
 public:
     CommandHandler(ShowManager& show_manager);
-    void handle(const JsonDocument& doc);
+    void handle(const cJSON* document);
 private:    
     ShowManager& show_manager;
 };

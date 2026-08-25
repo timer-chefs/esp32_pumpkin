@@ -1,7 +1,7 @@
 #ifndef LED_COUNTER_H
 #define LED_COUNTER_H
 
-#include <Arduino.h>
+#include <cstdint>
 
 class Led
 {

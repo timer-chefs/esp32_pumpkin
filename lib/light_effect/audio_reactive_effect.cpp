@@ -2,19 +2,24 @@
 #include "config.h"
 #include "fft.h"
 
-void AudioReactiveEffect::update(CRGB* led_strip, uint8_t num_leds)
+#include <algorithm>
+
+void AudioReactiveEffect::update(RgbColor* led_strip, uint8_t num_leds)
 {
     float envelope = calculate_embelope();
-    uint8_t brightness = constrain(envelope * brightness_scaling_factor, 0, max_brightness);
+    uint8_t brightness = static_cast<uint8_t>(std::clamp(
+        envelope * brightness_scaling_factor,
+        0.0f,
+        static_cast<float>(max_brightness)));
     
     // Create a copy of the color and scale it
-    CRGB scaled_color = color;
-    scaled_color.nscale8_video(brightness);
+    RgbColor scaled_color = color;
+    scaled_color.scale(brightness);
     
-    fill_solid(led_strip, num_leds, scaled_color);
+    std::fill_n(led_strip, num_leds, scaled_color);
 }
 
-void AudioReactiveEffect::set_color(const CRGB& color)
+void AudioReactiveEffect::set_color(const RgbColor& color)
 {
     this->color = color;
 }

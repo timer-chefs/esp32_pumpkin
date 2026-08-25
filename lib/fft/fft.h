@@ -1,7 +1,8 @@
 #ifndef FFT_H
 #define FFT_H
 
-#include <Arduino.h>
+#include <cstddef>
+#include <cstdint>
 
 
 void fft_init();

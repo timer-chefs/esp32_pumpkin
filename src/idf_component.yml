@@ -1,0 +1,5 @@
+dependencies:
+  espressif/esp-dsp: "^1.6.0"
+  espressif/led_strip: "^3.0.0"
+  espressif/mdns: "^1.8.0"
+  joltwallet/littlefs: "^1.20.0"
