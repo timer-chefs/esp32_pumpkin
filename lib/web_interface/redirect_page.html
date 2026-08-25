@@ -65,9 +65,16 @@ R"rawliteral(
                 var d = document.getElementById("ip-display");
                 d.innerHTML = 'IP: <span id="ip-text">' + ip + '</span> <button id="copy-btn">Copy</button>';
                 document.getElementById("copy-btn").onclick = async function () {
-                    await navigator.clipboard.writeText(ip);
-                    this.textContent = "Copied!";
-                    setTimeout(() => { this.textContent = "Copy"; }, 1500);
+                    try {
+                        if (!navigator.clipboard) {
+                            throw new Error("Clipboard API unavailable");
+                        }
+                        await navigator.clipboard.writeText(ip);
+                        this.textContent = "Copied!";
+                        setTimeout(() => { this.textContent = "Copy"; }, 1500);
+                    } catch (error) {
+                        window.prompt("Copy this address:", ip);
+                    }
                 };
             }
         })();
