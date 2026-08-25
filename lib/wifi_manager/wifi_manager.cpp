@@ -17,7 +17,10 @@ static WiFiManager wm;
 
 static DNSServer redirect_dns;
 static bool redirect_active = false;
+static bool redirect_start_pending = false;
 static unsigned long redirect_start_time = 0;
+
+static void wifi_redirect_stop();
 
 static void setup_wm_ip_display()
 {
@@ -64,7 +67,7 @@ static void IRAM_ATTR config_button_ISR() {
     wifi_config_requested = true;
 }
 
-void start_ip_info_portal(void)
+static void wifi_redirect_start()
 {
     WiFi.mode(WIFI_AP_STA);
     WiFi.softAP("Pumpkin-redirect");
@@ -76,7 +79,7 @@ void start_ip_info_portal(void)
     Serial.println("Redirect portal started on SoftAP");
 }
 
-void wifi_redirect_service()
+static void wifi_redirect_service()
 {
     if(!redirect_active)
     {
@@ -91,7 +94,7 @@ void wifi_redirect_service()
     }
 }
 
-void wifi_redirect_stop()
+static void wifi_redirect_stop()
 {
     if(!redirect_active)
     {
@@ -128,9 +131,11 @@ void wifi_manager_init() {
         Serial.println("WiFi is connected");
         Serial.println(String("IP: ") + WiFi.localIP().toString());
     }
+
+    redirect_start_pending = true;
 }
 
-void wifi_provisioning_service(){
+static void wifi_provisioning_service(){
     switch(wifi_state){
         case WiFiState::NORMAL:
             if(wifi_config_requested){
@@ -161,4 +166,17 @@ void wifi_provisioning_service(){
             wifi_state = WiFiState::NORMAL;
 
     }
+}
+
+void wifi_manager_service()
+{
+    wifi_provisioning_service();
+
+    if(redirect_start_pending)
+    {
+        redirect_start_pending = false;
+        wifi_redirect_start();
+    }
+
+    wifi_redirect_service();
 }
