@@ -77,11 +77,10 @@ static void initialize_provisioning_manager()
         return;
     }
 
-    const wifi_prov_mgr_config_t manager_config = {
-        .scheme = wifi_prov_scheme_softap,
-        .scheme_event_handler = WIFI_PROV_EVENT_HANDLER_NONE,
-        .app_event_handler = WIFI_PROV_EVENT_HANDLER_NONE,
-    };
+    wifi_prov_mgr_config_t manager_config = {};
+    manager_config.scheme = wifi_prov_scheme_softap;
+    manager_config.scheme_event_handler = WIFI_PROV_EVENT_HANDLER_NONE;
+    manager_config.app_event_handler = WIFI_PROV_EVENT_HANDLER_NONE;
     ESP_ERROR_CHECK(wifi_prov_mgr_init(manager_config));
     provisioning_manager_initialized = true;
 }
