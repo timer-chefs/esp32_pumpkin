@@ -18,9 +18,9 @@ extern "C" void app_main()
 {
   led_counter.init();
   led_counter.reset();
-  
+
   ESP_LOGI(tag, "Event Queue Test");
-  
+
   // Push 10 events
   ESP_LOGI(tag, "Pushing 10 events...");
   for (int i = 0; i < 10; i++) {
@@ -29,9 +29,9 @@ extern "C" void app_main()
     vTaskDelay(pdMS_TO_TICKS(500));
     ESP_LOGI(tag, "LED count: %u", led_counter.getValue());
   }
-  
+
   vTaskDelay(pdMS_TO_TICKS(2000));
-  
+
   // Pop 10 events
   ESP_LOGI(tag, "Popping 10 events...");
   for (int i = 0; i < 10; i++) {
@@ -42,6 +42,6 @@ extern "C" void app_main()
       ESP_LOGI(tag, "LED count: %u", led_counter.getValue());
     }
   }
-  
+
   ESP_LOGI(tag, "Test complete!");
 }

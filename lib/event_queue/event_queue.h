@@ -21,7 +21,7 @@ public:
     bool is_full();
     returned_event_t pop();
     void clear();
-    
+
 private:
     static const size_t event_queue_size =
         max_event_queue_size;
