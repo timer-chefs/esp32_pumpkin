@@ -46,6 +46,14 @@ constexpr uint8_t pin_led2 = GPIO_NUM_4;
 //WiFi Provisioning Pins:
 constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
 
+// SDIO Pin 
+constexpr uint8_t pin_sd_clk = GPIO_NUM_12;
+constexpr uint8_t pin_sd_cmd = GPIO_NUM_11;
+constexpr uint8_t pin_sd_d0 = GPIO_NUM_13;
+constexpr uint8_t pin_sd_d1 = GPIO_NUM_14;
+constexpr uint8_t pin_sd_d2 = GPIO_NUM_9;
+constexpr uint8_t pin_sd_d3 = GPIO_NUM_10;
+
 //Serial
 constexpr uint32_t baud_rate = 115200;
 constexpr bool enable_audio_stats_logging = false;
