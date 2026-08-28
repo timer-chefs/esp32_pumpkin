@@ -11,10 +11,6 @@ constexpr const char* mdns_hostname = "pumpkin";
 constexpr uint8_t wifi_provisioning_timeout = 120; // seconds
 constexpr unsigned long ip_info_portal_timeout_ms = 60000;
 
-//Event Queue
-constexpr size_t max_event_queue_size = 64;
-
-
 //Web server
 constexpr uint8_t web_server_port = 80;
 constexpr uint8_t web_socket_port = 81;
