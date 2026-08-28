@@ -5,9 +5,11 @@
 #include <stdint.h>
 
 constexpr const char* wifi_provisioning_ssid = "Pumpkin-WiFi_Provisioning";
+constexpr const char* mdns_hostname = "pumpkin";
 
 //WiFi Provisioning
 constexpr uint8_t wifi_provisioning_timeout = 120; // seconds
+constexpr unsigned long ip_info_portal_timeout_ms = 60000;
 
 //Event Queue
 constexpr size_t max_event_queue_size = 64;

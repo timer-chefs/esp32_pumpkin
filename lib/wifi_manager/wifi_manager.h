@@ -1,7 +1,7 @@
-#ifndef WIFI_MANAGER
-#define WIFI_MANAGER
+#ifndef WIFI_MANAGER_H
+#define WIFI_MANAGER_H
 
 void wifi_manager_init();
-void wifi_provisioning_service();
+void wifi_manager_service();
 
-#endif //WIFI_MANAGER
+#endif //WIFI_MANAGER_H

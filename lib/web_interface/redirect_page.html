@@ -1,0 +1,94 @@
+R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 2em;
+        }
+        h2 { color: #333; }
+        button {
+            font-size: 1.5em;
+            padding: 0.5em 1.5em;
+            margin-top: 1em;
+            border: none;
+            border-radius: 8px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 1em;
+            font-style: italic;
+        }
+        #ip-display {
+            margin-top: 1.5em;
+            font-size: 1.1em;
+            color: #555;
+        }
+        #ip-display span {
+            font-family: monospace;
+            font-weight: bold;
+            color: #333;
+        }
+        #copy-btn {
+            font-size: 0.9em;
+            padding: 0.3em 0.8em;
+            margin-left: 0.5em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f0f0f0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pumpkin</h1>
+    <p>Press the button to go to your pumpkin (only works for the hotspot phone
+    - others need to copy the address, reconnect to the hotspot and then paste
+    the address).</p>
+    <button id="btn">Open Pumpkin</button>
+    <p id="ip-display"></p>
+    <p id="status"></p>
+    <script>
+        async function getIp() {
+            var r = await fetch("/api/ip");
+            return await r.text();
+        }
+
+        (async function () {
+            var ip = await getIp();
+            if (ip) {
+                var d = document.getElementById("ip-display");
+                d.innerHTML = 'IP: <span id="ip-text">' + ip + '</span> <button id="copy-btn">Copy</button>';
+                document.getElementById("copy-btn").onclick = async function () {
+                    try {
+                        if (!navigator.clipboard) {
+                            throw new Error("Clipboard API unavailable");
+                        }
+                        await navigator.clipboard.writeText(ip);
+                        this.textContent = "Copied!";
+                        setTimeout(() => { this.textContent = "Copy"; }, 1500);
+                    } catch (error) {
+                        window.prompt("Copy this address:", ip);
+                    }
+                };
+            }
+        })();
+
+        document.getElementById("btn").onclick = async function () {
+            var s = document.getElementById("status");
+            s.textContent = "Redirecting...";
+            this.disabled = true;
+            var ip = await getIp();
+            if (ip) {
+                window.location.href = "http://" + ip;
+            }
+        };
+    </script>
+</body>
+</html>
+)rawliteral"

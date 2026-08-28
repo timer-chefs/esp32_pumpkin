@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
-// Set this to your ESP32's IP address for dev proxy
-const ESP32_HOST = process.env.ESP32_HOST || "192.168.1.100";
+// Set this to your ESP32's hostname or IP for dev proxy
+const ESP32_HOST = process.env.ESP32_HOST || "pumpkin.local";
 
 export default defineConfig({
     root: ".",

@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ESPmDNS.h>
 
 #include "config.h"
 #include "audio.h"
@@ -23,6 +24,16 @@ void setup()
 
     wifi_manager_init();
 
+    if (!MDNS.begin(mdns_hostname))
+    {
+        Serial.println("mDNS failed");
+    }
+    else
+    {
+        Serial.println(String("mDNS: http://") + mdns_hostname + ".local");
+        MDNS.addService("http", "tcp", web_server_port);
+    }
+
     web_interface_init();
     web_interface_start();
 
@@ -37,7 +48,7 @@ void setup()
 
 void loop()
 {
-    wifi_provisioning_service();
+    wifi_manager_service();
 
     web_interface_service();
     
