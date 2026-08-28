@@ -1,94 +1,79 @@
-body {
-  font-family: Arial, sans-serif;
-  max-width: 800px;
-  width: 100%;
-  margin: 0px auto;
-  padding: 16px;
-  box-sizing: border-box;
-  background-color: #f0f0f0;
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+:root {
+  --bs-body-font-family: "DM Sans", "Trebuchet MS", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
-h1 {
-  color: #333;
-  text-align: center;
+h1,
+h2,
+.h4,
+.card-title {
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+  letter-spacing: 0;
 }
 
-button {
-  padding: 12px 16px;
-  font-size: 1rem;
-  min-height: 48px;
-  background-color: #ff9800;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin: 5px;
-  transition: background-color 0.3s;
+.app-container {
+  max-width: 960px;
 }
 
-button:hover:not(:disabled) {
-  background-color: #e68900;
+.status-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  flex: 0 0 auto;
+  background: var(--bs-success);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-success-rgb), 0.2);
 }
 
-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-  opacity: 0.6;
+.source-button {
+  min-height: 5.5rem;
+  padding: 1rem 1.25rem;
 }
 
-#audio-mode {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+.source-button svg,
+.show-button > svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
 }
 
-#microphone-section,
-#file-section {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.source-button small,
+.show-button small {
+  opacity: 0.75;
 }
 
-#microphone-section p,
-#file-section p {
-  margin: 10px 0;
-  color: #333;
+.source-workspace {
+  min-height: 9rem;
 }
 
-#volume-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+.icon-button {
+  width: 3.25rem;
+  height: 3.25rem;
 }
 
-#file-status {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-left: 4px solid #ff9800;
-  border-radius: 4px;
-  min-height: 20px;
+.icon-button svg {
+  width: 1.25rem;
 }
 
-#btn-volume-up,
-#btn-volume-down {
-  width: 60px;
-  height: 60px;
+.volume-readout {
+  min-width: 8.5rem;
+}
+
+.volume-readout strong {
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
   font-size: 2rem;
 }
 
-input[type="file"] {
-  display: block;
-  margin: 15px 0;
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  width: 100%;
-  box-sizing: border-box;
-  cursor: pointer;
+.show-button {
+  min-height: 4.5rem;
+  padding: 0.75rem 1rem;
+}
+
+@media (max-width: 420px) {
+  .volume-readout {
+    min-width: 7rem;
+    padding-inline: 0.75rem !important;
+  }
 }

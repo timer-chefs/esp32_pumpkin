@@ -58,10 +58,7 @@ export async function streamAudioData(audioBuffer: ArrayBuffer): Promise<void> {
 
     const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
     console.log(`Streaming complete: ${bytesSent} bytes in ${elapsed}s`);
-    setFileStatus(
-      `Complete! (${bytesSent} bytes in ${elapsed}s)`,
-      "success",
-    );
+    setFileStatus(`Complete! (${bytesSent} bytes in ${elapsed}s)`, "success");
 
     if (await session.wait(500)) {
       await audioSessionManager.stop(session);
