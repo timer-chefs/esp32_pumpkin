@@ -31,7 +31,7 @@ jobs:
 
       - name: Format frontend files
         working-directory: frontend
-        run: npx prettier --write .
+        run: npm run format
 
       - name: Commit and push formatting changes
         run: |
