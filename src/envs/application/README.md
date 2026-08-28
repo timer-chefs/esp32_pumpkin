@@ -1,4 +1,4 @@
-# voice_websocket Environment
+# application Environment
 ## Purpose:
 This is the first iteration of our design.
 It is meant to prototype the voice over wifi capability.
@@ -20,12 +20,12 @@ We are using LittleFS to create a lightweight filesystem in the MCU. This helps 
 
 ### Command to create the binary.
 ```
-pio run -t buildfs -e voice_webpsocket
+pio run -t buildfs -e application
 ```
 > NOTE: Any environment works
 
 ### Command to upload the binary to the MCU.
 ```
-pio run -t uploadfs -e voice_websocket
+pio run -t uploadfs -e application
 ```
 > NOTE: Any environment works.
