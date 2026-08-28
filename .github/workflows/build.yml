@@ -43,3 +43,14 @@ jobs:
 
       - name: Build ${{ matrix.environment }}
         run: pio run -e ${{ matrix.environment }}
+  
+  # We can't depend on jobs with dynamic names. So this job acts as a collected
+  # "success" status for all of its dependencies. It will only have a "success"
+  # status if all of its dependencies succeeded. That way we can configure
+  # GitHub to require this job to pass before allowing a merge.
+  build-completed-successfully:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finish
+        run: echo "All builds completed"
