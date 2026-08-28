@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "typescript": "^7.0.2",
     "vite": "^8.1.5"
   }
 }
