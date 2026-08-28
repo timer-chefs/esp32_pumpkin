@@ -21,15 +21,12 @@ export async function switchToFile(): Promise<void> {
   setCurrentMode("Audio File");
 }
 
-export function onFileSelected(event: Event): void {
-  const input = event.currentTarget as HTMLInputElement;
-  selectedFile = input.files?.[0] ?? null;
+export function onFileSelected(file: File | null): void {
+  selectedFile = file;
 
   if (selectedFile) {
     const sizeMegabytes = (selectedFile.size / 1024 / 1024).toFixed(2);
-    setFileStatus(
-      `<p>Selected: <strong>${selectedFile.name}</strong> (${sizeMegabytes} MB)</p>`,
-    );
+    setFileStatus(`Selected: ${selectedFile.name} (${sizeMegabytes} MB)`);
     setStreamFileEnabled(true);
   } else {
     clearFileStatus();

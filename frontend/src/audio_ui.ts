@@ -1,72 +1,89 @@
+export type AudioPanel = "microphone" | "file";
+export type StatusTone = "neutral" | "success";
+
+export interface AudioUiState {
+  activePanel: AudioPanel | null;
+  currentMode: string;
+  currentStreaming: string | null;
+  fileStatus: { message: string; tone: StatusTone } | null;
+  folderStatus: "success" | "error" | null;
+  streamFileEnabled: boolean;
+  volume: number;
+}
+
+let state: AudioUiState = {
+  activePanel: null,
+  currentMode: "Idle",
+  currentStreaming: null,
+  fileStatus: null,
+  folderStatus: null,
+  streamFileEnabled: false,
+  volume: 1,
+};
+
+const listeners = new Set<() => void>();
+
+export function getAudioUiState(): AudioUiState {
+  return state;
+}
+
+export function subscribeToAudioUi(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 export function showMicrophoneMode(): void {
-  getElement<HTMLElement>("microphone-section").style.display = "block";
-  getElement<HTMLElement>("file-section").style.display = "none";
-  getElement<HTMLButtonElement>("btn-microphone").disabled = true;
-  getElement<HTMLButtonElement>("btn-file").disabled = false;
+  updateState({ activePanel: "microphone" });
 }
 
 export function hideMicrophoneMode(): void {
-  getElement<HTMLElement>("microphone-section").style.display = "none";
-  getElement<HTMLButtonElement>("btn-microphone").disabled = false;
+  if (state.activePanel === "microphone") {
+    updateState({ activePanel: null });
+  }
 }
 
 export function showFileMode(): void {
-  getElement<HTMLElement>("file-section").style.display = "block";
-  getElement<HTMLElement>("microphone-section").style.display = "none";
-  getElement<HTMLButtonElement>("btn-file").disabled = true;
-  getElement<HTMLButtonElement>("btn-microphone").disabled = false;
+  updateState({ activePanel: "file" });
 }
 
-export function setFileStatus(html: string): void {
-  getElement<HTMLElement>("file-status").innerHTML = html;
+export function setFileStatus(
+  message: string,
+  tone: StatusTone = "neutral",
+): void {
+  updateState({ fileStatus: { message, tone } });
 }
 
 export function clearFileStatus(): void {
-  getElement<HTMLElement>("file-status").replaceChildren();
+  updateState({ fileStatus: null });
 }
 
 export function setStreamFileEnabled(enabled: boolean): void {
-  getElement<HTMLButtonElement>("btn-stream").disabled = !enabled;
+  updateState({ streamFileEnabled: enabled });
 }
 
 export function setCurrentMode(mode: string): void {
-  getElement<HTMLElement>("current-mode").textContent = `Current Mode: ${mode}`;
+  updateState({ currentMode: mode });
 }
 
 export function setCurrentStreamingEnabled(enabled: boolean): void {
-  const element = getElement<HTMLElement>("current-streaming");
-  element.hidden = !enabled;
   if (!enabled) {
-    element.replaceChildren();
+    updateState({ currentStreaming: null });
   }
 }
 
 export function setCurrentStreaming(description: string): void {
-  const element = getElement<HTMLElement>("current-streaming");
-  element.textContent = `Current Streaming: ${description}`;
-  setCurrentStreamingEnabled(true);
+  updateState({ currentStreaming: description });
 }
 
 export function setFolderStatus(success: boolean): void {
-  const element = getElement<HTMLElement>("folder-status");
-  element.textContent = success
-    ? "Audio folder selected"
-    : "Failed to select folder";
-  element.style.color = success ? "green" : "red";
+  updateState({ folderStatus: success ? "success" : "error" });
 }
 
 export function setVolumeDisplay(volume: number): void {
-  getElement<HTMLElement>("volume-display").textContent =
-    `${Math.round(volume * 100)}%`;
+  updateState({ volume });
 }
 
-export function getElement<ElementType extends HTMLElement>(
-  id: string,
-): ElementType {
-  const element = document.getElementById(id);
-  if (!element) {
-    throw new Error(`Expected element #${id} to exist`);
-  }
-
-  return element as ElementType;
+function updateState(update: Partial<AudioUiState>): void {
+  state = { ...state, ...update };
+  listeners.forEach((listener) => listener());
 }

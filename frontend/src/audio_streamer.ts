@@ -17,7 +17,7 @@ export async function streamAudioData(audioBuffer: ArrayBuffer): Promise<void> {
   console.log(
     `Starting stream: ${data.length} bytes (${data.length / 2} Int16 samples)`,
   );
-  setFileStatus("<p>Streaming...</p>");
+  setFileStatus("Streaming...");
 
   try {
     for (let offset = 0; offset < data.length;) {
@@ -40,7 +40,7 @@ export async function streamAudioData(audioBuffer: ArrayBuffer): Promise<void> {
         const progress = Math.round((offset / data.length) * 100);
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
         setFileStatus(
-          `<p>Streaming: ${progress}% (${bytesSent} bytes, ${elapsed}s)</p>`,
+          `Streaming: ${progress}% (${bytesSent} bytes, ${elapsed}s)`,
         );
       }
 
@@ -59,7 +59,8 @@ export async function streamAudioData(audioBuffer: ArrayBuffer): Promise<void> {
     const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
     console.log(`Streaming complete: ${bytesSent} bytes in ${elapsed}s`);
     setFileStatus(
-      `<p style="color: green;">Complete! (${bytesSent} bytes in ${elapsed}s)</p>`,
+      `Complete! (${bytesSent} bytes in ${elapsed}s)`,
+      "success",
     );
 
     if (await session.wait(500)) {

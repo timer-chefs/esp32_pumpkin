@@ -6,13 +6,21 @@
     "dev": "vite",
     "build": "vite build",
     "format": "prettier --write src",
-    "format:check": "prettier --check \"**/*.ts\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.1",
     "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vite": "^8.1.5"
+  },
+  "dependencies": {
+    "lucide-react": "^1.35.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   }
 }
