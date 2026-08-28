@@ -1,0 +1,46 @@
+name: Format frontend
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Format frontend files
+        working-directory: frontend
+        run: npx prettier --write .
+
+      - name: Commit and push formatting changes
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/
+          git commit -m "✨ Auto-format"
+          git push origin HEAD:main
