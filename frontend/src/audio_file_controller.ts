@@ -3,6 +3,8 @@ import { stopAudio } from "./audio_cleanup.ts";
 import { processAudioFile } from "./audio_file_processor.ts";
 
 import { streamAudioData } from "./audio_streamer.ts";
+import { getAudioSocket, waitForAudioSocket } from "./audio_socket.ts";
+import { resetAudio } from "./protocol_client.ts";
 
 import {
   clearFileStatus,
@@ -42,7 +44,8 @@ export async function streamSelectedFile(): Promise<void> {
   }
 
   try {
-    await fetch("/api/audio/reset");
+    const socket = await waitForAudioSocket(getAudioSocket(location.hostname));
+    await resetAudio(socket);
   } catch (error) {
     console.warn("Could not reset audio buffer:", error);
   }

@@ -8,7 +8,8 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include <LittleFS.h>
-#include <ArduinoJson.h>
+#include <flatbuffers/flatbuffers.h>
+#include "pumpkin_generated.h"
 
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
@@ -16,12 +17,87 @@ static WebSocketsServer webSocket(web_socket_port);
 extern CommandHandler command_handler;
 static uint16_t connected_clients = 0;
 
+using namespace Pumpkin::Protocol;
+
 static void filesystem_init()
 {
     if(!LittleFS.begin())
     {
         Serial.println("LittleFS Mount Failed");
         return;
+    }
+}
+
+static void send_response(
+    uint8_t client_num,
+    uint32_t request_id,
+    const CommandResult& result)
+{
+    flatbuffers::FlatBufferBuilder builder(128);
+    flatbuffers::Offset<void> payload;
+
+    switch(result.payload_type)
+    {
+        case ServerPayload_Success:
+            payload = CreateSuccess(builder).Union();
+            break;
+
+        case ServerPayload_Volume:
+            payload = CreateVolume(builder, result.volume).Union();
+            break;
+
+        case ServerPayload_Error:
+            payload = CreateErrorDirect(
+                builder,
+                result.error_code,
+                result.error_message).Union();
+            break;
+
+        default:
+            return;
+    }
+
+    const auto server_message = CreateServerMessage(
+        builder,
+        request_id,
+        result.payload_type,
+        payload);
+    const auto message = CreateMessage(
+        builder,
+        MessageBody_ServerMessage,
+        server_message.Union());
+    FinishMessageBuffer(builder, message);
+
+    webSocket.sendBIN(
+        client_num,
+        builder.GetBufferPointer(),
+        builder.GetSize());
+}
+
+static void handle_binary_message(
+    uint8_t client_num,
+    uint8_t* payload,
+    size_t length)
+{
+    flatbuffers::Verifier verifier(payload, length);
+    if(!VerifyMessageBuffer(verifier))
+    {
+        Serial.println("Invalid FlatBuffers message");
+        return;
+    }
+
+    const auto* message = GetMessage(payload);
+    const auto* client_message = message->body_as_ClientMessage();
+    if(client_message == nullptr)
+    {
+        Serial.println("Received a non-client WebSocket message");
+        return;
+    }
+
+    const CommandResult result = command_handler.handle(*client_message);
+    if(client_message->request_id() != 0)
+    {
+        send_response(client_num, client_message->request_id(), result);
     }
 }
 
@@ -45,26 +121,9 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
         }
 
 
-        case WStype_TEXT:
-        {
-            JsonDocument doc;
-            DeserializationError error =
-                deserializeJson(doc, payload, length);
-
-            if(error)
-            {
-                Serial.println("Invalid JSON");
-                break;
-            }
-
-            command_handler.handle(doc);
-
-            break;
-        }
-
         case WStype_BIN:
         {
-            audio_write(payload, length);
+            handle_binary_message(client_num, payload, length);
             break;
         }
 
@@ -72,55 +131,6 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
         default:
             break;
     }
-}
-
-static void handle_audio_reset()
-{
-    audio_stoped();
-    server.send(200, "application/json", "{\"status\":\"reset\"}");
-}
-
-static void handle_volume_up()
-{
-    float volume = get_volume();
-
-    volume += 0.1f;
-    if(volume > 1.0f)
-    {
-        volume = 1.0f;
-    }
-
-    set_volume(volume);
-
-    server.send(200, "application/json", String("{\"volume\":") + String(volume) + "}");
-}
-
-static void handle_volume_down()
-{
-    float volume = get_volume();
-
-    volume -= 0.1f;
-    if(volume < 0.0f)
-    {
-        volume = 0.0f;
-    }
-
-    set_volume(volume);
-
-    server.send(
-        200,
-        "application/json",
-        String("{\"volume\":") + String(volume) + "}");
-}
-
-static void handle_get_volume()
-{
-    float volume = get_volume();
-
-    server.send(
-        200,
-        "application/json",
-        String("{\"volume\":") + String(volume) + "}");
 }
 
 static void handle_get_ip()
@@ -167,10 +177,6 @@ void web_interface_init()
 
     //Register HTTP routes
     server.on("/", HTTP_GET, handle_root);
-    server.on("/api/audio/reset", HTTP_GET, handle_audio_reset);
-    server.on("/api/audio/volume/up", HTTP_POST, handle_volume_up);
-    server.on("/api/audio/volume/down", HTTP_POST, handle_volume_down);
-    server.on("/api/audio/volume", HTTP_GET, handle_get_volume);
     server.on("/api/ip", HTTP_GET, handle_get_ip);
 
     //Serve static files from LittleFS:

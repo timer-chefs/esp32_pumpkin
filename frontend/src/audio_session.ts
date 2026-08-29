@@ -4,7 +4,12 @@ import {
   waitForAudioSocket,
 } from "./audio_socket.ts";
 
-import { sendCommand } from "./command_sender.ts";
+import {
+  resetAudio,
+  sendAudioChunk,
+  startAudioStream,
+  stopAudioStream,
+} from "./protocol_client.ts";
 
 export const AudioSessionState = {
   IDLE: "idle",
@@ -19,7 +24,7 @@ export type AudioSessionState =
 export interface AudioSessionDependencies {
   hostname?: string;
   socketFactory?: (hostname: string) => WebSocket;
-  resetAudioBuffer?: () => Promise<unknown>;
+  resetAudioBuffer?: (socket: WebSocket) => Promise<unknown>;
   onStateChange?: (state: AudioSessionState) => void;
   onError?: (error: Error) => void;
 }
@@ -33,7 +38,7 @@ export class AudioSession {
   readonly hostname: string;
 
   private readonly socketFactory: (hostname: string) => WebSocket;
-  private readonly resetAudioBuffer: () => Promise<unknown>;
+  private readonly resetAudioBuffer: (socket: WebSocket) => Promise<unknown>;
   private readonly onStateChange: (state: AudioSessionState) => void;
   private readonly onError: (error: Error) => void;
   private readonly abortController = new AbortController();
@@ -51,7 +56,7 @@ export class AudioSession {
   constructor({
     hostname = location.hostname,
     socketFactory = getAudioSocket,
-    resetAudioBuffer = () => fetch("/api/audio/reset"),
+    resetAudioBuffer = resetAudio,
     onStateChange = () => {},
     onError = () => {},
   }: AudioSessionDependencies = {}) {
@@ -94,7 +99,7 @@ export class AudioSession {
       socket.addEventListener("error", this.socketErrorHandler);
       socket.addEventListener("close", this.socketCloseHandler);
 
-      sendCommand(socket, { command: "START_AUDIO_STREAM" });
+      startAudioStream(socket);
       this.setState(AudioSessionState.STREAMING);
     } catch (error) {
       await this.stop({ notifyServer: false });
@@ -102,15 +107,14 @@ export class AudioSession {
     }
   }
 
-  send(
-    data: string | ArrayBuffer | Blob | ArrayBufferView<ArrayBuffer>,
-  ): boolean {
+  send(data: ArrayBuffer | Uint8Array<ArrayBuffer>): boolean {
     const socket = this.socket;
     if (!socket || !this.isStreaming || !isSocketOpen(socket)) {
       return false;
     }
 
-    socket.send(data);
+    const chunk = data instanceof Uint8Array ? data : new Uint8Array(data);
+    sendAudioChunk(socket, chunk);
     return true;
   }
 
@@ -203,11 +207,11 @@ export class AudioSession {
     }
 
     if (notifyServer && isSocketOpen(socket)) {
-      sendCommand(socket, { command: "STOP_AUDIO_STREAM" });
+      stopAudioStream(socket);
     }
 
-    if (resetBuffer) {
-      await this.resetAudioBuffer().catch((error) =>
+    if (resetBuffer && isSocketOpen(socket)) {
+      await this.resetAudioBuffer(socket).catch((error) =>
         this.onError(toError(error)),
       );
     }
