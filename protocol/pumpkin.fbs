@@ -1,0 +1,77 @@
+namespace Pumpkin.Protocol;
+
+table StartAudioStream {}
+
+table StopAudioStream {}
+
+table PlayShow {
+  show_id:ushort;
+}
+
+table AudioChunk {
+  pcm_s16le:[ubyte] (required);
+}
+
+table ResetAudio {}
+
+table GetVolume {}
+
+table AdjustVolume {
+  delta:float;
+}
+
+union ClientPayload {
+  StartAudioStream,
+  StopAudioStream,
+  PlayShow,
+  AudioChunk,
+  ResetAudio,
+  GetVolume,
+  AdjustVolume
+}
+
+table ClientMessage {
+  request_id:uint;
+  payload:ClientPayload (required);
+}
+
+table Success {}
+
+enum ErrorCode:ubyte {
+  UNKNOWN = 0,
+  INVALID_MESSAGE = 1,
+  UNSUPPORTED_MESSAGE = 2,
+  INVALID_ARGUMENT = 3
+}
+
+table Error {
+  code:ErrorCode = UNKNOWN;
+  message:string (required);
+}
+
+table Volume {
+  value:float;
+}
+
+union ServerPayload {
+  Success,
+  Error,
+  Volume
+}
+
+table ServerMessage {
+  request_id:uint;
+  payload:ServerPayload (required);
+}
+
+union MessageBody {
+  ClientMessage,
+  ServerMessage
+}
+
+table Message {
+  body:MessageBody (required);
+}
+
+root_type Message;
+file_identifier "PKIN";

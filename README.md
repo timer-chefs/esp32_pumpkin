@@ -35,3 +35,16 @@ ESP32-S3 Pin | Connection
 --- | ---
 GPIO 3 (internal pull-up) | Button pin 1
 GND | Button pin 2
+
+## Development
+
+The browser/device WebSocket contract is defined in `protocol/pumpkin.fbs`.
+After changing it, use `flatc` 2.0.8 to regenerate the TypeScript and C++
+bindings:
+
+```sh
+./protocol/generate.sh
+```
+
+All audio and control traffic uses this contract. `/api/ip` remains HTTP-only
+because it bootstraps the WiFi provisioning redirect page.
