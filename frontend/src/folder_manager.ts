@@ -11,7 +11,7 @@ interface DirectoryPickerWindow extends Window {
 
 let selectedFolder: ReadableDirectoryHandle | null = null;
 
-export async function selectAudioFolder(): Promise<boolean> {
+async function selectAudioFolder(): Promise<boolean> {
   try {
     const folder = await (
       window as unknown as DirectoryPickerWindow
@@ -48,10 +48,6 @@ export async function getAudioFile(fileName: string): Promise<File> {
     console.error(`Could not get file ${fileName}:`, error);
     throw new Error(`Audio file not found: ${fileName}`, { cause: error });
   }
-}
-
-export function isFolderSelected(): boolean {
-  return selectedFolder !== null;
 }
 
 export async function handleSelectAudioFolder(): Promise<void> {

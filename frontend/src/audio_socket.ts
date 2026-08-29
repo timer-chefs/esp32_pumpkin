@@ -6,7 +6,7 @@ export interface AudioSocketHandlers {
 
 let sharedSocket: WebSocket | null = null;
 
-export function createAudioSocket(
+function createAudioSocket(
   hostname: string,
   handlers: AudioSocketHandlers = {},
 ): WebSocket {
