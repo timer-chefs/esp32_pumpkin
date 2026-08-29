@@ -14,6 +14,7 @@ static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
 
 extern CommandHandler command_handler;
+static uint16_t connected_clients = 0;
 
 static void filesystem_init()
 {
@@ -27,19 +28,19 @@ static void filesystem_init()
 static void web_socket_event(uint8_t client_num, WStype_t type,
     uint8_t* payload, size_t length)
 {
-    (void)client_num;       //This is to indicate that client_num is not used.
-
     switch(type)
     {
         case WStype_CONNECTED:
         {
-            Serial.println("Client connected");
+            connected_clients++;
+            Serial.printf("Client %u connected (total: %u)\n", client_num, connected_clients);
             break;
         }
 
         case WStype_DISCONNECTED:
         {
-            Serial.println("Client disconnected");
+            connected_clients--;
+            Serial.printf("Client %u disconnected (total: %u)\n", client_num, connected_clients);
             break;
         }
 
