@@ -29,12 +29,25 @@ jobs:
         environment: ${{ fromJson(needs.detect-envs.outputs.environments) }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/cache@v6
+      - name: Cache PlatformIO toolchain
+        uses: actions/cache@v6
         with:
           path: |
-            ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio
+            ~/.platformio/packages
+            ~/.platformio/platforms
+          key: ${{ runner.os }}-platformio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-platformio-
+      - name: Cache PlatformIO build
+        uses: actions/cache@v6
+        with:
+          path: |
+            .pio/build/${{ matrix.environment }}
+            .pio/libdeps/${{ matrix.environment }}
+          key: ${{ runner.os }}-pio-build-${{ matrix.environment }}-${{ hashFiles('platformio.ini') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-pio-build-${{ matrix.environment }}-${{ hashFiles('platformio.ini') }}-
       - uses: actions/setup-python@v6
         with:
           python-version: '3.14'
@@ -43,7 +56,7 @@ jobs:
 
       - name: Build ${{ matrix.environment }}
         run: pio run -e ${{ matrix.environment }}
-  
+
   # We can't depend on jobs with dynamic names. So this job acts as a collected
   # "success" status for all of its dependencies. It will only have a "success"
   # status if all of its dependencies succeeded. That way we can configure
