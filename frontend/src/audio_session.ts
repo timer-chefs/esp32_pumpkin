@@ -1,7 +1,7 @@
 import {
-  closeAudioSocket,
-  createAudioSocket,
+  getAudioSocket,
   isSocketOpen,
+  waitForAudioSocket,
 } from "./audio_socket.ts";
 
 import { sendCommand } from "./command_sender.ts";
@@ -45,10 +45,12 @@ export class AudioSession {
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private processorNode: AudioWorkletNode | null = null;
   private stopPromise: Promise<void> | null = null;
+  private socketErrorHandler: (() => void) | null = null;
+  private socketCloseHandler: (() => void) | null = null;
 
   constructor({
     hostname = location.hostname,
-    socketFactory = createAudioSocket,
+    socketFactory = getAudioSocket,
     resetAudioBuffer = () => fetch("/api/audio/reset"),
     onStateChange = () => {},
     onError = () => {},
@@ -80,57 +82,20 @@ export class AudioSession {
     this.socket = socket;
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        let settled = false;
-        const settle = (complete: () => void) => {
-          if (settled) {
-            return;
-          }
+      await waitForAudioSocket(socket, this.abortController.signal);
 
-          settled = true;
-          this.abortController.signal.removeEventListener("abort", onAbort);
-          complete();
-        };
-        const onAbort = () =>
-          settle(() => {
-            reject(new DOMException("Audio session stopped", "AbortError"));
-          });
+      this.socketErrorHandler = () => {
+        this.onError(new Error("Audio WebSocket error"));
+        void this.stop({ notifyServer: false });
+      };
+      this.socketCloseHandler = () => {
+        void this.stop({ notifyServer: false });
+      };
+      socket.addEventListener("error", this.socketErrorHandler);
+      socket.addEventListener("close", this.socketCloseHandler);
 
-        socket.onopen = () => {
-          if (this.abortController.signal.aborted) {
-            onAbort();
-            return;
-          }
-
-          sendCommand(socket, { command: "START_AUDIO_STREAM" });
-          this.setState(AudioSessionState.STREAMING);
-          settle(resolve);
-        };
-
-        socket.onerror = () => {
-          const error = new Error("Audio WebSocket error");
-          if (this.state === AudioSessionState.CONNECTING) {
-            settle(() => reject(error));
-          } else {
-            this.onError(error);
-            void this.stop({ notifyServer: false });
-          }
-        };
-
-        socket.onclose = () => {
-          if (this.state === AudioSessionState.CONNECTING) {
-            settle(() => {
-              reject(new Error("Audio WebSocket closed before connecting"));
-            });
-          } else if (this.state === AudioSessionState.STREAMING) {
-            void this.stop({ notifyServer: false });
-          }
-        };
-
-        this.abortController.signal.addEventListener("abort", onAbort, {
-          once: true,
-        });
-      });
+      sendCommand(socket, { command: "START_AUDIO_STREAM" });
+      this.setState(AudioSessionState.STREAMING);
     } catch (error) {
       await this.stop({ notifyServer: false });
       throw error;
@@ -207,6 +172,15 @@ export class AudioSession {
     const socket = this.socket;
     this.socket = null;
 
+    if (socket && this.socketErrorHandler) {
+      socket.removeEventListener("error", this.socketErrorHandler);
+      this.socketErrorHandler = null;
+    }
+    if (socket && this.socketCloseHandler) {
+      socket.removeEventListener("close", this.socketCloseHandler);
+      this.socketCloseHandler = null;
+    }
+
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach((track) => track.stop());
       this.mediaStream = null;
@@ -230,10 +204,7 @@ export class AudioSession {
 
     if (notifyServer && isSocketOpen(socket)) {
       sendCommand(socket, { command: "STOP_AUDIO_STREAM" });
-      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-
-    closeAudioSocket(socket);
 
     if (resetBuffer) {
       await this.resetAudioBuffer().catch((error) =>
