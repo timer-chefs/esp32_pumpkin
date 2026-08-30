@@ -57,19 +57,19 @@ export function App() {
           >
             <Button
               variant={
-                state.activePanel === "microphone" ? "dark" : "outline-dark"
+                state.activeSource === "microphone" ? "dark" : "outline-dark"
               }
               className="source-button"
-              disabled={state.activePanel === "microphone"}
+              disabled={state.activeSource === "microphone"}
               onClick={actions.startMicrophone}
             >
               <Mic aria-hidden="true" />
               Microphone
             </Button>
             <Button
-              variant={state.activePanel === "file" ? "dark" : "outline-dark"}
+              variant={state.activeSource === "file" ? "dark" : "outline-dark"}
               className="source-button"
-              disabled={state.activePanel === "file"}
+              disabled={state.activeSource === "file"}
               onClick={actions.startFileMode}
             >
               <FileAudio aria-hidden="true" />
@@ -78,11 +78,11 @@ export function App() {
           </div>
 
           <div className="source-workspace">
-            {state.activePanel === null && (
+            {state.activeSource === null && (
               <p className="empty-state mb-0">No source active</p>
             )}
 
-            {state.activePanel === "microphone" && (
+            {state.activeSource === "microphone" && (
               <div className="active-source-row">
                 <Stack direction="horizontal" gap={3}>
                   <span className="status-dot" aria-hidden="true" />
@@ -99,7 +99,7 @@ export function App() {
               </div>
             )}
 
-            {state.activePanel === "file" && (
+            {state.activeSource === "file" && (
               <div className="file-source">
                 <Form.Group controlId="audio-file">
                   <Form.Label className="fw-semibold">Audio file</Form.Label>
