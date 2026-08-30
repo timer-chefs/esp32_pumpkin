@@ -45,7 +45,7 @@ static void setup_wm_ip_display()
         "    .then(function(ip){"
         "      if(ip){"
         "        clearInterval(t);"
-        "        var url='http://'+ip;"
+        "        var url='https://'+ip;"
         "        var d=document.createElement('div');"
         "        d.style.cssText='text-align:center;padding:1em;margin:1em 0;"
         "          background:#e8f5e9;border-radius:8px;';"

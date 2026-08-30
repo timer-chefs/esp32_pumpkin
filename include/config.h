@@ -17,7 +17,7 @@ constexpr size_t max_event_queue_size = 64;
 
 //Web server
 constexpr uint8_t web_server_port = 80;
-constexpr uint8_t web_socket_port = 81;
+constexpr uint16_t secure_web_server_port = 443;
 
 // Audio
 constexpr uint16_t buffer_size = 32768;
