@@ -1,12 +1,11 @@
 import { Minus, Plus } from "lucide-react";
 import { Button, ButtonGroup, Spinner } from "react-bootstrap";
 
-import { useAppContext } from "../app_context.tsx";
+import { useVolume } from "../app_context.tsx";
 
 export function VolumeControl() {
-  const { state, actions } = useAppContext();
-  const volumePercentage =
-    state.volume === null ? null : Math.round(state.volume * 100);
+  const { volume, decrease, increase } = useVolume();
+  const volumePercentage = volume === null ? null : Math.round(volume * 100);
 
   return (
     <section className="utility-section" aria-labelledby="volume-heading">
@@ -19,7 +18,7 @@ export function VolumeControl() {
           className="icon-button"
           aria-label="Decrease volume"
           title="Decrease volume"
-          onClick={actions.decreaseVolume}
+          onClick={decrease}
         >
           <Minus aria-hidden="true" />
         </Button>
@@ -40,7 +39,7 @@ export function VolumeControl() {
           className="icon-button"
           aria-label="Increase volume"
           title="Increase volume"
-          onClick={actions.increaseVolume}
+          onClick={increase}
         >
           <Plus aria-hidden="true" />
         </Button>

@@ -1,12 +1,21 @@
 import { FileAudio, Mic, Square, Volume2 } from "lucide-react";
 import { Alert, Button, Form, Spinner, Stack } from "react-bootstrap";
 
-import { useAppContext } from "../app_context.tsx";
+import { useAudioSource } from "../app_context.tsx";
 
 export function AudioSourceControl() {
-  const { state, actions } = useAppContext();
-  const { activeSource, fileStatus, microphoneStatus, streamFileEnabled } =
-    state;
+  const {
+    activeSource,
+    fileStatus,
+    microphoneStatus,
+    streamFileEnabled,
+    selectAudioFile,
+    startFile,
+    startFileMode,
+    startMicrophone,
+    stopAudio,
+    stopMicrophone,
+  } = useAudioSource();
 
   return (
     <section className="control-section" aria-labelledby="source-heading">
@@ -20,7 +29,7 @@ export function AudioSourceControl() {
           variant={activeSource === "microphone" ? "dark" : "outline-dark"}
           className="source-button"
           disabled={activeSource === "microphone"}
-          onClick={actions.startMicrophone}
+          onClick={startMicrophone}
         >
           <Mic aria-hidden="true" />
           Microphone
@@ -29,7 +38,7 @@ export function AudioSourceControl() {
           variant={activeSource === "file" ? "dark" : "outline-dark"}
           className="source-button"
           disabled={activeSource === "file"}
-          onClick={actions.startFileMode}
+          onClick={startFileMode}
         >
           <FileAudio aria-hidden="true" />
           Audio file
@@ -58,7 +67,7 @@ export function AudioSourceControl() {
             <Button
               variant="outline-danger"
               className="icon-label-button"
-              onClick={actions.stopMicrophone}
+              onClick={stopMicrophone}
             >
               <Square aria-hidden="true" />
               Stop
@@ -74,7 +83,7 @@ export function AudioSourceControl() {
                 type="file"
                 accept="audio/*"
                 onChange={(event) =>
-                  actions.selectAudioFile(
+                  selectAudioFile(
                     (event.currentTarget as HTMLInputElement).files?.[0] ??
                       null,
                   )
@@ -95,7 +104,7 @@ export function AudioSourceControl() {
                 variant="warning"
                 className="icon-label-button"
                 disabled={!streamFileEnabled}
-                onClick={actions.startFile}
+                onClick={startFile}
               >
                 <Volume2 aria-hidden="true" />
                 Stream
@@ -103,7 +112,7 @@ export function AudioSourceControl() {
               <Button
                 variant="outline-danger"
                 className="icon-label-button"
-                onClick={actions.stopAudio}
+                onClick={stopAudio}
               >
                 <Square aria-hidden="true" />
                 Stop
