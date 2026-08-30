@@ -21,6 +21,7 @@ export function renderWithAppContext(
       currentStreaming: null,
       fileStatus: null,
       folderStatus: null,
+      microphoneStatus: null,
       streamFileEnabled: false,
       volume: 1,
       ...overrides.state,

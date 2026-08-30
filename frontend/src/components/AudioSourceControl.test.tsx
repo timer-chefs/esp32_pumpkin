@@ -43,11 +43,24 @@ describe("AudioSourceControl", () => {
 
   it("shows the microphone state and delegates stopping", async () => {
     const user = userEvent.setup();
-    const controller = renderControl({ activeSource: "microphone" });
+    const controller = renderControl({
+      activeSource: "microphone",
+      microphoneStatus: "streaming",
+    });
 
     expect(screen.getByText("Microphone streaming")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Stop" }));
 
     expect(controller.actions.stopMicrophone).toHaveBeenCalledOnce();
+  });
+
+  it("shows microphone startup before streaming begins", () => {
+    renderControl({
+      activeSource: "microphone",
+      microphoneStatus: "starting",
+    });
+
+    expect(screen.getByText("Starting microphone")).toBeVisible();
+    expect(screen.queryByText("Microphone streaming")).not.toBeInTheDocument();
   });
 });
