@@ -11,10 +11,10 @@ import {
 } from "./protocol_client.ts";
 import workletUrl from "./worklet_processor.ts?worker&url";
 
-type AudioSource = "microphone" | "file";
-type StatusTone = "neutral" | "success";
+export type AudioSource = "microphone" | "file";
+export type StatusTone = "neutral" | "success";
 
-interface AppState {
+export interface AppState {
   activeSource: AudioSource | null;
   currentMode: string;
   currentStreaming: string | null;
@@ -63,7 +63,14 @@ const actions = {
   stopMicrophone: () => runAction(stopMicrophone),
 };
 
-export function useAppController() {
+export type AppActions = typeof actions;
+
+export interface AppController {
+  state: AppState;
+  actions: AppActions;
+}
+
+export function useAppController(): AppController {
   const currentState = useSyncExternalStore(subscribe, getState, getState);
 
   useEffect(() => runAction(loadVolume), []);
