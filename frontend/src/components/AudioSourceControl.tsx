@@ -1,11 +1,12 @@
 import { FileAudio, Mic, Square, Volume2 } from "lucide-react";
-import { Alert, Button, Form, Stack } from "react-bootstrap";
+import { Alert, Button, Form, Spinner, Stack } from "react-bootstrap";
 
 import { useAppContext } from "../app_context.tsx";
 
 export function AudioSourceControl() {
   const { state, actions } = useAppContext();
-  const { activeSource, fileStatus, streamFileEnabled } = state;
+  const { activeSource, fileStatus, microphoneStatus, streamFileEnabled } =
+    state;
 
   return (
     <section className="control-section" aria-labelledby="source-heading">
@@ -41,10 +42,18 @@ export function AudioSourceControl() {
         )}
 
         {activeSource === "microphone" && (
-          <div className="active-source-row">
+          <div className="active-source-row" aria-live="polite">
             <Stack direction="horizontal" gap={3}>
-              <span className="status-dot" aria-hidden="true" />
-              <strong>Microphone streaming</strong>
+              {microphoneStatus === "starting" ? (
+                <Spinner animation="border" size="sm" aria-hidden="true" />
+              ) : (
+                <span className="status-dot" aria-hidden="true" />
+              )}
+              <strong>
+                {microphoneStatus === "starting"
+                  ? "Starting microphone"
+                  : "Microphone streaming"}
+              </strong>
             </Stack>
             <Button
               variant="outline-danger"

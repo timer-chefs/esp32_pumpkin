@@ -12,6 +12,7 @@ import {
 import workletUrl from "./worklet_processor.ts?worker&url";
 
 export type AudioSource = "microphone" | "file";
+export type MicrophoneStatus = "starting" | "streaming";
 export type StatusTone = "neutral" | "success";
 
 export interface AppState {
@@ -20,6 +21,7 @@ export interface AppState {
   currentStreaming: string | null;
   fileStatus: { message: string; tone: StatusTone } | null;
   folderStatus: "success" | "error" | null;
+  microphoneStatus: MicrophoneStatus | null;
   streamFileEnabled: boolean;
   volume: number;
 }
@@ -41,6 +43,7 @@ let state: AppState = {
   currentStreaming: null,
   fileStatus: null,
   folderStatus: null,
+  microphoneStatus: null,
   streamFileEnabled: false,
   volume: 1,
 };
@@ -98,6 +101,7 @@ async function stopAudio(): Promise<void> {
     currentMode: "Idle",
     currentStreaming: null,
     fileStatus: null,
+    microphoneStatus: null,
   });
 }
 
@@ -139,7 +143,11 @@ async function startSelectedFile(): Promise<void> {
 
 async function startMicrophone(): Promise<void> {
   await stopAudio();
-  updateState({ activeSource: "microphone" });
+  updateState({
+    activeSource: "microphone",
+    currentMode: "Starting microphone",
+    microphoneStatus: "starting",
+  });
 
   let session: AudioSession | null = null;
   try {
@@ -172,13 +180,21 @@ async function startMicrophone(): Promise<void> {
     updateState({
       currentMode: "Microphone",
       currentStreaming: "Microphone",
+      microphoneStatus: "streaming",
     });
   } catch (error) {
     console.error("Could not start microphone streaming:", error);
     if (session) {
       await audioSessionManager.stop(session, { notifyServer: false });
     }
-    updateState({ activeSource: null });
+    if (state.activeSource === "microphone") {
+      updateState({
+        activeSource: null,
+        currentMode: "Idle",
+        currentStreaming: null,
+        microphoneStatus: null,
+      });
+    }
   }
 }
 
