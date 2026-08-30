@@ -1,7 +1,7 @@
-import { useAppContext } from "../app_context.tsx";
+import { useAppStatus } from "../app_context.tsx";
 
 export function AppHeader() {
-  const { currentMode, currentStreaming } = useAppContext().state;
+  const { currentMode, currentStreaming } = useAppStatus();
 
   return (
     <header className="app-header">

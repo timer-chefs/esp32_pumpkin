@@ -4,10 +4,10 @@ import { streamAudioFile } from "./audio_file.ts";
 import { audioSessionManager, type AudioSession } from "./audio_session.ts";
 import { getAudioSocket, waitForAudioSocket } from "./audio_socket.ts";
 import {
-  adjustVolume,
-  getVolume,
-  playShow,
-  resetAudio,
+    adjustVolume,
+    getVolume,
+    playShow,
+    resetAudio,
 } from "./protocol_client.ts";
 import workletUrl from "./worklet_processor.ts?worker&url";
 

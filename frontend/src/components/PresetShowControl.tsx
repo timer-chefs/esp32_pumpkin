@@ -1,10 +1,10 @@
 import { FolderOpen, Ghost } from "lucide-react";
 import { Alert, Button } from "react-bootstrap";
 
-import { useAppContext } from "../app_context.tsx";
+import { usePresetShows } from "../app_context.tsx";
 
 export function PresetShowControl() {
-  const { state, actions } = useAppContext();
+  const { folderStatus, playGhostShow, selectAudioFolder } = usePresetShows();
 
   return (
     <section className="utility-section" aria-labelledby="shows-heading">
@@ -15,7 +15,7 @@ export function PresetShowControl() {
         <Button
           variant="outline-dark"
           className="icon-label-button"
-          onClick={actions.selectAudioFolder}
+          onClick={selectAudioFolder}
         >
           <FolderOpen aria-hidden="true" />
           Audio folder
@@ -23,19 +23,19 @@ export function PresetShowControl() {
         <Button
           variant="success"
           className="icon-label-button"
-          onClick={actions.playGhostShow}
+          onClick={playGhostShow}
         >
           <Ghost aria-hidden="true" />
           Ghost
         </Button>
       </div>
-      {state.folderStatus && (
+      {folderStatus && (
         <Alert
-          variant={state.folderStatus === "success" ? "success" : "danger"}
+          variant={folderStatus === "success" ? "success" : "danger"}
           className="compact-alert"
           aria-live="polite"
         >
-          {state.folderStatus === "success"
+          {folderStatus === "success"
             ? "Audio folder ready"
             : "Audio folder unavailable"}
         </Alert>
