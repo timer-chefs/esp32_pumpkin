@@ -3,13 +3,21 @@
 
 #include <Arduino.h>
 #include "show_manager.h"
-#include <ArduinoJson.h>
+#include "pumpkin_generated.h"
+
+struct CommandResult
+{
+    Pumpkin::Protocol::ServerPayload payload_type;
+    Pumpkin::Protocol::ErrorCode error_code;
+    float volume;
+    const char* error_message;
+};
 
 class CommandHandler
 {
 public:
     CommandHandler(ShowManager& show_manager);
-    void handle(const JsonDocument& doc);
+    CommandResult handle(const Pumpkin::Protocol::ClientMessage& message);
 private:    
     ShowManager& show_manager;
 };

@@ -1,0 +1,49 @@
+name: Validate protocol bindings
+
+on:
+  push:
+    branches:
+      - main
+    paths: &protocol-paths
+      - ".github/workflows/validate-protocol.yml"
+      - "protocol/**"
+      - "frontend/src/generated/**"
+      - "lib/protocol/**"
+  pull_request:
+    paths: *protocol-paths
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install flatc 25.9.23
+        env:
+          FLATC_URL: https://github.com/google/flatbuffers/releases/download/v25.9.23/Linux.flatc.binary.clang++-18.zip
+          FLATC_SHA256: d66be9ad0ae21a6388683552191c84f6728b46436dd5a49dc693ef679987c2df
+        run: |
+          mkdir -p "$RUNNER_TEMP/flatc/bin"
+          curl --fail --location --silent --show-error "$FLATC_URL" \
+            --output "$RUNNER_TEMP/flatc/flatc.zip"
+          echo "$FLATC_SHA256  $RUNNER_TEMP/flatc/flatc.zip" | sha256sum --check --strict
+          unzip -q "$RUNNER_TEMP/flatc/flatc.zip" -d "$RUNNER_TEMP/flatc/bin"
+          chmod +x "$RUNNER_TEMP/flatc/bin/flatc"
+          echo "$RUNNER_TEMP/flatc/bin" >> "$GITHUB_PATH"
+
+      - name: Generate protocol bindings
+        run: ./protocol/generate.sh
+
+      - name: Check generated bindings
+        run: |
+          changes="$(git status --porcelain -- frontend/src/generated lib/protocol)"
+          if [[ -n "$changes" ]]; then
+            echo "::error::Generated protocol bindings are out of date."
+            echo "Run ./protocol/generate.sh, then commit the changes in frontend/src/generated and lib/protocol."
+            git diff -- frontend/src/generated lib/protocol
+            printf '%s\n' "$changes"
+            exit 1
+          fi
+
+          echo "✅ Generated protocol bindings are up to date."

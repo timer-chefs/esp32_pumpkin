@@ -18,12 +18,28 @@ constexpr size_t max_event_queue_size = 64;
 //Web server
 constexpr uint8_t web_server_port = 80;
 constexpr uint8_t web_socket_port = 81;
+// Audio-chunk frames and command frames (e.g. a button press) share one
+// websocket connection, and the library only dequeues one queued frame per
+// call. Drain up to this many per loop() iteration so a backlog of audio
+// frames doesn't delay a command frame queued behind them.
+constexpr uint8_t max_websocket_frames_per_loop = 8;
 
 // Audio
 constexpr uint16_t buffer_size = 32768;
 constexpr uint16_t sample_rate = 16000;
 constexpr uint8_t channels = 1;
 constexpr uint8_t bits_per_sample = 16;
+
+// If the amount of buffered-but-not-yet-played audio grows past this, the
+// device starts trimming small slices off the oldest buffered audio on
+// every write to catch back up, instead of letting playback lag behind
+// forever.
+constexpr uint16_t audio_catch_up_high_water_ms = 100;
+// ...and keeps trimming until buffered audio drops back down to this level.
+constexpr uint16_t audio_catch_up_low_water_ms = 50;
+// How much to trim per write while catching up. Small enough to be
+// inaudible as an individual drop.
+constexpr uint16_t audio_catch_up_step_ms = 4;
 
 // LED strip
 constexpr uint8_t pin_led_strip = GPIO_NUM_48;

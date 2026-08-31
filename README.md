@@ -46,3 +46,46 @@ ESP32-S3 Pin | Connection
 --- | ---
 GPIO 3 (internal pull-up) | Button pin 1
 GND | Button pin 2
+
+## Development
+
+### Dependencies
+
+- FlatBuffers 25.9.23 (available on [GitHub](https://github.com/google/flatbuffers/releases/v25.9.23))
+- platformio (tested with 6.1.19, available through [PIP](https://pypi.org/project/platformio/))
+- node (tested with v24.14.0)
+- npm (tested with version 11.9.0)
+
+### Run the client with an ESP32 backend
+
+```sh
+# Use the IP of your ESP32 device
+export ESP32_HOST=...
+npm --prefix frontend run dev
+```
+
+### Build the client
+
+```sh
+npm --prefix frontend run build
+```
+
+### Build the ESP32 firmware
+
+```sh
+# Builds and uploads
+pio run -e application upload
+# Uploads the client source code to the ESP's file system
+pio run -e application uploadfs
+```
+
+### Client-server protocol contract
+
+The browser/device WebSocket contract is defined through the FlatBuffer specification in `protocol/pumpkin.fbs`.
+After changing it, use `flatc` 25.9.23 to regenerate the TypeScript and C++ bindings:
+
+```sh
+./protocol/generate.sh
+```
+
+All audio and control traffic use this contract except `/api/ip` which remains HTTP-only because it's used during bootstrapping of the WiFi provisioning page.

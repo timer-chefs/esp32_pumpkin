@@ -3,11 +3,34 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "dev": "vite",
+    "format:check": "prettier --check \"**/*.{ts,tsx}\"",
+    "format": "prettier --write src",
+    "preview": "vite preview",
+    "test:watch": "vitest",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "vite": "^8.1.5"
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.6",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "flatbuffers": "25.9.23",
+    "lucide-react": "^1.35.0",
+    "react": "^19.2.8",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.2.8"
   }
 }
