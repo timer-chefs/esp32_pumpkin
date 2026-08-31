@@ -1,10 +1,12 @@
 import { Minus, Plus } from "lucide-react";
-import { Button, ButtonGroup } from "react-bootstrap";
+import { Button, ButtonGroup, Spinner } from "react-bootstrap";
 
 import { useAppContext } from "../app_context.tsx";
 
 export function VolumeControl() {
   const { state, actions } = useAppContext();
+  const volumePercentage =
+    state.volume === null ? null : Math.round(state.volume * 100);
 
   return (
     <section className="utility-section" aria-labelledby="volume-heading">
@@ -21,9 +23,17 @@ export function VolumeControl() {
         >
           <Minus aria-hidden="true" />
         </Button>
-        <output className="volume-readout">
-          <strong>{Math.round(state.volume * 100)}</strong>
-          <small>%</small>
+        <output
+          className="volume-readout"
+          aria-busy={volumePercentage === null}
+          aria-label={
+            volumePercentage === null
+              ? "Volume loading"
+              : `Volume ${volumePercentage}%`
+          }
+        >
+          <strong>{volumePercentage ?? <Spinner role="status" />}</strong>
+          {volumePercentage !== null && <small>%</small>}
         </output>
         <Button
           variant="outline-dark"

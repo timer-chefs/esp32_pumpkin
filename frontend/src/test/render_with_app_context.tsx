@@ -23,7 +23,7 @@ export function renderWithAppContext(
       folderStatus: null,
       microphoneStatus: null,
       streamFileEnabled: false,
-      volume: 1,
+      volume: null,
       ...overrides.state,
     },
     actions: {

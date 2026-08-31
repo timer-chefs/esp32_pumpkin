@@ -23,7 +23,7 @@ export interface AppState {
   folderStatus: "success" | "error" | null;
   microphoneStatus: MicrophoneStatus | null;
   streamFileEnabled: boolean;
-  volume: number;
+  volume: number | null;
 }
 
 interface ReadableDirectoryHandle extends FileSystemDirectoryHandle {
@@ -45,11 +45,10 @@ let state: AppState = {
   folderStatus: null,
   microphoneStatus: null,
   streamFileEnabled: false,
-  volume: 1,
+  volume: null,
 };
 let selectedFile: File | null = null;
 let selectedFolder: ReadableDirectoryHandle | null = null;
-let volume = 0.5;
 
 const listeners = new Set<() => void>();
 
@@ -263,12 +262,12 @@ async function streamFile(file: File): Promise<void> {
 }
 
 async function loadVolume(): Promise<void> {
-  volume = await getVolume(await getOpenSocket());
+  const volume = await getVolume(await getOpenSocket());
   updateState({ volume });
 }
 
 async function changeVolume(delta: number): Promise<void> {
-  volume = await adjustVolume(await getOpenSocket(), delta);
+  const volume = await adjustVolume(await getOpenSocket(), delta);
   updateState({ volume });
 }
 

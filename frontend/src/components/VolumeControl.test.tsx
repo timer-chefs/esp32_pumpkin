@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -6,6 +6,14 @@ import { renderWithAppContext } from "../test/render_with_app_context.tsx";
 import { VolumeControl } from "./VolumeControl.tsx";
 
 describe("VolumeControl", () => {
+  it("disables adjustments while the volume is loading", () => {
+    renderWithAppContext(<VolumeControl />);
+
+    const readout = screen.getByLabelText("Volume loading");
+    expect(readout).toHaveAttribute("aria-busy", "true");
+    expect(within(readout).getByRole("status")).toBeInTheDocument();
+  });
+
   it("rounds the volume percentage and delegates adjustments", async () => {
     const user = userEvent.setup();
     const { controller } = renderWithAppContext(<VolumeControl />, {
