@@ -13,7 +13,9 @@ It is meant to prototype the voice over wifi capability.
 3) Give permission to the browser to access your mic.
 4) Start talking on your phone. Your voice should be heard out of the device's speaker.
 
-Note: Microphone access typically requires a secure context (HTTPS), so this may not work over plain http:// on many mobile browsers unless you enable a browser exception.
+The application uses HTTPS/WSS with a device-generated self-signed certificate.
+Accept the browser's certificate warning before using microphone streaming. The
+WiFi provisioning portal remains on HTTP and redirects to HTTPS after setup.
 
 ## LittleFS
 We are using LittleFS to create a lightweight filesystem in the MCU. This helps organize and store the webpage in different files in the folder `./data`. Then it is converted into a binary that is later uploaded into the microcontroller.

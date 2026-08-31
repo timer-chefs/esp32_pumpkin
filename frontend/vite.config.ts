@@ -1,5 +1,5 @@
-import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
   const environment = loadEnv(mode, ".", "");
@@ -16,12 +16,14 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         "/api": {
-          target: `http://${esp32Host}`,
+          target: `https://${esp32Host}`,
           changeOrigin: true,
+          secure: false,
         },
         "/ws": {
-          target: `ws://${esp32Host}:81`,
+          target: `wss://${esp32Host}`,
           ws: true,
+          secure: false,
           rewriteWsOrigin: true,
         },
       },

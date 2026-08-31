@@ -30,8 +30,8 @@ void setup()
     }
     else
     {
-        Serial.println(String("mDNS: http://") + mdns_hostname + ".local");
-        MDNS.addService("http", "tcp", web_server_port);
+        Serial.println(String("mDNS: https://") + mdns_hostname + ".local");
+        MDNS.addService("https", "tcp", secure_web_server_port);
     }
 
     web_interface_init();
@@ -51,7 +51,7 @@ void loop()
     wifi_manager_service();
 
     web_interface_service();
-    
+
     if(is_audio_ready)
     {
         audio_service();

@@ -10,9 +10,10 @@ function createAudioSocket(
   hostname: string,
   handlers: AudioSocketHandlers = {},
 ): WebSocket {
+  const websocketProtocol = location.protocol === "https:" ? "wss" : "ws";
   const websocketUrl = import.meta.env.DEV
-    ? `ws://${hostname}:${location.port}/ws`
-    : `ws://${hostname}:81/`;
+    ? `${websocketProtocol}://${hostname}:${location.port}/ws`
+    : `wss://${hostname}/ws`;
   const socket = new WebSocket(websocketUrl);
   socket.binaryType = "arraybuffer";
 
