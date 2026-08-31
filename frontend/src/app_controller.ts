@@ -2,7 +2,10 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import { streamAudioFile } from "./audio_file.ts";
 import { audioSessionManager, type AudioSession } from "./audio_session.ts";
-import { getAudioSocket, waitForAudioSocket } from "./audio_socket.ts";
+import {
+  getPumpkinConnection,
+  type PumpkinConnection,
+} from "./pumpkin_connection.ts";
 import api from "./pumpkin_client.ts";
 import workletUrl from "./worklet_processor.ts?worker&url";
 
@@ -71,7 +74,7 @@ export function useAppController(): AppController {
   const currentState = useSyncExternalStore(subscribe, getState, getState);
 
   useEffect(() => {
-    getAudioSocket(location.hostname);
+    getPumpkinConnection(location.hostname);
     runAction(loadVolume);
   }, []);
 
@@ -230,8 +233,8 @@ async function selectAudioFolder(): Promise<void> {
 }
 
 async function playGhostShow(): Promise<void> {
-  const socket = await getOpenSocket();
-  api.playShow(socket, GHOST_SHOW.id);
+  const connection = await getOpenConnection();
+  api.playShow(connection, GHOST_SHOW.id);
 
   try {
     const file = await getAudioFile(GHOST_SHOW.audioFile);
@@ -260,25 +263,27 @@ async function streamFile(file: File): Promise<void> {
 }
 
 async function loadVolume(): Promise<void> {
-  const volume = await api.getVolume(await getOpenSocket());
+  const volume = await api.getVolume(await getOpenConnection());
   updateState({ volume });
 }
 
 async function changeVolume(delta: number): Promise<void> {
-  const volume = await api.adjustVolume(await getOpenSocket(), delta);
+  const volume = await api.adjustVolume(await getOpenConnection(), delta);
   updateState({ volume });
 }
 
 async function resetAudioBuffer(): Promise<void> {
   try {
-    await api.resetAudio(await getOpenSocket());
+    await api.resetAudio(await getOpenConnection());
   } catch (error) {
     console.warn("Could not reset audio buffer:", error);
   }
 }
 
-function getOpenSocket(): Promise<WebSocket> {
-  return waitForAudioSocket(getAudioSocket(location.hostname));
+async function getOpenConnection(): Promise<PumpkinConnection> {
+  const connection = getPumpkinConnection(location.hostname);
+  await connection.waitUntilOpen();
+  return connection;
 }
 
 function runAction(action: () => void | Promise<void>): void {

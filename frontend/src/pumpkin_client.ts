@@ -9,58 +9,61 @@ import {
   StartAudioStream,
   StopAudioStream,
 } from "./generated/pumpkin/protocol.ts";
-import { sendMessage, sendRequest } from "./protocol_client.ts";
+import type { PumpkinConnection } from "./pumpkin_connection.ts";
 
 export default class PumpkinClient {
-  static startAudioStream(socket: WebSocket): void {
-    sendMessage(socket, ClientPayload.StartAudioStream, (builder) =>
+  static startAudioStream(connection: PumpkinConnection): void {
+    connection.sendMessage(ClientPayload.StartAudioStream, (builder) =>
       StartAudioStream.createStartAudioStream(builder),
     );
   }
 
-  static stopAudioStream(socket: WebSocket): void {
-    sendMessage(socket, ClientPayload.StopAudioStream, (builder) =>
+  static stopAudioStream(connection: PumpkinConnection): void {
+    connection.sendMessage(ClientPayload.StopAudioStream, (builder) =>
       StopAudioStream.createStopAudioStream(builder),
     );
   }
 
-  static playShow(socket: WebSocket, show: number): void {
-    sendMessage(socket, ClientPayload.PlayShow, (builder) =>
+  static playShow(connection: PumpkinConnection, show: number): void {
+    connection.sendMessage(ClientPayload.PlayShow, (builder) =>
       PlayShow.createPlayShow(builder, show),
     );
   }
 
-  static sendAudioChunk(socket: WebSocket, pcmS16le: Uint8Array): void {
-    sendMessage(socket, ClientPayload.AudioChunk, (builder) => {
+  static sendAudioChunk(
+    connection: PumpkinConnection,
+    pcmS16le: Uint8Array,
+  ): void {
+    connection.sendMessage(ClientPayload.AudioChunk, (builder) => {
       const pcm = AudioChunk.createPcmS16leVector(builder, pcmS16le);
       return AudioChunk.createAudioChunk(builder, pcm);
     });
   }
 
-  static async resetAudio(socket: WebSocket): Promise<void> {
-    await sendRequest(
-      socket,
+  static resetAudio(connection: PumpkinConnection): Promise<void> {
+    return connection.sendRequest(
       ClientPayload.ResetAudio,
       (builder) => ResetAudio.createResetAudio(builder),
       ServerPayload.Success,
     );
   }
 
-  static async getVolume(socket: WebSocket): Promise<number> {
-    return (await sendRequest(
-      socket,
+  static getVolume(connection: PumpkinConnection): Promise<number> {
+    return connection.sendRequest(
       ClientPayload.GetVolume,
       (builder) => GetVolume.createGetVolume(builder),
       ServerPayload.Volume,
-    ))!;
+    );
   }
 
-  static async adjustVolume(socket: WebSocket, delta: number): Promise<number> {
-    return (await sendRequest(
-      socket,
+  static adjustVolume(
+    connection: PumpkinConnection,
+    delta: number,
+  ): Promise<number> {
+    return connection.sendRequest(
       ClientPayload.AdjustVolume,
       (builder) => AdjustVolume.createAdjustVolume(builder, delta),
       ServerPayload.Volume,
-    ))!;
+    );
   }
 }

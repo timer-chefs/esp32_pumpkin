@@ -1,8 +1,7 @@
 import {
-  getAudioSocket,
-  isSocketOpen,
-  waitForAudioSocket,
-} from "./audio_socket.ts";
+  getPumpkinConnection,
+  type PumpkinConnection,
+} from "./pumpkin_connection.ts";
 
 import api from "./pumpkin_client.ts";
 
@@ -18,8 +17,8 @@ export type AudioSessionState =
 
 export interface AudioSessionDependencies {
   hostname?: string;
-  socketFactory?: (hostname: string) => WebSocket;
-  resetAudioBuffer?: (socket: WebSocket) => Promise<unknown>;
+  connectionFactory?: (hostname: string) => PumpkinConnection;
+  resetAudioBuffer?: (connection: PumpkinConnection) => Promise<unknown>;
   onStateChange?: (state: AudioSessionState) => void;
   onError?: (error: Error) => void;
 }
@@ -32,31 +31,33 @@ export interface StopAudioSessionOptions {
 export class AudioSession {
   readonly hostname: string;
 
-  private readonly socketFactory: (hostname: string) => WebSocket;
-  private readonly resetAudioBuffer: (socket: WebSocket) => Promise<unknown>;
+  private readonly connectionFactory: (hostname: string) => PumpkinConnection;
+  private readonly resetAudioBuffer: (
+    connection: PumpkinConnection,
+  ) => Promise<unknown>;
   private readonly onStateChange: (state: AudioSessionState) => void;
   private readonly onError: (error: Error) => void;
   private readonly abortController = new AbortController();
 
   private state: AudioSessionState = AudioSessionState.IDLE;
-  private socket: WebSocket | null = null;
+  private connection: PumpkinConnection | null = null;
   private mediaStream: MediaStream | null = null;
   private audioContext: AudioContext | null = null;
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private processorNode: AudioWorkletNode | null = null;
   private stopPromise: Promise<void> | null = null;
-  private socketErrorHandler: (() => void) | null = null;
-  private socketCloseHandler: (() => void) | null = null;
+  private connectionErrorHandler: (() => void) | null = null;
+  private connectionCloseHandler: (() => void) | null = null;
 
   constructor({
     hostname = location.hostname,
-    socketFactory = getAudioSocket,
+    connectionFactory = getPumpkinConnection,
     resetAudioBuffer = api.resetAudio,
     onStateChange = () => {},
     onError = () => {},
   }: AudioSessionDependencies = {}) {
     this.hostname = hostname;
-    this.socketFactory = socketFactory;
+    this.connectionFactory = connectionFactory;
     this.resetAudioBuffer = resetAudioBuffer;
     this.onStateChange = onStateChange;
     this.onError = onError;
@@ -78,23 +79,23 @@ export class AudioSession {
     }
 
     this.setState(AudioSessionState.CONNECTING);
-    const socket = this.socketFactory(this.hostname);
-    this.socket = socket;
+    const connection = this.connectionFactory(this.hostname);
+    this.connection = connection;
 
     try {
-      await waitForAudioSocket(socket, this.abortController.signal);
+      await connection.waitUntilOpen(this.abortController.signal);
 
-      this.socketErrorHandler = () => {
+      this.connectionErrorHandler = () => {
         this.onError(new Error("Audio WebSocket error"));
         void this.stop({ notifyServer: false });
       };
-      this.socketCloseHandler = () => {
+      this.connectionCloseHandler = () => {
         void this.stop({ notifyServer: false });
       };
-      socket.addEventListener("error", this.socketErrorHandler);
-      socket.addEventListener("close", this.socketCloseHandler);
+      connection.addEventListener("error", this.connectionErrorHandler);
+      connection.addEventListener("close", this.connectionCloseHandler);
 
-      api.startAudioStream(socket);
+      api.startAudioStream(connection);
       this.setState(AudioSessionState.STREAMING);
     } catch (error) {
       await this.stop({ notifyServer: false });
@@ -103,13 +104,13 @@ export class AudioSession {
   }
 
   send(data: ArrayBuffer | Uint8Array<ArrayBuffer>): boolean {
-    const socket = this.socket;
-    if (!socket || !this.isStreaming || !isSocketOpen(socket)) {
+    const connection = this.connection;
+    if (!connection || !this.isStreaming || !connection.isOpen) {
       return false;
     }
 
     const chunk = data instanceof Uint8Array ? data : new Uint8Array(data);
-    api.sendAudioChunk(socket, chunk);
+    api.sendAudioChunk(connection, chunk);
     return true;
   }
 
@@ -168,16 +169,16 @@ export class AudioSession {
     this.setState(AudioSessionState.STOPPING);
     this.abortController.abort();
 
-    const socket = this.socket;
-    this.socket = null;
+    const connection = this.connection;
+    this.connection = null;
 
-    if (socket && this.socketErrorHandler) {
-      socket.removeEventListener("error", this.socketErrorHandler);
-      this.socketErrorHandler = null;
+    if (connection && this.connectionErrorHandler) {
+      connection.removeEventListener("error", this.connectionErrorHandler);
+      this.connectionErrorHandler = null;
     }
-    if (socket && this.socketCloseHandler) {
-      socket.removeEventListener("close", this.socketCloseHandler);
-      this.socketCloseHandler = null;
+    if (connection && this.connectionCloseHandler) {
+      connection.removeEventListener("close", this.connectionCloseHandler);
+      this.connectionCloseHandler = null;
     }
 
     if (this.mediaStream) {
@@ -201,12 +202,12 @@ export class AudioSession {
       this.audioContext = null;
     }
 
-    if (notifyServer && isSocketOpen(socket)) {
-      api.stopAudioStream(socket);
+    if (notifyServer && connection?.isOpen) {
+      api.stopAudioStream(connection);
     }
 
-    if (resetBuffer && isSocketOpen(socket)) {
-      await this.resetAudioBuffer(socket).catch((error) =>
+    if (resetBuffer && connection?.isOpen) {
+      await this.resetAudioBuffer(connection).catch((error) =>
         this.onError(toError(error)),
       );
     }
