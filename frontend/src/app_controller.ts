@@ -3,12 +3,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { streamAudioFile } from "./audio_file.ts";
 import { audioSessionManager, type AudioSession } from "./audio_session.ts";
 import { getAudioSocket, waitForAudioSocket } from "./audio_socket.ts";
-import {
-    adjustVolume,
-    getVolume,
-    playShow,
-    resetAudio,
-} from "./protocol_client.ts";
+import api from "./pumpkin_client.ts";
 import workletUrl from "./worklet_processor.ts?worker&url";
 
 export type AudioSource = "microphone" | "file";
@@ -233,7 +228,7 @@ async function selectAudioFolder(): Promise<void> {
 
 async function playGhostShow(): Promise<void> {
   const socket = await getOpenSocket();
-  playShow(socket, GHOST_SHOW.id);
+  api.playShow(socket, GHOST_SHOW.id);
 
   try {
     const file = await getAudioFile(GHOST_SHOW.audioFile);
@@ -262,18 +257,18 @@ async function streamFile(file: File): Promise<void> {
 }
 
 async function loadVolume(): Promise<void> {
-  const volume = await getVolume(await getOpenSocket());
+  const volume = await api.getVolume(await getOpenSocket());
   updateState({ volume });
 }
 
 async function changeVolume(delta: number): Promise<void> {
-  const volume = await adjustVolume(await getOpenSocket(), delta);
+  const volume = await api.adjustVolume(await getOpenSocket(), delta);
   updateState({ volume });
 }
 
 async function resetAudioBuffer(): Promise<void> {
   try {
-    await resetAudio(await getOpenSocket());
+    await api.resetAudio(await getOpenSocket());
   } catch (error) {
     console.warn("Could not reset audio buffer:", error);
   }

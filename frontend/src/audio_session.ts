@@ -4,12 +4,7 @@ import {
   waitForAudioSocket,
 } from "./audio_socket.ts";
 
-import {
-  resetAudio,
-  sendAudioChunk,
-  startAudioStream,
-  stopAudioStream,
-} from "./protocol_client.ts";
+import api from "./pumpkin_client.ts";
 
 export const AudioSessionState = {
   IDLE: "idle",
@@ -56,7 +51,7 @@ export class AudioSession {
   constructor({
     hostname = location.hostname,
     socketFactory = getAudioSocket,
-    resetAudioBuffer = resetAudio,
+    resetAudioBuffer = api.resetAudio,
     onStateChange = () => {},
     onError = () => {},
   }: AudioSessionDependencies = {}) {
@@ -99,7 +94,7 @@ export class AudioSession {
       socket.addEventListener("error", this.socketErrorHandler);
       socket.addEventListener("close", this.socketCloseHandler);
 
-      startAudioStream(socket);
+      api.startAudioStream(socket);
       this.setState(AudioSessionState.STREAMING);
     } catch (error) {
       await this.stop({ notifyServer: false });
@@ -114,7 +109,7 @@ export class AudioSession {
     }
 
     const chunk = data instanceof Uint8Array ? data : new Uint8Array(data);
-    sendAudioChunk(socket, chunk);
+    api.sendAudioChunk(socket, chunk);
     return true;
   }
 
@@ -207,7 +202,7 @@ export class AudioSession {
     }
 
     if (notifyServer && isSocketOpen(socket)) {
-      stopAudioStream(socket);
+      api.stopAudioStream(socket);
     }
 
     if (resetBuffer && isSocketOpen(socket)) {

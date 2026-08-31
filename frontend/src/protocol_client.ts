@@ -1,20 +1,13 @@
 import * as flatbuffers from "flatbuffers";
 
 import {
-  AdjustVolume,
-  AudioChunk,
   ClientMessage,
   ClientPayload,
-  GetVolume,
+  Error as ProtocolError,
   Message,
   MessageBody,
-  PlayShow,
-  Error as ProtocolError,
-  ResetAudio,
   ServerMessage,
   ServerPayload,
-  StartAudioStream,
-  StopAudioStream,
   Volume,
 } from "./generated/pumpkin_generated.ts";
 
@@ -28,64 +21,19 @@ interface PendingRequest {
 const pendingRequests = new WeakMap<WebSocket, Map<number, PendingRequest>>();
 let nextRequestId = 1;
 
-type CreatePayload = (builder: flatbuffers.Builder) => flatbuffers.Offset;
+export type CreatePayload = (
+  builder: flatbuffers.Builder,
+) => flatbuffers.Offset;
 
-export function startAudioStream(socket: WebSocket): void {
-  sendMessage(socket, ClientPayload.StartAudioStream, (builder) =>
-    StartAudioStream.createStartAudioStream(builder),
-  );
-}
-
-export function stopAudioStream(socket: WebSocket): void {
-  sendMessage(socket, ClientPayload.StopAudioStream, (builder) =>
-    StopAudioStream.createStopAudioStream(builder),
-  );
-}
-
-export function playShow(socket: WebSocket, show: number): void {
-  sendMessage(socket, ClientPayload.PlayShow, (builder) =>
-    PlayShow.createPlayShow(builder, show),
-  );
-}
-
-export function sendAudioChunk(socket: WebSocket, pcmS16le: Uint8Array): void {
-  sendMessage(socket, ClientPayload.AudioChunk, (builder) => {
-    const pcm = AudioChunk.createPcmS16leVector(builder, pcmS16le);
-    return AudioChunk.createAudioChunk(builder, pcm);
-  });
-}
-
-export async function resetAudio(socket: WebSocket): Promise<void> {
-  await sendRequest(
-    socket,
-    ClientPayload.ResetAudio,
-    (builder) => ResetAudio.createResetAudio(builder),
-    ServerPayload.Success,
-  );
-}
-
-export async function getVolume(socket: WebSocket): Promise<number> {
-  return (await sendRequest(
-    socket,
-    ClientPayload.GetVolume,
-    (builder) => GetVolume.createGetVolume(builder),
-    ServerPayload.Volume,
-  ))!;
-}
-
-export async function adjustVolume(
+export function sendMessage(
   socket: WebSocket,
-  delta: number,
-): Promise<number> {
-  return (await sendRequest(
-    socket,
-    ClientPayload.AdjustVolume,
-    (builder) => AdjustVolume.createAdjustVolume(builder, delta),
-    ServerPayload.Volume,
-  ))!;
+  payloadType: ClientPayload,
+  createPayload: CreatePayload,
+): void {
+  socket.send(encodeMessage(payloadType, createPayload, 0));
 }
 
-function sendRequest(
+export function sendRequest(
   socket: WebSocket,
   payloadType: ClientPayload,
   createPayload: CreatePayload,
@@ -159,14 +107,6 @@ function getPendingRequests(socket: WebSocket): Map<number, PendingRequest> {
   });
 
   return requests;
-}
-
-function sendMessage(
-  socket: WebSocket,
-  payloadType: ClientPayload,
-  createPayload: CreatePayload,
-): void {
-  socket.send(encodeMessage(payloadType, createPayload, 0));
 }
 
 function encodeMessage(
