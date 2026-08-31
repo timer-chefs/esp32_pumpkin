@@ -4,6 +4,7 @@ import {
 } from "./pumpkin_connection.ts";
 
 import api from "./pumpkin_client.ts";
+import { toError } from "./to_error.ts";
 
 export const AudioSessionState = {
   IDLE: "idle",
@@ -46,8 +47,7 @@ export class AudioSession {
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private processorNode: AudioWorkletNode | null = null;
   private stopPromise: Promise<void> | null = null;
-  private connectionErrorHandler: (() => void) | null = null;
-  private connectionCloseHandler: (() => void) | null = null;
+  private unsubscribeDisconnect: (() => void) | null = null;
 
   constructor({
     hostname = location.hostname,
@@ -85,15 +85,12 @@ export class AudioSession {
     try {
       await connection.waitUntilOpen(this.abortController.signal);
 
-      this.connectionErrorHandler = () => {
-        this.onError(new Error("Audio WebSocket error"));
+      this.unsubscribeDisconnect = connection.onDisconnect((reason) => {
+        if (reason === "error") {
+          this.onError(new Error("Audio WebSocket error"));
+        }
         void this.stop({ notifyServer: false });
-      };
-      this.connectionCloseHandler = () => {
-        void this.stop({ notifyServer: false });
-      };
-      connection.addEventListener("error", this.connectionErrorHandler);
-      connection.addEventListener("close", this.connectionCloseHandler);
+      });
 
       api.startAudioStream(connection);
       this.setState(AudioSessionState.STREAMING);
@@ -172,14 +169,8 @@ export class AudioSession {
     const connection = this.connection;
     this.connection = null;
 
-    if (connection && this.connectionErrorHandler) {
-      connection.removeEventListener("error", this.connectionErrorHandler);
-      this.connectionErrorHandler = null;
-    }
-    if (connection && this.connectionCloseHandler) {
-      connection.removeEventListener("close", this.connectionCloseHandler);
-      this.connectionCloseHandler = null;
-    }
+    this.unsubscribeDisconnect?.();
+    this.unsubscribeDisconnect = null;
 
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach((track) => track.stop());
@@ -277,7 +268,3 @@ class AudioSessionManager {
 }
 
 export const audioSessionManager = new AudioSessionManager();
-
-function toError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
-}

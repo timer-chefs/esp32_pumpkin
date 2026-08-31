@@ -10,11 +10,12 @@ import {
   ServerPayload,
   Volume,
 } from "./generated/pumpkin/protocol.ts";
+import { toError } from "./to_error.ts";
 
-export type CreatePayload = (
-  builder: flatbuffers.Builder,
-) => flatbuffers.Offset;
+type CreatePayload = (builder: flatbuffers.Builder) => flatbuffers.Offset;
 
+// decodeResponse only ever populates `value` for ServerPayload.Volume, so
+// that's the only payload sendRequest's callers can resolve a number for.
 type ResponseValue<Payload extends ServerPayload> =
   Payload extends ServerPayload.Volume ? number : void;
 
@@ -25,7 +26,8 @@ interface PendingRequest {
   timeout: ReturnType<typeof setTimeout>;
 }
 
-type ConnectionEvent = "close" | "error";
+type DisconnectReason = "close" | "error";
+type DisconnectListener = (reason: DisconnectReason) => void;
 
 const REQUEST_TIMEOUT_MS = 5000;
 
@@ -33,6 +35,7 @@ const REQUEST_TIMEOUT_MS = 5000;
 export class PumpkinConnection {
   private socket: WebSocket;
   private readonly pendingRequests = new Map<number, PendingRequest>();
+  private readonly disconnectListeners = new Set<DisconnectListener>();
   private nextRequestId = 1;
 
   constructor(private readonly hostname: string) {
@@ -49,6 +52,11 @@ export class PumpkinConnection {
       this.socket.readyState === WebSocket.CLOSING ||
       this.socket.readyState === WebSocket.CLOSED
     ) {
+      // The current socket is on its way out and about to be replaced.
+      // Tell subscribers now rather than waiting for its close event, which
+      // by the time it fires will target a socket that's no longer current
+      // and would otherwise be silently ignored (see handleDisconnect).
+      this.handleCurrentSocketLost("close");
       this.socket = this.createSocket();
     }
 
@@ -94,13 +102,15 @@ export class PumpkinConnection {
     });
   }
 
-  /** Listens for disconnects on the current socket, e.g. so a caller can notice a session died. */
-  addEventListener(type: ConnectionEvent, listener: () => void): void {
-    this.socket.addEventListener(type, listener);
-  }
-
-  removeEventListener(type: ConnectionEvent, listener: () => void): void {
-    this.socket.removeEventListener(type, listener);
+  /**
+   * Subscribes to disconnects of the connection's *current* socket, staying
+   * correct across reconnects (unlike listening on a socket directly, which
+   * goes stale the moment the connection swaps in a new one). Returns an
+   * unsubscribe function.
+   */
+  onDisconnect(listener: DisconnectListener): () => void {
+    this.disconnectListeners.add(listener);
+    return () => this.disconnectListeners.delete(listener);
   }
 
   sendMessage(payloadType: ClientPayload, createPayload: CreatePayload): void {
@@ -148,9 +158,10 @@ export class PumpkinConnection {
 
     socket.addEventListener("message", (event) => this.handleMessage(event));
     socket.addEventListener("close", () =>
-      this.rejectAllPending(
-        new Error("WebSocket closed before the request completed"),
-      ),
+      this.handleDisconnect(socket, "close"),
+    );
+    socket.addEventListener("error", () =>
+      this.handleDisconnect(socket, "error"),
     );
 
     return socket;
@@ -181,6 +192,26 @@ export class PumpkinConnection {
     } else {
       pending.resolve(response.value);
     }
+  }
+
+  // A superseded socket (replaced by waitUntilOpen while reconnecting) can
+  // still fire a belated close/error event; ignore it so it can't reject
+  // requests that were actually sent on the socket that replaced it, or
+  // double-report a loss that waitUntilOpen already announced.
+  private handleDisconnect(socket: WebSocket, reason: DisconnectReason): void {
+    if (this.socket === socket) {
+      this.handleCurrentSocketLost(reason);
+    }
+  }
+
+  private handleCurrentSocketLost(reason: DisconnectReason): void {
+    if (reason === "close") {
+      this.rejectAllPending(
+        new Error("WebSocket closed before the request completed"),
+      );
+    }
+
+    this.disconnectListeners.forEach((listener) => listener(reason));
   }
 
   private rejectAllPending(error: Error): void {
@@ -225,11 +256,17 @@ export class PumpkinConnection {
 }
 
 let sharedConnection: PumpkinConnection | null = null;
+let sharedConnectionHostname: string | null = null;
 
 /** Returns the single shared connection to the pumpkin device, creating it on first use. */
 export function getPumpkinConnection(hostname: string): PumpkinConnection {
   if (!sharedConnection) {
     sharedConnection = new PumpkinConnection(hostname);
+    sharedConnectionHostname = hostname;
+  } else if (hostname !== sharedConnectionHostname) {
+    console.warn(
+      `Ignoring hostname "${hostname}": already connected to "${sharedConnectionHostname}".`,
+    );
   }
   return sharedConnection;
 }
@@ -279,8 +316,4 @@ function decodeResponse(data: Uint8Array):
   }
 
   return { requestId: serverMessage.requestId(), payloadType };
-}
-
-function toError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
 }
