@@ -205,5 +205,14 @@ void web_interface_stop()
 
 void web_interface_service() {
     server.handleClient();
-    webSocket.loop();
+
+    // webSocket.loop() only dequeues one already-buffered frame per call.
+    // Audio-chunk and command frames (e.g. a button press) share the same
+    // connection, so drain what's already waiting instead of trickling it
+    // out one frame per Arduino loop() iteration -- otherwise a backlog of
+    // audio frames delays any command queued behind them.
+    for(uint8_t i = 0; i < max_websocket_frames_per_loop; ++i)
+    {
+        webSocket.loop();
+    }
 }
