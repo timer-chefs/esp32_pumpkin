@@ -28,6 +28,17 @@ GPIO 1 | LED 0
 GPIO 2 | LED 1
 GPIO 4 | LED 2
 
+### SD Card (SDIO)
+
+ESP32-S3 Pin | SD Card Pin
+---|---
+GPIO 12 | CLK
+GPIO 11 | CMD
+GPIO 13 | D0
+GPIO 14 | D1
+GPIO 9 | D2
+GPIO 10 | D3
+
 ### WiFi Provisioning Button
 This button triggeres the wifi provisioning functionality. This allows the user to change the network to which the system connects to.
 
