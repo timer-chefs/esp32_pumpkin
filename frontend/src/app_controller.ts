@@ -70,7 +70,10 @@ export interface AppController {
 export function useAppController(): AppController {
   const currentState = useSyncExternalStore(subscribe, getState, getState);
 
-  useEffect(() => runAction(loadVolume), []);
+  useEffect(() => {
+    getAudioSocket(location.hostname);
+    runAction(loadVolume);
+  }, []);
 
   return { state: currentState, actions };
 }
