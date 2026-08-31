@@ -8,9 +8,9 @@
 
 // Ensure the included flatbuffers.h is the same version as when this file was
 // generated, otherwise it may not be compatible.
-static_assert(FLATBUFFERS_VERSION_MAJOR == 2 &&
-              FLATBUFFERS_VERSION_MINOR == 0 &&
-              FLATBUFFERS_VERSION_REVISION == 8,
+static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
+              FLATBUFFERS_VERSION_MINOR == 9 &&
+              FLATBUFFERS_VERSION_REVISION == 23,
              "Non-compatible flatbuffers version included");
 
 namespace Pumpkin {
@@ -98,7 +98,7 @@ inline const char * const *EnumNamesClientPayload() {
 }
 
 inline const char *EnumNameClientPayload(ClientPayload e) {
-  if (flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_AdjustVolume)) return "";
+  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_AdjustVolume)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesClientPayload()[index];
 }
@@ -135,8 +135,8 @@ template<> struct ClientPayloadTraits<Pumpkin::Protocol::AdjustVolume> {
   static const ClientPayload enum_value = ClientPayload_AdjustVolume;
 };
 
-bool VerifyClientPayload(flatbuffers::Verifier &verifier, const void *obj, ClientPayload type);
-bool VerifyClientPayloadVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
+bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *obj, ClientPayload type);
+bool VerifyClientPayloadVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
 enum ErrorCode : uint8_t {
   ErrorCode_UNKNOWN = 0,
@@ -169,7 +169,7 @@ inline const char * const *EnumNamesErrorCode() {
 }
 
 inline const char *EnumNameErrorCode(ErrorCode e) {
-  if (flatbuffers::IsOutRange(e, ErrorCode_UNKNOWN, ErrorCode_INVALID_ARGUMENT)) return "";
+  if (::flatbuffers::IsOutRange(e, ErrorCode_UNKNOWN, ErrorCode_INVALID_ARGUMENT)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesErrorCode()[index];
 }
@@ -205,7 +205,7 @@ inline const char * const *EnumNamesServerPayload() {
 }
 
 inline const char *EnumNameServerPayload(ServerPayload e) {
-  if (flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_Volume)) return "";
+  if (::flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_Volume)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesServerPayload()[index];
 }
@@ -226,8 +226,8 @@ template<> struct ServerPayloadTraits<Pumpkin::Protocol::Volume> {
   static const ServerPayload enum_value = ServerPayload_Volume;
 };
 
-bool VerifyServerPayload(flatbuffers::Verifier &verifier, const void *obj, ServerPayload type);
-bool VerifyServerPayloadVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
+bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *obj, ServerPayload type);
+bool VerifyServerPayloadVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
 enum MessageBody : uint8_t {
   MessageBody_NONE = 0,
@@ -257,7 +257,7 @@ inline const char * const *EnumNamesMessageBody() {
 }
 
 inline const char *EnumNameMessageBody(MessageBody e) {
-  if (flatbuffers::IsOutRange(e, MessageBody_NONE, MessageBody_ServerMessage)) return "";
+  if (::flatbuffers::IsOutRange(e, MessageBody_NONE, MessageBody_ServerMessage)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMessageBody()[index];
 }
@@ -274,12 +274,12 @@ template<> struct MessageBodyTraits<Pumpkin::Protocol::ServerMessage> {
   static const MessageBody enum_value = MessageBody_ServerMessage;
 };
 
-bool VerifyMessageBody(flatbuffers::Verifier &verifier, const void *obj, MessageBody type);
-bool VerifyMessageBodyVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
+bool VerifyMessageBody(::flatbuffers::Verifier &verifier, const void *obj, MessageBody type);
+bool VerifyMessageBodyVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
-struct StartAudioStream FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct StartAudioStream FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef StartAudioStreamBuilder Builder;
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
@@ -287,28 +287,28 @@ struct StartAudioStream FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct StartAudioStreamBuilder {
   typedef StartAudioStream Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  explicit StartAudioStreamBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit StartAudioStreamBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<StartAudioStream> Finish() {
+  ::flatbuffers::Offset<StartAudioStream> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<StartAudioStream>(end);
+    auto o = ::flatbuffers::Offset<StartAudioStream>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<StartAudioStream> CreateStartAudioStream(
-    flatbuffers::FlatBufferBuilder &_fbb) {
+inline ::flatbuffers::Offset<StartAudioStream> CreateStartAudioStream(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
   StartAudioStreamBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
-struct StopAudioStream FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct StopAudioStream FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef StopAudioStreamBuilder Builder;
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
@@ -316,26 +316,26 @@ struct StopAudioStream FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct StopAudioStreamBuilder {
   typedef StopAudioStream Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  explicit StopAudioStreamBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit StopAudioStreamBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<StopAudioStream> Finish() {
+  ::flatbuffers::Offset<StopAudioStream> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<StopAudioStream>(end);
+    auto o = ::flatbuffers::Offset<StopAudioStream>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<StopAudioStream> CreateStopAudioStream(
-    flatbuffers::FlatBufferBuilder &_fbb) {
+inline ::flatbuffers::Offset<StopAudioStream> CreateStopAudioStream(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
   StopAudioStreamBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
-struct PlayShow FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct PlayShow FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef PlayShowBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_SHOW_ID = 4
@@ -343,7 +343,7 @@ struct PlayShow FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint16_t show_id() const {
     return GetField<uint16_t>(VT_SHOW_ID, 0);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_SHOW_ID, 2) &&
            verifier.EndTable();
@@ -352,39 +352,39 @@ struct PlayShow FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct PlayShowBuilder {
   typedef PlayShow Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
   void add_show_id(uint16_t show_id) {
     fbb_.AddElement<uint16_t>(PlayShow::VT_SHOW_ID, show_id, 0);
   }
-  explicit PlayShowBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit PlayShowBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<PlayShow> Finish() {
+  ::flatbuffers::Offset<PlayShow> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<PlayShow>(end);
+    auto o = ::flatbuffers::Offset<PlayShow>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<PlayShow> CreatePlayShow(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<PlayShow> CreatePlayShow(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     uint16_t show_id = 0) {
   PlayShowBuilder builder_(_fbb);
   builder_.add_show_id(show_id);
   return builder_.Finish();
 }
 
-struct AudioChunk FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct AudioChunk FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef AudioChunkBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PCM_S16LE = 4
   };
-  const flatbuffers::Vector<uint8_t> *pcm_s16le() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_PCM_S16LE);
+  const ::flatbuffers::Vector<uint8_t> *pcm_s16le() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_PCM_S16LE);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffsetRequired(verifier, VT_PCM_S16LE) &&
            verifier.VerifyVector(pcm_s16le()) &&
@@ -394,33 +394,33 @@ struct AudioChunk FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct AudioChunkBuilder {
   typedef AudioChunk Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_pcm_s16le(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> pcm_s16le) {
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_pcm_s16le(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> pcm_s16le) {
     fbb_.AddOffset(AudioChunk::VT_PCM_S16LE, pcm_s16le);
   }
-  explicit AudioChunkBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit AudioChunkBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<AudioChunk> Finish() {
+  ::flatbuffers::Offset<AudioChunk> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<AudioChunk>(end);
+    auto o = ::flatbuffers::Offset<AudioChunk>(end);
     fbb_.Required(o, AudioChunk::VT_PCM_S16LE);
     return o;
   }
 };
 
-inline flatbuffers::Offset<AudioChunk> CreateAudioChunk(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> pcm_s16le = 0) {
+inline ::flatbuffers::Offset<AudioChunk> CreateAudioChunk(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> pcm_s16le = 0) {
   AudioChunkBuilder builder_(_fbb);
   builder_.add_pcm_s16le(pcm_s16le);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<AudioChunk> CreateAudioChunkDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<AudioChunk> CreateAudioChunkDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint8_t> *pcm_s16le = nullptr) {
   auto pcm_s16le__ = pcm_s16le ? _fbb.CreateVector<uint8_t>(*pcm_s16le) : 0;
   return Pumpkin::Protocol::CreateAudioChunk(
@@ -428,9 +428,9 @@ inline flatbuffers::Offset<AudioChunk> CreateAudioChunkDirect(
       pcm_s16le__);
 }
 
-struct ResetAudio FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct ResetAudio FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ResetAudioBuilder Builder;
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
@@ -438,28 +438,28 @@ struct ResetAudio FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct ResetAudioBuilder {
   typedef ResetAudio Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  explicit ResetAudioBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit ResetAudioBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<ResetAudio> Finish() {
+  ::flatbuffers::Offset<ResetAudio> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<ResetAudio>(end);
+    auto o = ::flatbuffers::Offset<ResetAudio>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<ResetAudio> CreateResetAudio(
-    flatbuffers::FlatBufferBuilder &_fbb) {
+inline ::flatbuffers::Offset<ResetAudio> CreateResetAudio(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
   ResetAudioBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
-struct GetVolume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct GetVolume FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef GetVolumeBuilder Builder;
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
@@ -467,26 +467,26 @@ struct GetVolume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct GetVolumeBuilder {
   typedef GetVolume Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  explicit GetVolumeBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit GetVolumeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<GetVolume> Finish() {
+  ::flatbuffers::Offset<GetVolume> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GetVolume>(end);
+    auto o = ::flatbuffers::Offset<GetVolume>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<GetVolume> CreateGetVolume(
-    flatbuffers::FlatBufferBuilder &_fbb) {
+inline ::flatbuffers::Offset<GetVolume> CreateGetVolume(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
   GetVolumeBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
-struct AdjustVolume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct AdjustVolume FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef AdjustVolumeBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_DELTA = 4
@@ -494,7 +494,7 @@ struct AdjustVolume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   float delta() const {
     return GetField<float>(VT_DELTA, 0.0f);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<float>(verifier, VT_DELTA, 4) &&
            verifier.EndTable();
@@ -503,31 +503,31 @@ struct AdjustVolume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct AdjustVolumeBuilder {
   typedef AdjustVolume Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
   void add_delta(float delta) {
     fbb_.AddElement<float>(AdjustVolume::VT_DELTA, delta, 0.0f);
   }
-  explicit AdjustVolumeBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit AdjustVolumeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<AdjustVolume> Finish() {
+  ::flatbuffers::Offset<AdjustVolume> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<AdjustVolume>(end);
+    auto o = ::flatbuffers::Offset<AdjustVolume>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<AdjustVolume> CreateAdjustVolume(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<AdjustVolume> CreateAdjustVolume(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     float delta = 0.0f) {
   AdjustVolumeBuilder builder_(_fbb);
   builder_.add_delta(delta);
   return builder_.Finish();
 }
 
-struct ClientMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ClientMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_REQUEST_ID = 4,
@@ -565,7 +565,7 @@ struct ClientMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Pumpkin::Protocol::AdjustVolume *payload_as_AdjustVolume() const {
     return payload_type() == Pumpkin::Protocol::ClientPayload_AdjustVolume ? static_cast<const Pumpkin::Protocol::AdjustVolume *>(payload()) : nullptr;
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_REQUEST_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_PAYLOAD_TYPE, 1) &&
@@ -605,34 +605,34 @@ template<> inline const Pumpkin::Protocol::AdjustVolume *ClientMessage::payload_
 
 struct ClientMessageBuilder {
   typedef ClientMessage Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
   void add_request_id(uint32_t request_id) {
     fbb_.AddElement<uint32_t>(ClientMessage::VT_REQUEST_ID, request_id, 0);
   }
   void add_payload_type(Pumpkin::Protocol::ClientPayload payload_type) {
     fbb_.AddElement<uint8_t>(ClientMessage::VT_PAYLOAD_TYPE, static_cast<uint8_t>(payload_type), 0);
   }
-  void add_payload(flatbuffers::Offset<void> payload) {
+  void add_payload(::flatbuffers::Offset<void> payload) {
     fbb_.AddOffset(ClientMessage::VT_PAYLOAD, payload);
   }
-  explicit ClientMessageBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit ClientMessageBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<ClientMessage> Finish() {
+  ::flatbuffers::Offset<ClientMessage> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<ClientMessage>(end);
+    auto o = ::flatbuffers::Offset<ClientMessage>(end);
     fbb_.Required(o, ClientMessage::VT_PAYLOAD);
     return o;
   }
 };
 
-inline flatbuffers::Offset<ClientMessage> CreateClientMessage(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<ClientMessage> CreateClientMessage(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t request_id = 0,
     Pumpkin::Protocol::ClientPayload payload_type = Pumpkin::Protocol::ClientPayload_NONE,
-    flatbuffers::Offset<void> payload = 0) {
+    ::flatbuffers::Offset<void> payload = 0) {
   ClientMessageBuilder builder_(_fbb);
   builder_.add_payload(payload);
   builder_.add_request_id(request_id);
@@ -640,9 +640,9 @@ inline flatbuffers::Offset<ClientMessage> CreateClientMessage(
   return builder_.Finish();
 }
 
-struct Success FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Success FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef SuccessBuilder Builder;
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
@@ -650,26 +650,26 @@ struct Success FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct SuccessBuilder {
   typedef Success Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  explicit SuccessBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit SuccessBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<Success> Finish() {
+  ::flatbuffers::Offset<Success> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Success>(end);
+    auto o = ::flatbuffers::Offset<Success>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Success> CreateSuccess(
-    flatbuffers::FlatBufferBuilder &_fbb) {
+inline ::flatbuffers::Offset<Success> CreateSuccess(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
   SuccessBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
-struct Error FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Error FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ErrorBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CODE = 4,
@@ -678,10 +678,10 @@ struct Error FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   Pumpkin::Protocol::ErrorCode code() const {
     return static_cast<Pumpkin::Protocol::ErrorCode>(GetField<uint8_t>(VT_CODE, 0));
   }
-  const flatbuffers::String *message() const {
-    return GetPointer<const flatbuffers::String *>(VT_MESSAGE);
+  const ::flatbuffers::String *message() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_MESSAGE);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_CODE, 1) &&
            VerifyOffsetRequired(verifier, VT_MESSAGE) &&
@@ -692,38 +692,38 @@ struct Error FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct ErrorBuilder {
   typedef Error Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
   void add_code(Pumpkin::Protocol::ErrorCode code) {
     fbb_.AddElement<uint8_t>(Error::VT_CODE, static_cast<uint8_t>(code), 0);
   }
-  void add_message(flatbuffers::Offset<flatbuffers::String> message) {
+  void add_message(::flatbuffers::Offset<::flatbuffers::String> message) {
     fbb_.AddOffset(Error::VT_MESSAGE, message);
   }
-  explicit ErrorBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit ErrorBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<Error> Finish() {
+  ::flatbuffers::Offset<Error> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Error>(end);
+    auto o = ::flatbuffers::Offset<Error>(end);
     fbb_.Required(o, Error::VT_MESSAGE);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Error> CreateError(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<Error> CreateError(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     Pumpkin::Protocol::ErrorCode code = Pumpkin::Protocol::ErrorCode_UNKNOWN,
-    flatbuffers::Offset<flatbuffers::String> message = 0) {
+    ::flatbuffers::Offset<::flatbuffers::String> message = 0) {
   ErrorBuilder builder_(_fbb);
   builder_.add_message(message);
   builder_.add_code(code);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<Error> CreateErrorDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<Error> CreateErrorDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     Pumpkin::Protocol::ErrorCode code = Pumpkin::Protocol::ErrorCode_UNKNOWN,
     const char *message = nullptr) {
   auto message__ = message ? _fbb.CreateString(message) : 0;
@@ -733,7 +733,7 @@ inline flatbuffers::Offset<Error> CreateErrorDirect(
       message__);
 }
 
-struct Volume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Volume FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef VolumeBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VALUE = 4
@@ -741,7 +741,7 @@ struct Volume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   float value() const {
     return GetField<float>(VT_VALUE, 0.0f);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<float>(verifier, VT_VALUE, 4) &&
            verifier.EndTable();
@@ -750,31 +750,31 @@ struct Volume FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct VolumeBuilder {
   typedef Volume Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
   void add_value(float value) {
     fbb_.AddElement<float>(Volume::VT_VALUE, value, 0.0f);
   }
-  explicit VolumeBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit VolumeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<Volume> Finish() {
+  ::flatbuffers::Offset<Volume> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Volume>(end);
+    auto o = ::flatbuffers::Offset<Volume>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Volume> CreateVolume(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<Volume> CreateVolume(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     float value = 0.0f) {
   VolumeBuilder builder_(_fbb);
   builder_.add_value(value);
   return builder_.Finish();
 }
 
-struct ServerMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ServerMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_REQUEST_ID = 4,
@@ -800,7 +800,7 @@ struct ServerMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Pumpkin::Protocol::Volume *payload_as_Volume() const {
     return payload_type() == Pumpkin::Protocol::ServerPayload_Volume ? static_cast<const Pumpkin::Protocol::Volume *>(payload()) : nullptr;
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_REQUEST_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_PAYLOAD_TYPE, 1) &&
@@ -824,34 +824,34 @@ template<> inline const Pumpkin::Protocol::Volume *ServerMessage::payload_as<Pum
 
 struct ServerMessageBuilder {
   typedef ServerMessage Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
   void add_request_id(uint32_t request_id) {
     fbb_.AddElement<uint32_t>(ServerMessage::VT_REQUEST_ID, request_id, 0);
   }
   void add_payload_type(Pumpkin::Protocol::ServerPayload payload_type) {
     fbb_.AddElement<uint8_t>(ServerMessage::VT_PAYLOAD_TYPE, static_cast<uint8_t>(payload_type), 0);
   }
-  void add_payload(flatbuffers::Offset<void> payload) {
+  void add_payload(::flatbuffers::Offset<void> payload) {
     fbb_.AddOffset(ServerMessage::VT_PAYLOAD, payload);
   }
-  explicit ServerMessageBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit ServerMessageBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<ServerMessage> Finish() {
+  ::flatbuffers::Offset<ServerMessage> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<ServerMessage>(end);
+    auto o = ::flatbuffers::Offset<ServerMessage>(end);
     fbb_.Required(o, ServerMessage::VT_PAYLOAD);
     return o;
   }
 };
 
-inline flatbuffers::Offset<ServerMessage> CreateServerMessage(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<ServerMessage> CreateServerMessage(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t request_id = 0,
     Pumpkin::Protocol::ServerPayload payload_type = Pumpkin::Protocol::ServerPayload_NONE,
-    flatbuffers::Offset<void> payload = 0) {
+    ::flatbuffers::Offset<void> payload = 0) {
   ServerMessageBuilder builder_(_fbb);
   builder_.add_payload(payload);
   builder_.add_request_id(request_id);
@@ -859,7 +859,7 @@ inline flatbuffers::Offset<ServerMessage> CreateServerMessage(
   return builder_.Finish();
 }
 
-struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Message FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_BODY_TYPE = 4,
@@ -878,7 +878,7 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Pumpkin::Protocol::ServerMessage *body_as_ServerMessage() const {
     return body_type() == Pumpkin::Protocol::MessageBody_ServerMessage ? static_cast<const Pumpkin::Protocol::ServerMessage *>(body()) : nullptr;
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_BODY_TYPE, 1) &&
            VerifyOffsetRequired(verifier, VT_BODY) &&
@@ -897,37 +897,37 @@ template<> inline const Pumpkin::Protocol::ServerMessage *Message::body_as<Pumpk
 
 struct MessageBuilder {
   typedef Message Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
   void add_body_type(Pumpkin::Protocol::MessageBody body_type) {
     fbb_.AddElement<uint8_t>(Message::VT_BODY_TYPE, static_cast<uint8_t>(body_type), 0);
   }
-  void add_body(flatbuffers::Offset<void> body) {
+  void add_body(::flatbuffers::Offset<void> body) {
     fbb_.AddOffset(Message::VT_BODY, body);
   }
-  explicit MessageBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit MessageBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<Message> Finish() {
+  ::flatbuffers::Offset<Message> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Message>(end);
+    auto o = ::flatbuffers::Offset<Message>(end);
     fbb_.Required(o, Message::VT_BODY);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Message> CreateMessage(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<Message> CreateMessage(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     Pumpkin::Protocol::MessageBody body_type = Pumpkin::Protocol::MessageBody_NONE,
-    flatbuffers::Offset<void> body = 0) {
+    ::flatbuffers::Offset<void> body = 0) {
   MessageBuilder builder_(_fbb);
   builder_.add_body(body);
   builder_.add_body_type(body_type);
   return builder_.Finish();
 }
 
-inline bool VerifyClientPayload(flatbuffers::Verifier &verifier, const void *obj, ClientPayload type) {
+inline bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *obj, ClientPayload type) {
   switch (type) {
     case ClientPayload_NONE: {
       return true;
@@ -964,10 +964,10 @@ inline bool VerifyClientPayload(flatbuffers::Verifier &verifier, const void *obj
   }
 }
 
-inline bool VerifyClientPayloadVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types) {
+inline bool VerifyClientPayloadVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
   if (!values || !types) return !values && !types;
   if (values->size() != types->size()) return false;
-  for (flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
+  for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
     if (!VerifyClientPayload(
         verifier,  values->Get(i), types->GetEnum<ClientPayload>(i))) {
       return false;
@@ -976,7 +976,7 @@ inline bool VerifyClientPayloadVector(flatbuffers::Verifier &verifier, const fla
   return true;
 }
 
-inline bool VerifyServerPayload(flatbuffers::Verifier &verifier, const void *obj, ServerPayload type) {
+inline bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *obj, ServerPayload type) {
   switch (type) {
     case ServerPayload_NONE: {
       return true;
@@ -997,10 +997,10 @@ inline bool VerifyServerPayload(flatbuffers::Verifier &verifier, const void *obj
   }
 }
 
-inline bool VerifyServerPayloadVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types) {
+inline bool VerifyServerPayloadVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
   if (!values || !types) return !values && !types;
   if (values->size() != types->size()) return false;
-  for (flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
+  for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
     if (!VerifyServerPayload(
         verifier,  values->Get(i), types->GetEnum<ServerPayload>(i))) {
       return false;
@@ -1009,7 +1009,7 @@ inline bool VerifyServerPayloadVector(flatbuffers::Verifier &verifier, const fla
   return true;
 }
 
-inline bool VerifyMessageBody(flatbuffers::Verifier &verifier, const void *obj, MessageBody type) {
+inline bool VerifyMessageBody(::flatbuffers::Verifier &verifier, const void *obj, MessageBody type) {
   switch (type) {
     case MessageBody_NONE: {
       return true;
@@ -1026,10 +1026,10 @@ inline bool VerifyMessageBody(flatbuffers::Verifier &verifier, const void *obj, 
   }
 }
 
-inline bool VerifyMessageBodyVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types) {
+inline bool VerifyMessageBodyVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
   if (!values || !types) return !values && !types;
   if (values->size() != types->size()) return false;
-  for (flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
+  for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
     if (!VerifyMessageBody(
         verifier,  values->Get(i), types->GetEnum<MessageBody>(i))) {
       return false;
@@ -1039,11 +1039,11 @@ inline bool VerifyMessageBodyVector(flatbuffers::Verifier &verifier, const flatb
 }
 
 inline const Pumpkin::Protocol::Message *GetMessage(const void *buf) {
-  return flatbuffers::GetRoot<Pumpkin::Protocol::Message>(buf);
+  return ::flatbuffers::GetRoot<Pumpkin::Protocol::Message>(buf);
 }
 
 inline const Pumpkin::Protocol::Message *GetSizePrefixedMessage(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<Pumpkin::Protocol::Message>(buf);
+  return ::flatbuffers::GetSizePrefixedRoot<Pumpkin::Protocol::Message>(buf);
 }
 
 inline const char *MessageIdentifier() {
@@ -1051,34 +1051,34 @@ inline const char *MessageIdentifier() {
 }
 
 inline bool MessageBufferHasIdentifier(const void *buf) {
-  return flatbuffers::BufferHasIdentifier(
+  return ::flatbuffers::BufferHasIdentifier(
       buf, MessageIdentifier());
 }
 
 inline bool SizePrefixedMessageBufferHasIdentifier(const void *buf) {
-  return flatbuffers::BufferHasIdentifier(
+  return ::flatbuffers::BufferHasIdentifier(
       buf, MessageIdentifier(), true);
 }
 
 inline bool VerifyMessageBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifyBuffer<Pumpkin::Protocol::Message>(MessageIdentifier());
 }
 
 inline bool VerifySizePrefixedMessageBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifySizePrefixedBuffer<Pumpkin::Protocol::Message>(MessageIdentifier());
 }
 
 inline void FinishMessageBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Pumpkin::Protocol::Message> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Pumpkin::Protocol::Message> root) {
   fbb.Finish(root, MessageIdentifier());
 }
 
 inline void FinishSizePrefixedMessageBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Pumpkin::Protocol::Message> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Pumpkin::Protocol::Message> root) {
   fbb.FinishSizePrefixed(root, MessageIdentifier());
 }
 

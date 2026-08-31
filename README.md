@@ -40,7 +40,7 @@ GND | Button pin 2
 
 ### Dependencies
 
-- FlatBuffers 2.0.8 (available on [GitHub](https://github.com/google/flatbuffers/releases/v2.0.8))
+- FlatBuffers 25.9.23 (available on [GitHub](https://github.com/google/flatbuffers/releases/v25.9.23))
 - platformio (tested with 6.1.19, available through [PIP](https://pypi.org/project/platformio/))
 - node (tested with v24.14.0)
 - npm (tested with version 11.9.0)
@@ -71,7 +71,7 @@ pio run -e application uploadfs
 ### Client-server protocol contract
 
 The browser/device WebSocket contract is defined through the FlatBuffer specification in `protocol/pumpkin.fbs`.
-After changing it, use `flatc` 2.0.8 to regenerate the TypeScript and C++ bindings:
+After changing it, use `flatc` 25.9.23 to regenerate the TypeScript and C++ bindings:
 
 ```sh
 ./protocol/generate.sh

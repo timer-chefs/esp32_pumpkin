@@ -19,10 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install flatc 2.0.8
+      - name: Install flatc 25.9.23
         env:
-          FLATC_URL: https://github.com/google/flatbuffers/releases/download/v2.0.8/Linux.flatc.binary.clang++-12.zip
-          FLATC_SHA256: d9be8ece2fff95dd088a9580344bccf47fe73c956b4ce02fd8793dcb82af14bc
+          FLATC_URL: https://github.com/google/flatbuffers/releases/download/v25.9.23/Linux.flatc.binary.clang++-18.zip
+          FLATC_SHA256: d66be9ad0ae21a6388683552191c84f6728b46436dd5a49dc693ef679987c2df
         run: |
           mkdir -p "$RUNNER_TEMP/flatc/bin"
           curl --fail --location --silent --show-error "$FLATC_URL" \

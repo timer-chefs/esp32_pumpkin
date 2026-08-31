@@ -9,7 +9,7 @@ import {
   ServerMessage,
   ServerPayload,
   Volume,
-} from "./generated/pumpkin_generated.ts";
+} from "./generated/pumpkin/protocol.ts";
 
 interface PendingRequest {
   expectedPayload: ServerPayload;

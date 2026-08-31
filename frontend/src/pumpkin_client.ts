@@ -8,7 +8,7 @@ import {
   ServerPayload,
   StartAudioStream,
   StopAudioStream,
-} from "./generated/pumpkin_generated.ts";
+} from "./generated/pumpkin/protocol.ts";
 import { sendMessage, sendRequest } from "./protocol_client.ts";
 
 export default class PumpkinClient {
