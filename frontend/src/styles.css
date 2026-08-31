@@ -75,6 +75,15 @@ h2 {
   line-height: 1;
 }
 
+.wake-lock-indicator {
+  display: inline-flex;
+  color: #7d897a;
+}
+
+.wake-lock-indicator--active {
+  color: var(--bs-success);
+}
+
 .streaming-label {
   margin-left: auto;
   color: #d7ddd5;

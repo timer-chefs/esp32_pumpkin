@@ -1,4 +1,5 @@
 import { useAppStatus } from "../app_context.tsx";
+import { WakeLockIndicator } from "./WakeLockIndicator.tsx";
 
 export function AppHeader() {
   const { currentMode, currentStreaming } = useAppStatus();
@@ -15,6 +16,7 @@ export function AppHeader() {
           <small>Mode</small>
           <strong>{currentMode}</strong>
         </span>
+        <WakeLockIndicator />
         {currentStreaming && (
           <span className="streaming-label text-truncate">
             {currentStreaming}
