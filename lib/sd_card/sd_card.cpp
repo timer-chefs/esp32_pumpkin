@@ -19,8 +19,9 @@ void sd_card_init()
         pin_sd_d2,
         pin_sd_d3);
 
-    // Try 4-bit SDIO mode first
-    if(!SD_MMC.begin("/sdcard", true))
+    // Try 4-bit SDIO mode first, formatting the card if it can't be mounted
+    // (e.g. blank card or corrupted filesystem)
+    if(!SD_MMC.begin("/sdcard", true, true))
     {
         Serial.println("4-bit SDIO mode failed. Trying 1-bit mode...");
         return;
