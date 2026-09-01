@@ -46,7 +46,7 @@ constexpr uint8_t pin_led1 = GPIO_NUM_2;
 constexpr uint8_t pin_led2 = GPIO_NUM_4;
 
 //WiFi Provisioning Pins:
-constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_3;
+constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
 
 //Serial
 constexpr uint32_t baud_rate = 115200;
