@@ -3,10 +3,11 @@
 #include "config.h"
 #include "fft.h"
 
+#include <string.h>
+
 static RingBufferStream audio_buffer(buffer_size);
 static I2SStream i2s;
 VolumeStream volume(i2s);
-static StreamCopy copier(volume, audio_buffer);
 
 static bool is_playback_running = false;
 
@@ -15,7 +16,14 @@ static constexpr size_t bytes_per_ms = (sample_rate * bytes_per_frame) / 1000;
 static constexpr size_t catch_up_high_water_bytes = audio_catch_up_high_water_ms * bytes_per_ms;
 static constexpr size_t catch_up_low_water_bytes = audio_catch_up_low_water_ms * bytes_per_ms;
 static constexpr size_t catch_up_step_bytes = audio_catch_up_step_ms * bytes_per_ms;
+static constexpr size_t catch_up_crossfade_bytes = audio_catch_up_crossfade_ms * bytes_per_ms;
 static bool is_catching_up = false;
+
+// Chunk size used to pull audio out of the ring buffer for playback. Needs
+// to be comfortably bigger than catch_up_step_bytes + catch_up_crossfade_bytes
+// so a whole trim-and-crossfade always fits inside a single chunk.
+static constexpr size_t playback_chunk_bytes = 1024;
+static uint8_t playback_chunk[playback_chunk_bytes];
 
 static void audio_buffer_clear()
 {
@@ -32,17 +40,22 @@ static void audio_buffer_clear()
 // after a network stall) the buffer fills up faster than it drains, and
 // without this, that backlog would just play out later at normal speed
 // forever instead of catching back up. Trimming a few ms off the oldest
-// buffered audio on each write -- once we're significantly behind, until
-// we're back near the target -- keeps latency bounded.
-static void audio_catch_up_if_behind()
+// buffered audio on each playback chunk -- once we're significantly behind,
+// until we're back near the target -- keeps latency bounded.
+//
+// The trim itself is cross-faded rather than cut outright: cutting a
+// waveform at an arbitrary point creates a sample-value discontinuity,
+// which is heard as a click. Blending the samples right before the cut into
+// the samples right after it removes the same amount of time but leaves no
+// discontinuity, so it's inaudible instead of a click -- and a run of many
+// small trims stays smooth instead of turning into a string of clicks.
+static size_t catch_up_bytes_needed(size_t buffered)
 {
-    size_t buffered = audio_buffer.available();
-
     if(!is_catching_up)
     {
         if(buffered <= catch_up_high_water_bytes)
         {
-            return;
+            return 0;
         }
 
         is_catching_up = true;
@@ -58,18 +71,61 @@ static void audio_catch_up_if_behind()
     if(buffered <= catch_up_low_water_bytes)
     {
         is_catching_up = false;
-        return;
+        return 0;
     }
 
     size_t to_drop = min(catch_up_step_bytes, buffered - catch_up_low_water_bytes);
     to_drop -= to_drop % bytes_per_frame;
-    if(to_drop == 0)
+    return to_drop;
+}
+
+// Removes `to_drop` bytes from `chunk` (of length `n`), cross-fading over
+// catch_up_crossfade_bytes at the seam instead of cutting it outright.
+// Returns the new, shorter length. If there isn't enough room in this chunk
+// to fit the drop plus a full crossfade, leaves the chunk untouched --
+// there will be another chunk along shortly to try again on.
+static size_t apply_catch_up_drop(uint8_t* chunk, size_t n, size_t to_drop)
+{
+    if(to_drop == 0 || n < to_drop + catch_up_crossfade_bytes)
+    {
+        return n;
+    }
+
+    auto* samples = reinterpret_cast<int16_t*>(chunk);
+    size_t fade_samples = catch_up_crossfade_bytes / sizeof(int16_t);
+    size_t drop_samples = to_drop / sizeof(int16_t);
+
+    for(size_t i = 0; i < fade_samples; i++)
+    {
+        float t = (float)i / (float)fade_samples;
+        int16_t before_cut = samples[i];
+        int16_t after_cut = samples[drop_samples + i];
+        samples[i] = (int16_t)(before_cut * (1.0f - t) + after_cut * t);
+    }
+
+    size_t tail_bytes = n - to_drop - catch_up_crossfade_bytes;
+    memmove(chunk + catch_up_crossfade_bytes, chunk + to_drop + catch_up_crossfade_bytes, tail_bytes);
+
+    return catch_up_crossfade_bytes + tail_bytes;
+}
+
+// Pulls the next chunk of audio out of the ring buffer and sends it to
+// playback, applying a catch-up trim first if we're behind.
+static void audio_copy_to_playback()
+{
+    size_t buffered = audio_buffer.available();
+    if(buffered == 0)
     {
         return;
     }
 
-    uint8_t scratch[catch_up_step_bytes];
-    audio_buffer.readBytes(scratch, to_drop);
+    size_t to_drop = catch_up_bytes_needed(buffered);
+
+    size_t to_read = min(buffered, playback_chunk_bytes);
+    size_t n = audio_buffer.readBytes(playback_chunk, to_read);
+    n = apply_catch_up_drop(playback_chunk, n, to_drop);
+
+    volume.write(playback_chunk, n);
 }
 
 bool audio_init()
@@ -110,7 +166,6 @@ void audio_write(const uint8_t* payload, size_t length)
 {
     write_to_fft(payload, length);
     audio_buffer.write(payload, length);
-    audio_catch_up_if_behind();
 }
 
 void audio_started()
@@ -131,9 +186,9 @@ bool is_audio_running()
 
 void audio_service()
 {
-    if(is_playback_running)    
+    if(is_playback_running)
     {
-        copier.copy();
+        audio_copy_to_playback();
     }
 }
 
