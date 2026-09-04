@@ -28,14 +28,19 @@ constexpr uint8_t bits_per_sample = 16;
 
 // If the amount of buffered-but-not-yet-played audio grows past this, the
 // device starts trimming small slices off the oldest buffered audio on
-// every write to catch back up, instead of letting playback lag behind
-// forever.
+// every playback chunk to catch back up, instead of letting playback lag
+// behind forever.
 constexpr uint16_t audio_catch_up_high_water_ms = 100;
 // ...and keeps trimming until buffered audio drops back down to this level.
 constexpr uint16_t audio_catch_up_low_water_ms = 50;
-// How much to trim per write while catching up. Small enough to be
+// How much to trim per playback chunk while catching up. Small enough to be
 // inaudible as an individual drop.
 constexpr uint16_t audio_catch_up_step_ms = 4;
+// Each trim is blended across this many ms rather than cut outright, so the
+// audio right before the cut is cross-faded into the audio right after it
+// instead of jumping straight from one waveform to the other (which is what
+// causes an audible click/pop).
+constexpr uint16_t audio_catch_up_crossfade_ms = 3;
 
 // LED strip
 constexpr uint8_t pin_led_strip = GPIO_NUM_48;
