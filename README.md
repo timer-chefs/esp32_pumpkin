@@ -10,7 +10,7 @@ GPIO 16 | BCK | Bit Clock
 GPIO 17 | LCK | Left/Right Clock (Word Select)
 GPIO 18 | DIN | Data In
 GND | GND | Ground
-\- | SCK | Leave floating
+GND | SCK | Let the module select an internal clock
 3.3V | VIN | Most modules have an onboard regulator
 3.3V | XSMT | Un-mute
 
