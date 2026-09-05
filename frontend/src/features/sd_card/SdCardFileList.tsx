@@ -1,7 +1,8 @@
 import { Play, RefreshCw, Square } from "lucide-react";
 import { Alert, Button, ListGroup, Spinner, Stack } from "react-bootstrap";
 
-import { useSdCard } from "../app_context.tsx";
+import { useSdCard } from "./sd_card_slice.ts";
+import "./sd_card.css";
 import { SdCardUpload } from "./SdCardUpload.tsx";
 
 export function SdCardFileList() {

@@ -22,6 +22,10 @@ constexpr uint8_t max_websocket_frames_per_loop = 8;
 // Initial size of the response FlatBuffer. Big enough for a full audio file
 // listing, and the builder grows on its own if that ever isn't enough.
 constexpr uint16_t response_builder_size = 2048;
+// Upper bound on the commands feature libraries can register between them.
+constexpr uint8_t max_registered_commands = 24;
+// Largest chunk of streamed audio a client may send in one message.
+constexpr uint16_t max_audio_chunk_size = 512;
 
 // Audio
 constexpr uint16_t buffer_size = 32768;

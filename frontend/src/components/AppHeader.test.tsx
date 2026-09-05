@@ -7,7 +7,7 @@ import { AppHeader } from "./AppHeader.tsx";
 describe("AppHeader", () => {
   it("presents the current mode and stream", () => {
     renderWithAppContext(<AppHeader />, {
-      state: { currentMode: "Audio File", currentStreaming: "ghost.wav" },
+      state: { status: { mode: "Audio File", streaming: "ghost.wav" } },
     });
 
     expect(screen.getByText("Audio File")).toBeVisible();

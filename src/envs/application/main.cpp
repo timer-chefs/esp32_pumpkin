@@ -16,13 +16,14 @@ bool is_audio_ready = false;
 
 EffectManager effect_manager;
 ShowManager show_manager(effect_manager);
-CommandHandler command_handler(show_manager);
 
 void setup()
 {
     Serial.begin(baud_rate);
 
     led_strip_init();
+
+    command_handler_init();
 
     sd_card_init();
     sd_audio_init();
@@ -47,6 +48,8 @@ void setup()
     {
         Serial.println("Audio init failed");
     }
+
+    verify_registered_commands();
 
     Serial.println("System ready");
 }

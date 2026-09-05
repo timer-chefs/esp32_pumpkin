@@ -2,28 +2,23 @@
 #define COMMAND_HANDLER_H
 
 #include <Arduino.h>
-#include "sd_card.h"
-#include "show_manager.h"
+#include <flatbuffers/flatbuffers.h>
+
+#include "command_result.h"
 #include "pumpkin_generated.h"
 
-struct CommandResult
-{
-    Pumpkin::Protocol::ServerPayload payload_type;
-    Pumpkin::Protocol::ErrorCode error_code;
-    float volume;
-    const char* error_message;
-    // Points at storage owned by the handler, valid until the next command.
-    const FileInfo* audio_files;
-    size_t audio_file_count;
-};
+// Registers the commands that don't belong to a single feature library.
+// Feature libraries register their own from their init.
+void command_handler_init();
 
-class CommandHandler
-{
-public:
-    CommandHandler(ShowManager& show_manager);
-    CommandResult handle(const Pumpkin::Protocol::ClientMessage& message);
-private:    
-    ShowManager& show_manager;
-};
+// Warns about any client message the protocol defines that nothing answers.
+// Call once every feature has registered, at the end of setup: the registry
+// can't be checked for exhaustiveness the way a switch could.
+void verify_registered_commands();
+
+// Answers one client message, building the response payload into `builder`.
+CommandResult handle_command(
+    const Pumpkin::Protocol::ClientMessage& message,
+    flatbuffers::FlatBufferBuilder& builder);
 
 #endif //COMMAND_HANDLER_H

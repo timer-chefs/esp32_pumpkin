@@ -2,12 +2,13 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import type { AppState } from "../app_controller.ts";
-import { renderWithAppContext } from "../test/render_with_app_context.tsx";
+import type { AppState } from "../../app/app_state.ts";
+import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
 import { SdCardUpload } from "./SdCardUpload.tsx";
 
-function renderUpload(state: Partial<AppState> = {}) {
-  return renderWithAppContext(<SdCardUpload />, { state }).controller;
+function renderUpload(sdCard: Partial<AppState["sdCard"]> = {}) {
+  return renderWithAppContext(<SdCardUpload />, { state: { sdCard } })
+    .controller;
 }
 
 describe("SdCardUpload", () => {
@@ -21,7 +22,7 @@ describe("SdCardUpload", () => {
     await user.upload(screen.getByLabelText("Song to upload"), file);
     await user.click(screen.getByRole("button", { name: "Upload" }));
 
-    expect(controller.actions.uploadToSdCard).toHaveBeenCalledWith(file);
+    expect(controller.actions.sdCard.uploadFile).toHaveBeenCalledWith(file);
   });
 
   it("reports the measured rate and what is left of the transfer", () => {
@@ -70,6 +71,6 @@ describe("SdCardUpload", () => {
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(controller.actions.cancelUpload).toHaveBeenCalledOnce();
+    expect(controller.actions.sdCard.cancelUpload).toHaveBeenCalledOnce();
   });
 });

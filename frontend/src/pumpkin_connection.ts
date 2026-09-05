@@ -21,16 +21,26 @@ export interface AudioFileInfo {
   size: number;
 }
 
-type ResponseData = number | AudioFileInfo[];
+/**
+ * How to read each response payload that carries data. A payload that isn't
+ * listed decodes to void, which is what an acknowledgement is. Adding a
+ * response type is one entry here: it defines both how the value is read and
+ * what sendRequest resolves with, so the two can't drift apart.
+ */
+const payloadDecoders = {
+  [ServerPayload.Volume]: (message: ServerMessage) =>
+    (message.payload(new Volume()) as Volume).value(),
+  [ServerPayload.AudioFileList]: (message: ServerMessage) =>
+    readAudioFiles(message.payload(new AudioFileList()) as AudioFileList),
+} as const;
 
-// decodeResponse only populates `value` for the payloads that carry one, so
-// those are the only ones sendRequest's callers can resolve a value for.
+type DecodedPayload = keyof typeof payloadDecoders;
+type ResponseData = ReturnType<(typeof payloadDecoders)[DecodedPayload]>;
+
 type ResponseValue<Payload extends ServerPayload> =
-  Payload extends ServerPayload.Volume
-    ? number
-    : Payload extends ServerPayload.AudioFileList
-      ? AudioFileInfo[]
-      : void;
+  Payload extends DecodedPayload
+    ? ReturnType<(typeof payloadDecoders)[Payload]>
+    : void;
 
 interface PendingRequest {
   expectedPayload: ServerPayload;
@@ -319,28 +329,25 @@ function decodeResponse(data: Uint8Array):
     };
   }
 
-  if (payloadType === ServerPayload.Volume) {
-    const payload = serverMessage.payload(new Volume()) as Volume;
-    return {
-      requestId: serverMessage.requestId(),
-      payloadType,
-      value: payload.value(),
-    };
-  }
+  const decode: ((message: ServerMessage) => ResponseData) | undefined =
+    payloadDecoders[payloadType as DecodedPayload];
 
-  if (payloadType === ServerPayload.AudioFileList) {
-    const payload = serverMessage.payload(new AudioFileList()) as AudioFileList;
-    const files: AudioFileInfo[] = [];
+  return {
+    requestId: serverMessage.requestId(),
+    payloadType,
+    value: decode?.(serverMessage),
+  };
+}
 
-    for (let index = 0; index < payload.filesLength(); index++) {
-      const file = payload.files(index);
-      if (file) {
-        files.push({ name: file.name() ?? "", size: file.size() });
-      }
+function readAudioFiles(payload: AudioFileList): AudioFileInfo[] {
+  const files: AudioFileInfo[] = [];
+
+  for (let index = 0; index < payload.filesLength(); index++) {
+    const file = payload.files(index);
+    if (file) {
+      files.push({ name: file.name() ?? "", size: file.size() });
     }
-
-    return { requestId: serverMessage.requestId(), payloadType, value: files };
   }
 
-  return { requestId: serverMessage.requestId(), payloadType };
+  return files;
 }

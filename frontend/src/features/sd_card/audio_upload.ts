@@ -1,6 +1,6 @@
-import { decodeAudioFile, TARGET_SAMPLE_RATE } from "./audio_file.ts";
-import api from "./pumpkin_client.ts";
-import type { PumpkinConnection } from "./pumpkin_connection.ts";
+import { decodeAudioFile, TARGET_SAMPLE_RATE } from "../../audio_file.ts";
+import api from "../../pumpkin_client.ts";
+import type { PumpkinConnection } from "../../pumpkin_connection.ts";
 
 const CHANNELS = 1;
 const BITS_PER_SAMPLE = 16;

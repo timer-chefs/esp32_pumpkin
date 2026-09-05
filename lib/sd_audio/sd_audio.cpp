@@ -2,6 +2,7 @@
 
 #include "audio.h"
 #include "config.h"
+#include "sd_audio_commands.h"
 
 #include <cstring>
 
@@ -74,6 +75,8 @@ static void build_path(char* path, size_t size, const char* file_name)
 
 void sd_audio_init()
 {
+    register_sd_audio_commands();
+
     create_directory(sd_audio_directory);
 
     // An upload that was cut short by a reset leaves its temporary file

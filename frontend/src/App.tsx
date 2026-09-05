@@ -1,11 +1,11 @@
 import { Container } from "react-bootstrap";
 
-import { AppContextProvider } from "./app_context.tsx";
-import { useAppController } from "./app_controller.ts";
+import { AppContextProvider } from "./app/app_context.tsx";
+import { useAppController } from "./app/app_controller.ts";
 import { AppHeader } from "./components/AppHeader.tsx";
-import { AudioSourceControl } from "./components/AudioSourceControl.tsx";
-import { PresetShowControl } from "./components/PresetShowControl.tsx";
-import { VolumeControl } from "./components/VolumeControl.tsx";
+import { AudioSourceControl } from "./features/audio_source/AudioSourceControl.tsx";
+import { PresetShowControl } from "./features/preset_shows/PresetShowControl.tsx";
+import { VolumeControl } from "./features/volume/VolumeControl.tsx";
 
 export function App() {
   const controller = useAppController();

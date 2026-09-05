@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { decodeAudioFile } from "./audio_file.ts";
+import { decodeAudioFile } from "../../audio_file.ts";
 import { toStoredName, uploadAudioFile } from "./audio_upload.ts";
-import api from "./pumpkin_client.ts";
-import type { PumpkinConnection } from "./pumpkin_connection.ts";
+import api from "../../pumpkin_client.ts";
+import type { PumpkinConnection } from "../../pumpkin_connection.ts";
 
-vi.mock("./audio_file.ts", () => ({
+vi.mock("../../audio_file.ts", () => ({
   TARGET_SAMPLE_RATE: 16_000,
   decodeAudioFile: vi.fn(),
 }));
 
-vi.mock("./pumpkin_client.ts", () => ({
+vi.mock("../../pumpkin_client.ts", () => ({
   default: {
     beginAudioUpload: vi.fn(),
     sendAudioUploadChunk: vi.fn(),

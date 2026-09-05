@@ -2,8 +2,8 @@ import { Upload, X } from "lucide-react";
 import { Button, Form, ProgressBar, Stack } from "react-bootstrap";
 import { useRef, useState } from "react";
 
-import { useSdCard } from "../app_context.tsx";
-import type { UploadState } from "../app_controller.ts";
+import { useSdCard } from "./sd_card_slice.ts";
+import type { UploadState } from "./sd_card_slice.ts";
 
 export function SdCardUpload() {
   const { upload, cancelUpload, uploadFile } = useSdCard();

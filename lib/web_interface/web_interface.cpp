@@ -9,14 +9,15 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include <LittleFS.h>
-#include <vector>
 #include <flatbuffers/flatbuffers.h>
 #include "pumpkin_generated.h"
 
 static WebServer server(web_server_port);
 static WebSocketsServer webSocket(web_socket_port);
 
-extern CommandHandler command_handler;
+// Reused for every response so a busy stream isn't allocating a buffer per
+// message. Safe because messages are handled one at a time from loop().
+static flatbuffers::FlatBufferBuilder response_builder(response_builder_size);
 static uint16_t connected_clients = 0;
 
 using namespace Pumpkin::Protocol;
@@ -35,61 +36,21 @@ static void send_response(
     uint32_t request_id,
     const CommandResult& result)
 {
-    flatbuffers::FlatBufferBuilder builder(response_builder_size);
-    flatbuffers::Offset<void> payload;
-
-    switch(result.payload_type)
-    {
-        case ServerPayload_Success:
-            payload = CreateSuccess(builder).Union();
-            break;
-
-        case ServerPayload_Volume:
-            payload = CreateVolume(builder, result.volume).Union();
-            break;
-
-        case ServerPayload_AudioFileList:
-        {
-            std::vector<flatbuffers::Offset<AudioFile>> files;
-            files.reserve(result.audio_file_count);
-            for(size_t i = 0; i < result.audio_file_count; ++i)
-            {
-                files.push_back(CreateAudioFileDirect(
-                    builder,
-                    result.audio_files[i].name,
-                    result.audio_files[i].size));
-            }
-
-            payload = CreateAudioFileListDirect(builder, &files).Union();
-            break;
-        }
-
-        case ServerPayload_Error:
-            payload = CreateErrorDirect(
-                builder,
-                result.error_code,
-                result.error_message).Union();
-            break;
-
-        default:
-            return;
-    }
-
     const auto server_message = CreateServerMessage(
-        builder,
+        response_builder,
         request_id,
         result.payload_type,
-        payload);
+        result.payload);
     const auto message = CreateMessage(
-        builder,
+        response_builder,
         MessageBody_ServerMessage,
         server_message.Union());
-    FinishMessageBuffer(builder, message);
+    FinishMessageBuffer(response_builder, message);
 
     webSocket.sendBIN(
         client_num,
-        builder.GetBufferPointer(),
-        builder.GetSize());
+        response_builder.GetBufferPointer(),
+        response_builder.GetSize());
 }
 
 static void handle_binary_message(
@@ -112,7 +73,8 @@ static void handle_binary_message(
         return;
     }
 
-    const CommandResult result = command_handler.handle(*client_message);
+    response_builder.Clear();
+    const CommandResult result = handle_command(*client_message, response_builder);
     if(client_message->request_id() != 0)
     {
         send_response(client_num, client_message->request_id(), result);

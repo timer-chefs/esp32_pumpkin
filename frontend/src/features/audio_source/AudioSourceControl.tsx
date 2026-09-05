@@ -1,8 +1,8 @@
 import { FileAudio, Mic, Music, Square, Volume2 } from "lucide-react";
 import { Alert, Button, Form, Spinner, Stack } from "react-bootstrap";
 
-import { useAudioSource } from "../app_context.tsx";
-import { SdCardFileList } from "./SdCardFileList.tsx";
+import { SdCardFileList } from "../sd_card/SdCardFileList.tsx";
+import { useAudioSource } from "./audio_source_slice.ts";
 
 export function AudioSourceControl() {
   const {

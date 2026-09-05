@@ -1,7 +1,7 @@
 import { Minus, Plus } from "lucide-react";
 import { Button, ButtonGroup, Spinner } from "react-bootstrap";
 
-import { useVolume } from "../app_context.tsx";
+import { useVolume } from "./volume_slice.ts";
 
 export function VolumeControl() {
   const { volume, decrease, increase } = useVolume();
