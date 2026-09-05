@@ -20,6 +20,27 @@ table AdjustVolume {
   delta:float;
 }
 
+table ListAudioFiles {}
+
+table PlayAudioFile {
+  name:string (required);
+}
+
+table BeginAudioUpload {
+  name:string (required);
+  size:uint;
+}
+
+// Sent as a request so the device's response doubles as the go-ahead for the
+// next chunk, which is what keeps the client from running ahead of the card.
+table AudioUploadChunk {
+  bytes:[ubyte] (required);
+}
+
+table FinishAudioUpload {}
+
+table CancelAudioUpload {}
+
 union ClientPayload {
   StartAudioStream,
   StopAudioStream,
@@ -27,7 +48,13 @@ union ClientPayload {
   AudioChunk,
   ResetAudio,
   GetVolume,
-  AdjustVolume
+  AdjustVolume,
+  ListAudioFiles,
+  PlayAudioFile,
+  BeginAudioUpload,
+  AudioUploadChunk,
+  FinishAudioUpload,
+  CancelAudioUpload
 }
 
 table ClientMessage {
@@ -53,10 +80,20 @@ table Volume {
   value:float;
 }
 
+table AudioFile {
+  name:string (required);
+  size:uint;
+}
+
+table AudioFileList {
+  files:[AudioFile] (required);
+}
+
 union ServerPayload {
   Success,
   Error,
-  Volume
+  Volume,
+  AudioFileList
 }
 
 table ServerMessage {

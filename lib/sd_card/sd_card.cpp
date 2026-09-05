@@ -19,15 +19,26 @@ void sd_card_init()
         pin_sd_d2,
         pin_sd_d3);
 
-    // Try 4-bit SDIO mode first, formatting the card if it can't be mounted
-    // (e.g. blank card or corrupted filesystem)
-    if(!SD_MMC.begin("/sdcard", true, true))
+    // 1-bit SDIO mode. Never format on a failed mount: the card carries the
+    // audio files, so a card that can't be read has to be looked at rather
+    // than wiped.
+    if(!SD_MMC.begin("/sdcard", true, false))
     {
-        Serial.println("4-bit SDIO mode failed. Trying 1-bit mode...");
+        Serial.println("SD card mount failed.");
         return;
     }
 
     Serial.println("SD Card mounted successfully.");
+}
+
+bool sd_card_is_mounted()
+{
+    return SD_MMC.cardType() != CARD_NONE;
+}
+
+uint64_t free_space()
+{
+    return SD_MMC.totalBytes() - SD_MMC.usedBytes();
 }
 
 // mode: FILE_READ, FILE_WRITE, FILE_APPEND
@@ -80,6 +91,87 @@ void close_file(File* file)
     delete file;
 }
 
+
+static bool has_extension(const char* name, const char* extension)
+{
+    if(!extension)
+    {
+        return true;
+    }
+
+    const size_t name_length = strlen(name);
+    const size_t extension_length = strlen(extension);
+
+    return name_length > extension_length &&
+           strcasecmp(name + name_length - extension_length, extension) == 0;
+}
+
+size_t list_files(
+    const char* directory_path,
+    const char* extension,
+    FileInfo* entries,
+    size_t max_entries)
+{
+    File directory = SD_MMC.open(directory_path);
+    if(!directory || !directory.isDirectory())
+    {
+        Serial.printf("Failed to open directory: %s\n", directory_path);
+        if(directory)
+        {
+            directory.close();
+        }
+        return 0;
+    }
+
+    size_t count = 0;
+    for(File entry = directory.openNextFile();
+        entry && count < max_entries;
+        entry = directory.openNextFile())
+    {
+        // File::name() is the bare name on this core, but be defensive about
+        // cores that hand back a full path.
+        const char* full_name = entry.name();
+        const char* last_separator = strrchr(full_name, '/');
+        const char* name = last_separator ? last_separator + 1 : full_name;
+
+        // Hidden entries are the card's own bookkeeping (and the sidecar
+        // files some desktops leave behind), never something to play.
+        const bool is_listable = !entry.isDirectory() &&
+                                 name[0] != '.' &&
+                                 has_extension(name, extension);
+        if(!is_listable)
+        {
+            entry.close();
+            continue;
+        }
+
+        strlcpy(entries[count].name, name, sizeof(entries[count].name));
+        entries[count].size = entry.size();
+        count++;
+
+        entry.close();
+    }
+
+    directory.close();
+    return count;
+}
+
+bool create_directory(const char* path)
+{
+    if(SD_MMC.exists(path))
+    {
+        return true;
+    }
+
+    if(SD_MMC.mkdir(path))
+    {
+        Serial.printf("Directory created: %s\n", path);
+        return true;
+    }
+
+    Serial.printf("Failed to create directory: %s\n", path);
+    return false;
+}
 
 // Check if file exists
 bool file_exists(const char* path)

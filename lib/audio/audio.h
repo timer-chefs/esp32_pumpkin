@@ -6,6 +6,7 @@
 bool audio_init();
 void audio_write(const uint8_t* payload, size_t length);
 void audio_service();
+size_t audio_buffered_bytes();
 void audio_started();
 void audio_stoped();
 bool is_audio_running();

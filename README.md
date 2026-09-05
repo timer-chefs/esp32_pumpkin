@@ -47,6 +47,18 @@ ESP32-S3 Pin | Connection
 GPIO 3 (internal pull-up) | Button pin 1
 GND | Button pin 2
 
+## Transfer songs to the SD card
+
+If you place songs in the `/audio` directory on the SD card then they can be played "offline" without buffering. They will be listed in the UI.
+
+Only `.wav` files are listed, and should optimally be 16-bit PCM (mono or stereo) and 16kHz. Other sample rates work (8 - 48 kHz) but have to be resampled on the fly.
+
+You can encode a file with the expected format with the following command:
+
+```bash
+ffmpeg -i song.mp3 -ac 1 -ar 16000 -c:a pcm_s16le song.wav
+```
+
 ## Development
 
 ### Dependencies

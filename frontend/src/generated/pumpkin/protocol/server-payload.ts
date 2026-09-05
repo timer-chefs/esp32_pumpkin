@@ -2,6 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
+import { AudioFileList } from '../../pumpkin/protocol/audio-file-list.js';
 import { Error } from '../../pumpkin/protocol/error.js';
 import { Success } from '../../pumpkin/protocol/success.js';
 import { Volume } from '../../pumpkin/protocol/volume.js';
@@ -11,32 +12,35 @@ export enum ServerPayload {
   NONE = 0,
   Success = 1,
   Error = 2,
-  Volume = 3
+  Volume = 3,
+  AudioFileList = 4
 }
 
 export function unionToServerPayload(
   type: ServerPayload,
-  accessor: (obj:Error|Success|Volume) => Error|Success|Volume|null
-): Error|Success|Volume|null {
+  accessor: (obj:AudioFileList|Error|Success|Volume) => AudioFileList|Error|Success|Volume|null
+): AudioFileList|Error|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(new Success())! as Success;
     case 'Error': return accessor(new Error())! as Error;
     case 'Volume': return accessor(new Volume())! as Volume;
+    case 'AudioFileList': return accessor(new AudioFileList())! as AudioFileList;
     default: return null;
   }
 }
 
 export function unionListToServerPayload(
   type: ServerPayload, 
-  accessor: (index: number, obj:Error|Success|Volume) => Error|Success|Volume|null, 
+  accessor: (index: number, obj:AudioFileList|Error|Success|Volume) => AudioFileList|Error|Success|Volume|null, 
   index: number
-): Error|Success|Volume|null {
+): AudioFileList|Error|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(index, new Success())! as Success;
     case 'Error': return accessor(index, new Error())! as Error;
     case 'Volume': return accessor(index, new Volume())! as Volume;
+    case 'AudioFileList': return accessor(index, new AudioFileList())! as AudioFileList;
     default: return null;
   }
 }

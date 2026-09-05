@@ -17,9 +17,21 @@ describe("AudioSourceControl", () => {
 
     await user.click(screen.getByRole("button", { name: "Microphone" }));
     await user.click(screen.getByRole("button", { name: "Audio file" }));
+    await user.click(screen.getByRole("button", { name: "SD card" }));
 
     expect(controller.actions.startMicrophone).toHaveBeenCalledOnce();
     expect(controller.actions.startFileMode).toHaveBeenCalledOnce();
+    expect(controller.actions.startSdCardMode).toHaveBeenCalledOnce();
+  });
+
+  it("shows the SD card listing when the card is the active source", () => {
+    renderControl({
+      activeSource: "sdCard",
+      sdCardFiles: [{ name: "ghost.wav", size: 1024 }],
+    });
+
+    expect(screen.getByText("Files on the SD card")).toBeVisible();
+    expect(screen.getByText("ghost.wav")).toBeVisible();
   });
 
   it("accepts a file and exposes file streaming controls", async () => {
