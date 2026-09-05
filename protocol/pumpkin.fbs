@@ -20,6 +20,12 @@ table AdjustVolume {
   delta:float;
 }
 
+table ListAudioFiles {}
+
+table PlayAudioFile {
+  name:string (required);
+}
+
 union ClientPayload {
   StartAudioStream,
   StopAudioStream,
@@ -27,7 +33,9 @@ union ClientPayload {
   AudioChunk,
   ResetAudio,
   GetVolume,
-  AdjustVolume
+  AdjustVolume,
+  ListAudioFiles,
+  PlayAudioFile
 }
 
 table ClientMessage {
@@ -53,10 +61,20 @@ table Volume {
   value:float;
 }
 
+table AudioFile {
+  name:string (required);
+  size:uint;
+}
+
+table AudioFileList {
+  files:[AudioFile] (required);
+}
+
 union ServerPayload {
   Success,
   Error,
-  Volume
+  Volume,
+  AudioFileList
 }
 
 table ServerMessage {

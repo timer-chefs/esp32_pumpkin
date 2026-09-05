@@ -6,10 +6,11 @@ import {
   getPumpkinConnection,
   type PumpkinConnection,
 } from "./pumpkin_connection.ts";
-import api from "./pumpkin_client.ts";
+import api, { type AudioFileInfo } from "./pumpkin_client.ts";
+import { toError } from "./to_error.ts";
 import workletUrl from "./worklet_processor.ts?worker&url";
 
-export type AudioSource = "microphone" | "file";
+export type AudioSource = "microphone" | "file" | "sdCard";
 export type MicrophoneStatus = "starting" | "streaming";
 export type StatusTone = "neutral" | "success";
 
@@ -20,6 +21,11 @@ export interface AppState {
   fileStatus: { message: string; tone: StatusTone } | null;
   folderStatus: "success" | "error" | null;
   microphoneStatus: MicrophoneStatus | null;
+  playingSdCardFile: string | null;
+  sdCardError: string | null;
+  // Null until the card has been listed for the first time.
+  sdCardFiles: AudioFileInfo[] | null;
+  sdCardLoading: boolean;
   streamFileEnabled: boolean;
   volume: number | null;
 }
@@ -42,6 +48,10 @@ let state: AppState = {
   fileStatus: null,
   folderStatus: null,
   microphoneStatus: null,
+  playingSdCardFile: null,
+  sdCardError: null,
+  sdCardFiles: null,
+  sdCardLoading: false,
   streamFileEnabled: false,
   volume: null,
 };
@@ -54,13 +64,17 @@ const actions = {
   decreaseVolume: () => runAction(() => changeVolume(-0.1)),
   increaseVolume: () => runAction(() => changeVolume(0.1)),
   playGhostShow: () => runAction(playGhostShow),
+  playSdCardFile: (name: string) => runAction(() => playSdCardFile(name)),
+  refreshSdCardFiles: () => runAction(refreshSdCardFiles),
   selectAudioFile,
   selectAudioFolder: () => runAction(selectAudioFolder),
   startFile: () => runAction(startSelectedFile),
   startFileMode: () => runAction(startFileMode),
   startMicrophone: () => runAction(startMicrophone),
+  startSdCardMode: () => runAction(startSdCardMode),
   stopAudio: () => runAction(stopAudio),
   stopMicrophone: () => runAction(stopMicrophone),
+  stopSdCardPlayback: () => runAction(stopSdCardPlayback),
 };
 
 export type AppActions = typeof actions;
@@ -97,11 +111,13 @@ function updateState(update: Partial<AppState>): void {
 
 async function stopAudio(): Promise<void> {
   await audioSessionManager.stop();
+  await tellDeviceToStopSdCardPlayback();
   updateState({
     currentMode: "Idle",
     currentStreaming: null,
     fileStatus: null,
     microphoneStatus: null,
+    playingSdCardFile: null,
   });
 }
 
@@ -209,6 +225,66 @@ async function requestMicrophone(): Promise<MediaStream> {
   } catch (error) {
     alert("Microphone access failed.");
     throw error;
+  }
+}
+
+async function startSdCardMode(): Promise<void> {
+  await stopAudio();
+  updateState({ activeSource: "sdCard", currentMode: "SD card" });
+  await refreshSdCardFiles();
+}
+
+async function refreshSdCardFiles(): Promise<void> {
+  updateState({ sdCardError: null, sdCardLoading: true });
+
+  try {
+    const files = await api.listAudioFiles(await getOpenConnection());
+    updateState({ sdCardFiles: files, sdCardLoading: false });
+  } catch (error) {
+    console.error("Could not list the SD card:", error);
+    updateState({
+      sdCardError: "Could not read the SD card",
+      sdCardLoading: false,
+    });
+  }
+}
+
+async function playSdCardFile(name: string): Promise<void> {
+  // The device plays this one on its own, so hand back whatever the browser
+  // was streaming before asking for it.
+  await audioSessionManager.stop();
+
+  try {
+    await api.playAudioFile(await getOpenConnection(), name);
+    updateState({
+      currentMode: "SD card",
+      currentStreaming: name,
+      playingSdCardFile: name,
+      sdCardError: null,
+    });
+  } catch (error) {
+    console.error(`Could not play "${name}" from the SD card:`, error);
+    updateState({
+      playingSdCardFile: null,
+      sdCardError: toError(error).message,
+    });
+  }
+}
+
+async function stopSdCardPlayback(): Promise<void> {
+  await tellDeviceToStopSdCardPlayback();
+  updateState({ currentStreaming: null, playingSdCardFile: null });
+}
+
+async function tellDeviceToStopSdCardPlayback(): Promise<void> {
+  if (!state.playingSdCardFile) {
+    return;
+  }
+
+  try {
+    api.stopAudioStream(await getOpenConnection());
+  } catch (error) {
+    console.warn("Could not stop SD card playback:", error);
   }
 }
 

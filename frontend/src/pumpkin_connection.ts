@@ -1,6 +1,7 @@
 import * as flatbuffers from "flatbuffers";
 
 import {
+  AudioFileList,
   ClientMessage,
   ClientPayload,
   Error as ProtocolError,
@@ -14,14 +15,26 @@ import { toError } from "./to_error.ts";
 
 type CreatePayload = (builder: flatbuffers.Builder) => flatbuffers.Offset;
 
-// decodeResponse only ever populates `value` for ServerPayload.Volume, so
-// that's the only payload sendRequest's callers can resolve a number for.
+/** An audio file stored on the device's SD card. */
+export interface AudioFileInfo {
+  name: string;
+  size: number;
+}
+
+type ResponseData = number | AudioFileInfo[];
+
+// decodeResponse only populates `value` for the payloads that carry one, so
+// those are the only ones sendRequest's callers can resolve a value for.
 type ResponseValue<Payload extends ServerPayload> =
-  Payload extends ServerPayload.Volume ? number : void;
+  Payload extends ServerPayload.Volume
+    ? number
+    : Payload extends ServerPayload.AudioFileList
+      ? AudioFileInfo[]
+      : void;
 
 interface PendingRequest {
   expectedPayload: ServerPayload;
-  resolve: (value: number | undefined) => void;
+  resolve: (value: ResponseData | undefined) => void;
   reject: (error: Error) => void;
   timeout: ReturnType<typeof setTimeout>;
 }
@@ -132,7 +145,7 @@ export class PumpkinConnection {
 
       this.pendingRequests.set(requestId, {
         expectedPayload,
-        resolve: resolve as (value: number | undefined) => void,
+        resolve: resolve as (value: ResponseData | undefined) => void,
         reject,
         timeout,
       });
@@ -275,7 +288,7 @@ function decodeResponse(data: Uint8Array):
   | {
       requestId: number;
       payloadType: ServerPayload;
-      value?: number;
+      value?: ResponseData;
       error?: Error;
     }
   | undefined {
@@ -313,6 +326,20 @@ function decodeResponse(data: Uint8Array):
       payloadType,
       value: payload.value(),
     };
+  }
+
+  if (payloadType === ServerPayload.AudioFileList) {
+    const payload = serverMessage.payload(new AudioFileList()) as AudioFileList;
+    const files: AudioFileInfo[] = [];
+
+    for (let index = 0; index < payload.filesLength(); index++) {
+      const file = payload.files(index);
+      if (file) {
+        files.push({ name: file.name() ?? "", size: file.size() });
+      }
+    }
+
+    return { requestId: serverMessage.requestId(), payloadType, value: files };
   }
 
   return { requestId: serverMessage.requestId(), payloadType };

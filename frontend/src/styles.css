@@ -116,7 +116,7 @@ h2 {
 
 .source-selector {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -170,6 +170,33 @@ h2 {
 
 .file-source {
   max-width: 36rem;
+}
+
+.sd-card-source {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sd-card-toolbar {
+  align-items: center;
+}
+
+.sd-card-files {
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+.sd-card-file {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sd-card-file-name {
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+  font-weight: 600;
 }
 
 .utility-grid {

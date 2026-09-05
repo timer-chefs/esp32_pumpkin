@@ -19,6 +19,9 @@ constexpr uint8_t web_socket_port = 81;
 // call. Drain up to this many per loop() iteration so a backlog of audio
 // frames doesn't delay a command frame queued behind them.
 constexpr uint8_t max_websocket_frames_per_loop = 8;
+// Initial size of the response FlatBuffer. Big enough for a full audio file
+// listing, and the builder grows on its own if that ever isn't enough.
+constexpr uint16_t response_builder_size = 2048;
 
 // Audio
 constexpr uint16_t buffer_size = 32768;
@@ -59,6 +62,19 @@ constexpr uint8_t pin_led2 = GPIO_NUM_4;
 
 //WiFi Provisioning Pins:
 constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
+
+// SD card audio library
+// Audio files live in their own directory on the card so the listing isn't
+// polluted by whatever else the card happens to carry.
+constexpr const char* sd_audio_directory = "/audio";
+constexpr uint8_t max_listed_audio_files = 32;
+constexpr uint8_t max_file_name_length = 64;
+// How much SD-sourced audio to keep buffered ahead of playback. Kept below
+// audio_catch_up_high_water_ms so topping the buffer up never looks like a
+// network burst to the catch-up logic.
+constexpr uint16_t sd_audio_target_buffer_ms = 60;
+// How much of the file to read from the card at a time.
+constexpr uint16_t sd_audio_read_block_size = 1024;
 
 // SDIO Pin 
 constexpr uint8_t pin_sd_clk = GPIO_NUM_12;

@@ -8,6 +8,7 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include <LittleFS.h>
+#include <vector>
 #include <flatbuffers/flatbuffers.h>
 #include "pumpkin_generated.h"
 
@@ -33,7 +34,7 @@ static void send_response(
     uint32_t request_id,
     const CommandResult& result)
 {
-    flatbuffers::FlatBufferBuilder builder(128);
+    flatbuffers::FlatBufferBuilder builder(response_builder_size);
     flatbuffers::Offset<void> payload;
 
     switch(result.payload_type)
@@ -45,6 +46,22 @@ static void send_response(
         case ServerPayload_Volume:
             payload = CreateVolume(builder, result.volume).Union();
             break;
+
+        case ServerPayload_AudioFileList:
+        {
+            std::vector<flatbuffers::Offset<AudioFile>> files;
+            files.reserve(result.audio_file_count);
+            for(size_t i = 0; i < result.audio_file_count; ++i)
+            {
+                files.push_back(CreateAudioFileDirect(
+                    builder,
+                    result.audio_files[i].name,
+                    result.audio_files[i].size));
+            }
+
+            payload = CreateAudioFileListDirect(builder, &files).Union();
+            break;
+        }
 
         case ServerPayload_Error:
             payload = CreateErrorDirect(

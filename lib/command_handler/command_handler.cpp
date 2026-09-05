@@ -1,24 +1,34 @@
 #include "command_handler.h"
 #include "audio.h"
+#include "sd_audio.h"
 
 #include <algorithm>
 #include <cmath>
 
 using namespace Pumpkin::Protocol;
 
+// The listing is answered straight out of this buffer, so it only has to
+// outlive the response the web interface builds from it.
+static FileInfo listed_audio_files[max_listed_audio_files];
+
 static CommandResult success()
 {
-    return {ServerPayload_Success, ErrorCode_UNKNOWN, 0.0f, nullptr};
+    return {ServerPayload_Success, ErrorCode_UNKNOWN, 0.0f, nullptr, nullptr, 0};
 }
 
 static CommandResult volume(float value)
 {
-    return {ServerPayload_Volume, ErrorCode_UNKNOWN, value, nullptr};
+    return {ServerPayload_Volume, ErrorCode_UNKNOWN, value, nullptr, nullptr, 0};
 }
 
 static CommandResult error(ErrorCode code, const char* message)
 {
-    return {ServerPayload_Error, code, 0.0f, message};
+    return {ServerPayload_Error, code, 0.0f, message, nullptr, 0};
+}
+
+static CommandResult audio_files(const FileInfo* files, size_t count)
+{
+    return {ServerPayload_AudioFileList, ErrorCode_UNKNOWN, 0.0f, nullptr, files, count};
 }
 
 CommandHandler::CommandHandler(ShowManager& show_manager)
@@ -30,10 +40,13 @@ CommandResult CommandHandler::handle(const ClientMessage& message)
     switch(message.payload_type())
     {
         case ClientPayload_StartAudioStream:
+            // The stream takes over from whatever the SD card was playing.
+            sd_audio_stop();
             audio_started();
             return success();
 
         case ClientPayload_StopAudioStream:
+            sd_audio_stop();
             audio_stoped();
             show_manager.set_current_show(0);
             return success();
@@ -58,6 +71,7 @@ CommandResult CommandHandler::handle(const ClientMessage& message)
         }
 
         case ClientPayload_ResetAudio:
+            sd_audio_stop();
             audio_stoped();
             return success();
 
@@ -77,6 +91,29 @@ CommandResult CommandHandler::handle(const ClientMessage& message)
                 std::min(1.0f, get_volume() + delta));
             set_volume(adjusted);
             return volume(adjusted);
+        }
+
+        case ClientPayload_ListAudioFiles:
+        {
+            size_t count = 0;
+            if(!sd_audio_list_files(listed_audio_files, max_listed_audio_files, &count))
+            {
+                return error(ErrorCode_UNKNOWN, "No SD card detected");
+            }
+
+            return audio_files(listed_audio_files, count);
+        }
+
+        case ClientPayload_PlayAudioFile:
+        {
+            const auto* name = message.payload_as_PlayAudioFile()->name();
+            const char* error_message = nullptr;
+            if(!sd_audio_start(name->c_str(), &error_message))
+            {
+                return error(ErrorCode_INVALID_ARGUMENT, error_message);
+            }
+
+            return success();
         }
 
         default:

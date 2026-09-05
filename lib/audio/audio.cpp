@@ -137,6 +137,12 @@ void audio_service()
     }
 }
 
+// How much written-but-not-yet-played audio the buffer currently holds.
+size_t audio_buffered_bytes()
+{
+    return audio_buffer.available();
+}
+
 void set_volume(float volume_level)
 {
     volume.setVolume(volume_level);
