@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 import { streamAudioFile } from "./audio_file.ts";
+import { toStoredName, uploadAudioFile } from "./audio_upload.ts";
 import { audioSessionManager, type AudioSession } from "./audio_session.ts";
 import {
   getPumpkinConnection,
@@ -11,6 +12,17 @@ import { toError } from "./to_error.ts";
 import workletUrl from "./worklet_processor.ts?worker&url";
 
 export type AudioSource = "microphone" | "file" | "sdCard";
+
+export interface UploadState {
+  name: string;
+  // Decoding and resampling the file in the browser comes first; only then
+  // is there a byte count to make progress against.
+  phase: "converting" | "sending";
+  bytesSent: number;
+  totalBytes: number;
+  bytesPerSecond: number | null;
+  secondsRemaining: number | null;
+}
 export type MicrophoneStatus = "starting" | "streaming";
 export type StatusTone = "neutral" | "success";
 
@@ -27,6 +39,7 @@ export interface AppState {
   sdCardFiles: AudioFileInfo[] | null;
   sdCardLoading: boolean;
   streamFileEnabled: boolean;
+  upload: UploadState | null;
   volume: number | null;
 }
 
@@ -53,14 +66,17 @@ let state: AppState = {
   sdCardFiles: null,
   sdCardLoading: false,
   streamFileEnabled: false,
+  upload: null,
   volume: null,
 };
 let selectedFile: File | null = null;
 let selectedFolder: ReadableDirectoryHandle | null = null;
+let uploadAbortController: AbortController | null = null;
 
 const listeners = new Set<() => void>();
 
 const actions = {
+  cancelUpload,
   decreaseVolume: () => runAction(() => changeVolume(-0.1)),
   increaseVolume: () => runAction(() => changeVolume(0.1)),
   playGhostShow: () => runAction(playGhostShow),
@@ -75,6 +91,7 @@ const actions = {
   stopAudio: () => runAction(stopAudio),
   stopMicrophone: () => runAction(stopMicrophone),
   stopSdCardPlayback: () => runAction(stopSdCardPlayback),
+  uploadToSdCard: (file: File) => runAction(() => uploadToSdCard(file)),
 };
 
 export type AppActions = typeof actions;
@@ -286,6 +303,56 @@ async function tellDeviceToStopSdCardPlayback(): Promise<void> {
   } catch (error) {
     console.warn("Could not stop SD card playback:", error);
   }
+}
+
+async function uploadToSdCard(file: File): Promise<void> {
+  if (uploadAbortController) {
+    return;
+  }
+
+  const controller = new AbortController();
+  uploadAbortController = controller;
+
+  const name = toStoredName(file.name);
+  updateState({
+    sdCardError: null,
+    upload: {
+      name,
+      phase: "converting",
+      bytesSent: 0,
+      totalBytes: 0,
+      bytesPerSecond: null,
+      secondsRemaining: null,
+    },
+  });
+
+  try {
+    await uploadAudioFile(await getOpenConnection(), file, {
+      signal: controller.signal,
+      onProgress: (progress) =>
+        updateState({ upload: { name, phase: "sending", ...progress } }),
+    });
+
+    await refreshSdCardFiles();
+  } catch (error) {
+    if (!isAbortError(error)) {
+      console.error(`Could not upload "${name}":`, error);
+      updateState({ sdCardError: toError(error).message });
+    }
+  } finally {
+    if (uploadAbortController === controller) {
+      uploadAbortController = null;
+    }
+    updateState({ upload: null });
+  }
+}
+
+function cancelUpload(): void {
+  uploadAbortController?.abort();
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 async function selectAudioFolder(): Promise<void> {

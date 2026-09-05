@@ -2,6 +2,7 @@ import { Play, RefreshCw, Square } from "lucide-react";
 import { Alert, Button, ListGroup, Spinner, Stack } from "react-bootstrap";
 
 import { useSdCard } from "../app_context.tsx";
+import { SdCardUpload } from "./SdCardUpload.tsx";
 
 export function SdCardFileList() {
   const { error, files, isLoading, playingFile, playFile, refresh, stop } =
@@ -48,6 +49,8 @@ export function SdCardFileList() {
       {files !== null && files.length === 0 && (
         <p className="empty-state mb-0">No audio files on the SD card</p>
       )}
+
+      <SdCardUpload />
 
       {files !== null && files.length > 0 && (
         <ListGroup className="sd-card-files">

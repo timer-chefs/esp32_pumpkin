@@ -26,6 +26,21 @@ table PlayAudioFile {
   name:string (required);
 }
 
+table BeginAudioUpload {
+  name:string (required);
+  size:uint;
+}
+
+// Sent as a request so the device's response doubles as the go-ahead for the
+// next chunk, which is what keeps the client from running ahead of the card.
+table AudioUploadChunk {
+  bytes:[ubyte] (required);
+}
+
+table FinishAudioUpload {}
+
+table CancelAudioUpload {}
+
 union ClientPayload {
   StartAudioStream,
   StopAudioStream,
@@ -35,7 +50,11 @@ union ClientPayload {
   GetVolume,
   AdjustVolume,
   ListAudioFiles,
-  PlayAudioFile
+  PlayAudioFile,
+  BeginAudioUpload,
+  AudioUploadChunk,
+  FinishAudioUpload,
+  CancelAudioUpload
 }
 
 table ClientMessage {

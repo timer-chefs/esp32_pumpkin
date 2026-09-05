@@ -15,6 +15,7 @@ struct FileInfo
 
 void sd_card_init();
 bool sd_card_is_mounted();
+uint64_t free_space();
 
 File* open_file(const char* path, const char* mode);
 size_t read_file(File* file, uint8_t* buffer, size_t size);

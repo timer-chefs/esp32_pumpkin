@@ -69,12 +69,22 @@ constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
 constexpr const char* sd_audio_directory = "/audio";
 constexpr uint8_t max_listed_audio_files = 32;
 constexpr uint8_t max_file_name_length = 64;
+// Room for "<sd_audio_directory>/<file name>".
+constexpr uint8_t audio_path_length = max_file_name_length + 32;
 // How much SD-sourced audio to keep buffered ahead of playback. Kept below
 // audio_catch_up_high_water_ms so topping the buffer up never looks like a
 // network burst to the catch-up logic.
 constexpr uint16_t sd_audio_target_buffer_ms = 60;
 // How much of the file to read from the card at a time.
 constexpr uint16_t sd_audio_read_block_size = 1024;
+// Largest upload chunk the device accepts. The client acknowledges its way
+// through a file a couple of chunks at a time, so this also caps how much of
+// an upload can be in flight anywhere between the browser and the card.
+constexpr uint16_t max_upload_chunk_size = 2048;
+// An upload in progress writes here, and only takes its real name once every
+// byte has arrived, so an interrupted upload can't leave a half file behind.
+// The leading dot keeps it out of the listing.
+constexpr const char* sd_upload_temporary_file = ".upload.tmp";
 
 // SDIO Pin 
 constexpr uint8_t pin_sd_clk = GPIO_NUM_12;

@@ -43,6 +43,18 @@ struct ListAudioFilesBuilder;
 struct PlayAudioFile;
 struct PlayAudioFileBuilder;
 
+struct BeginAudioUpload;
+struct BeginAudioUploadBuilder;
+
+struct AudioUploadChunk;
+struct AudioUploadChunkBuilder;
+
+struct FinishAudioUpload;
+struct FinishAudioUploadBuilder;
+
+struct CancelAudioUpload;
+struct CancelAudioUploadBuilder;
+
 struct ClientMessage;
 struct ClientMessageBuilder;
 
@@ -78,11 +90,15 @@ enum ClientPayload : uint8_t {
   ClientPayload_AdjustVolume = 7,
   ClientPayload_ListAudioFiles = 8,
   ClientPayload_PlayAudioFile = 9,
+  ClientPayload_BeginAudioUpload = 10,
+  ClientPayload_AudioUploadChunk = 11,
+  ClientPayload_FinishAudioUpload = 12,
+  ClientPayload_CancelAudioUpload = 13,
   ClientPayload_MIN = ClientPayload_NONE,
-  ClientPayload_MAX = ClientPayload_PlayAudioFile
+  ClientPayload_MAX = ClientPayload_CancelAudioUpload
 };
 
-inline const ClientPayload (&EnumValuesClientPayload())[10] {
+inline const ClientPayload (&EnumValuesClientPayload())[14] {
   static const ClientPayload values[] = {
     ClientPayload_NONE,
     ClientPayload_StartAudioStream,
@@ -93,13 +109,17 @@ inline const ClientPayload (&EnumValuesClientPayload())[10] {
     ClientPayload_GetVolume,
     ClientPayload_AdjustVolume,
     ClientPayload_ListAudioFiles,
-    ClientPayload_PlayAudioFile
+    ClientPayload_PlayAudioFile,
+    ClientPayload_BeginAudioUpload,
+    ClientPayload_AudioUploadChunk,
+    ClientPayload_FinishAudioUpload,
+    ClientPayload_CancelAudioUpload
   };
   return values;
 }
 
 inline const char * const *EnumNamesClientPayload() {
-  static const char * const names[11] = {
+  static const char * const names[15] = {
     "NONE",
     "StartAudioStream",
     "StopAudioStream",
@@ -110,13 +130,17 @@ inline const char * const *EnumNamesClientPayload() {
     "AdjustVolume",
     "ListAudioFiles",
     "PlayAudioFile",
+    "BeginAudioUpload",
+    "AudioUploadChunk",
+    "FinishAudioUpload",
+    "CancelAudioUpload",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameClientPayload(ClientPayload e) {
-  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_PlayAudioFile)) return "";
+  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_CancelAudioUpload)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesClientPayload()[index];
 }
@@ -159,6 +183,22 @@ template<> struct ClientPayloadTraits<Pumpkin::Protocol::ListAudioFiles> {
 
 template<> struct ClientPayloadTraits<Pumpkin::Protocol::PlayAudioFile> {
   static const ClientPayload enum_value = ClientPayload_PlayAudioFile;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::BeginAudioUpload> {
+  static const ClientPayload enum_value = ClientPayload_BeginAudioUpload;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::AudioUploadChunk> {
+  static const ClientPayload enum_value = ClientPayload_AudioUploadChunk;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::FinishAudioUpload> {
+  static const ClientPayload enum_value = ClientPayload_FinishAudioUpload;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::CancelAudioUpload> {
+  static const ClientPayload enum_value = ClientPayload_CancelAudioUpload;
 };
 
 bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *obj, ClientPayload type);
@@ -641,6 +681,180 @@ inline ::flatbuffers::Offset<PlayAudioFile> CreatePlayAudioFileDirect(
       name__);
 }
 
+struct BeginAudioUpload FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef BeginAudioUploadBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NAME = 4,
+    VT_SIZE = 6
+  };
+  const ::flatbuffers::String *name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
+  }
+  uint32_t size() const {
+    return GetField<uint32_t>(VT_SIZE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffsetRequired(verifier, VT_NAME) &&
+           verifier.VerifyString(name()) &&
+           VerifyField<uint32_t>(verifier, VT_SIZE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct BeginAudioUploadBuilder {
+  typedef BeginAudioUpload Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_name(::flatbuffers::Offset<::flatbuffers::String> name) {
+    fbb_.AddOffset(BeginAudioUpload::VT_NAME, name);
+  }
+  void add_size(uint32_t size) {
+    fbb_.AddElement<uint32_t>(BeginAudioUpload::VT_SIZE, size, 0);
+  }
+  explicit BeginAudioUploadBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<BeginAudioUpload> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<BeginAudioUpload>(end);
+    fbb_.Required(o, BeginAudioUpload::VT_NAME);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<BeginAudioUpload> CreateBeginAudioUpload(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> name = 0,
+    uint32_t size = 0) {
+  BeginAudioUploadBuilder builder_(_fbb);
+  builder_.add_size(size);
+  builder_.add_name(name);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<BeginAudioUpload> CreateBeginAudioUploadDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *name = nullptr,
+    uint32_t size = 0) {
+  auto name__ = name ? _fbb.CreateString(name) : 0;
+  return Pumpkin::Protocol::CreateBeginAudioUpload(
+      _fbb,
+      name__,
+      size);
+}
+
+struct AudioUploadChunk FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef AudioUploadChunkBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_BYTES = 4
+  };
+  const ::flatbuffers::Vector<uint8_t> *bytes() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_BYTES);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffsetRequired(verifier, VT_BYTES) &&
+           verifier.VerifyVector(bytes()) &&
+           verifier.EndTable();
+  }
+};
+
+struct AudioUploadChunkBuilder {
+  typedef AudioUploadChunk Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_bytes(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> bytes) {
+    fbb_.AddOffset(AudioUploadChunk::VT_BYTES, bytes);
+  }
+  explicit AudioUploadChunkBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<AudioUploadChunk> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<AudioUploadChunk>(end);
+    fbb_.Required(o, AudioUploadChunk::VT_BYTES);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<AudioUploadChunk> CreateAudioUploadChunk(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> bytes = 0) {
+  AudioUploadChunkBuilder builder_(_fbb);
+  builder_.add_bytes(bytes);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<AudioUploadChunk> CreateAudioUploadChunkDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<uint8_t> *bytes = nullptr) {
+  auto bytes__ = bytes ? _fbb.CreateVector<uint8_t>(*bytes) : 0;
+  return Pumpkin::Protocol::CreateAudioUploadChunk(
+      _fbb,
+      bytes__);
+}
+
+struct FinishAudioUpload FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef FinishAudioUploadBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct FinishAudioUploadBuilder {
+  typedef FinishAudioUpload Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit FinishAudioUploadBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<FinishAudioUpload> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<FinishAudioUpload>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<FinishAudioUpload> CreateFinishAudioUpload(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  FinishAudioUploadBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct CancelAudioUpload FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CancelAudioUploadBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CancelAudioUploadBuilder {
+  typedef CancelAudioUpload Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CancelAudioUploadBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CancelAudioUpload> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CancelAudioUpload>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CancelAudioUpload> CreateCancelAudioUpload(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CancelAudioUploadBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
 struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ClientMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -684,6 +898,18 @@ struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   const Pumpkin::Protocol::PlayAudioFile *payload_as_PlayAudioFile() const {
     return payload_type() == Pumpkin::Protocol::ClientPayload_PlayAudioFile ? static_cast<const Pumpkin::Protocol::PlayAudioFile *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::BeginAudioUpload *payload_as_BeginAudioUpload() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_BeginAudioUpload ? static_cast<const Pumpkin::Protocol::BeginAudioUpload *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::AudioUploadChunk *payload_as_AudioUploadChunk() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_AudioUploadChunk ? static_cast<const Pumpkin::Protocol::AudioUploadChunk *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::FinishAudioUpload *payload_as_FinishAudioUpload() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_FinishAudioUpload ? static_cast<const Pumpkin::Protocol::FinishAudioUpload *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::CancelAudioUpload *payload_as_CancelAudioUpload() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_CancelAudioUpload ? static_cast<const Pumpkin::Protocol::CancelAudioUpload *>(payload()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -729,6 +955,22 @@ template<> inline const Pumpkin::Protocol::ListAudioFiles *ClientMessage::payloa
 
 template<> inline const Pumpkin::Protocol::PlayAudioFile *ClientMessage::payload_as<Pumpkin::Protocol::PlayAudioFile>() const {
   return payload_as_PlayAudioFile();
+}
+
+template<> inline const Pumpkin::Protocol::BeginAudioUpload *ClientMessage::payload_as<Pumpkin::Protocol::BeginAudioUpload>() const {
+  return payload_as_BeginAudioUpload();
+}
+
+template<> inline const Pumpkin::Protocol::AudioUploadChunk *ClientMessage::payload_as<Pumpkin::Protocol::AudioUploadChunk>() const {
+  return payload_as_AudioUploadChunk();
+}
+
+template<> inline const Pumpkin::Protocol::FinishAudioUpload *ClientMessage::payload_as<Pumpkin::Protocol::FinishAudioUpload>() const {
+  return payload_as_FinishAudioUpload();
+}
+
+template<> inline const Pumpkin::Protocol::CancelAudioUpload *ClientMessage::payload_as<Pumpkin::Protocol::CancelAudioUpload>() const {
+  return payload_as_CancelAudioUpload();
 }
 
 struct ClientMessageBuilder {
@@ -1218,6 +1460,22 @@ inline bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *o
     }
     case ClientPayload_PlayAudioFile: {
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::PlayAudioFile *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_BeginAudioUpload: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::BeginAudioUpload *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_AudioUploadChunk: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::AudioUploadChunk *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_FinishAudioUpload: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::FinishAudioUpload *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_CancelAudioUpload: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::CancelAudioUpload *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

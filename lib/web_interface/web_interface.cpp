@@ -3,6 +3,7 @@
 #include "audio.h"
 #include "config.h"
 #include "command_handler.h"
+#include "sd_audio.h"
 
 #include <WiFi.h>
 #include <WebServer.h>
@@ -134,6 +135,9 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
         {
             connected_clients--;
             Serial.printf("Client %u disconnected (total: %u)\n", client_num, connected_clients);
+
+            // A client that drops mid-upload is never going to finish it.
+            sd_audio_upload_cancel();
             break;
         }
 

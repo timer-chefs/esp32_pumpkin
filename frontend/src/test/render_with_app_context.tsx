@@ -27,10 +27,12 @@ export function renderWithAppContext(
       sdCardFiles: null,
       sdCardLoading: false,
       streamFileEnabled: false,
+      upload: null,
       volume: null,
       ...overrides.state,
     },
     actions: {
+      cancelUpload: vi.fn(),
       decreaseVolume: vi.fn(),
       increaseVolume: vi.fn(),
       playGhostShow: vi.fn(),
@@ -45,6 +47,7 @@ export function renderWithAppContext(
       stopAudio: vi.fn(),
       stopMicrophone: vi.fn(),
       stopSdCardPlayback: vi.fn(),
+      uploadToSdCard: vi.fn(),
       ...overrides.actions,
     },
   };

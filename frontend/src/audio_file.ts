@@ -1,6 +1,6 @@
 import { audioSessionManager } from "./audio_session.ts";
 
-const TARGET_SAMPLE_RATE = 16_000;
+export const TARGET_SAMPLE_RATE = 16_000;
 const CHUNK_SIZE = 512;
 const BYTES_PER_SECOND = TARGET_SAMPLE_RATE * Int16Array.BYTES_PER_ELEMENT;
 
@@ -71,7 +71,10 @@ export async function streamAudioFile(
   }
 }
 
-async function decodeAudioFile(file: File): Promise<Int16Array<ArrayBuffer>> {
+/** Decodes any audio file the browser can open into the device's mono 16 kHz PCM. */
+export async function decodeAudioFile(
+  file: File,
+): Promise<Int16Array<ArrayBuffer>> {
   const audioContext = new AudioContext();
 
   try {

@@ -72,9 +72,12 @@ export interface SdCardControls {
   files: AppState["sdCardFiles"];
   isLoading: AppState["sdCardLoading"];
   playingFile: AppState["playingSdCardFile"];
+  upload: AppState["upload"];
+  cancelUpload: AppActions["cancelUpload"];
   playFile: AppActions["playSdCardFile"];
   refresh: AppActions["refreshSdCardFiles"];
   stop: AppActions["stopSdCardPlayback"];
+  uploadFile: AppActions["uploadToSdCard"];
 }
 
 export function useSdCard(): SdCardControls {
@@ -84,9 +87,12 @@ export function useSdCard(): SdCardControls {
     files: state.sdCardFiles,
     isLoading: state.sdCardLoading,
     playingFile: state.playingSdCardFile,
+    upload: state.upload,
+    cancelUpload: actions.cancelUpload,
     playFile: actions.playSdCardFile,
     refresh: actions.refreshSdCardFiles,
     stop: actions.stopSdCardPlayback,
+    uploadFile: actions.uploadToSdCard,
   };
 }
 

@@ -54,15 +54,36 @@ static int16_t next_sample = 0;
 static float resample_phase = 0.0f;
 static float resample_step = 1.0f;
 
+// An upload in progress, writing to the temporary file until every
+// announced byte has arrived.
+static File* upload_file = nullptr;
+static char upload_name[max_file_name_length] = {};
+static uint32_t upload_expected_bytes = 0;
+static uint32_t upload_received_bytes = 0;
+
 static bool is_playing = false;
 // The file has been read to its end, but the audio it produced is still
 // working its way through the buffer and the I2S hardware.
 static bool is_draining = false;
 static bool playback_finished = false;
 
+static void build_path(char* path, size_t size, const char* file_name)
+{
+    snprintf(path, size, "%s/%s", sd_audio_directory, file_name);
+}
+
 void sd_audio_init()
 {
     create_directory(sd_audio_directory);
+
+    // An upload that was cut short by a reset leaves its temporary file
+    // behind, and nothing will ever claim it.
+    char path[audio_path_length];
+    build_path(path, sizeof(path), sd_upload_temporary_file);
+    if(file_exists(path))
+    {
+        delete_file(path);
+    }
 }
 
 bool sd_audio_list_files(FileInfo* entries, size_t max_entries, size_t* count)
@@ -282,14 +303,20 @@ bool sd_audio_start(const char* file_name, const char** error_message)
         return false;
     }
 
+    if(upload_file)
+    {
+        *error_message = "An upload is in progress";
+        return false;
+    }
+
     if(!is_bare_file_name(file_name))
     {
         *error_message = "Invalid audio file name";
         return false;
     }
 
-    char path[max_file_name_length + 32];
-    snprintf(path, sizeof(path), "%s/%s", sd_audio_directory, file_name);
+    char path[audio_path_length];
+    build_path(path, sizeof(path), file_name);
 
     sd_audio_stop();
 
@@ -347,6 +374,157 @@ void sd_audio_stop()
     data_remaining_bytes = 0;
 
     audio_stoped();
+}
+
+static bool is_wav_file_name(const char* file_name)
+{
+    const size_t length = strlen(file_name);
+    return length > 4 && strcasecmp(file_name + length - 4, ".wav") == 0;
+}
+
+bool sd_audio_upload_begin(
+    const char* file_name,
+    uint32_t size,
+    const char** error_message)
+{
+    if(!sd_card_is_mounted())
+    {
+        *error_message = "No SD card detected";
+        return false;
+    }
+
+    // Playback reads the card from loop(), and interleaving that with the
+    // writes would starve one of them.
+    if(is_playing || is_draining)
+    {
+        *error_message = "Cannot upload while audio is playing";
+        return false;
+    }
+
+    if(!is_bare_file_name(file_name) || !is_wav_file_name(file_name))
+    {
+        *error_message = "Invalid audio file name";
+        return false;
+    }
+
+    if(size == 0)
+    {
+        *error_message = "Cannot upload an empty file";
+        return false;
+    }
+
+    if(size > free_space())
+    {
+        *error_message = "Not enough free space on the SD card";
+        return false;
+    }
+
+    // Whatever came before never finished, so it has no claim on the card.
+    sd_audio_upload_cancel();
+
+    char path[audio_path_length];
+    build_path(path, sizeof(path), sd_upload_temporary_file);
+
+    upload_file = open_file(path, FILE_WRITE);
+    if(!upload_file)
+    {
+        *error_message = "Could not write to the SD card";
+        return false;
+    }
+
+    strlcpy(upload_name, file_name, sizeof(upload_name));
+    upload_expected_bytes = size;
+    upload_received_bytes = 0;
+
+    Serial.printf("Receiving %s (%u bytes)\n", upload_name, (unsigned)size);
+    return true;
+}
+
+bool sd_audio_upload_write(
+    const uint8_t* bytes,
+    size_t length,
+    const char** error_message)
+{
+    if(!upload_file)
+    {
+        *error_message = "No upload in progress";
+        return false;
+    }
+
+    if(upload_received_bytes + length > upload_expected_bytes)
+    {
+        sd_audio_upload_cancel();
+        *error_message = "Upload sent more data than it announced";
+        return false;
+    }
+
+    if(write_file(upload_file, bytes, length) != length)
+    {
+        sd_audio_upload_cancel();
+        *error_message = "Could not write to the SD card";
+        return false;
+    }
+
+    upload_received_bytes += length;
+    return true;
+}
+
+bool sd_audio_upload_finish(const char** error_message)
+{
+    if(!upload_file)
+    {
+        *error_message = "No upload in progress";
+        return false;
+    }
+
+    if(upload_received_bytes != upload_expected_bytes)
+    {
+        sd_audio_upload_cancel();
+        *error_message = "Upload ended before every byte arrived";
+        return false;
+    }
+
+    close_file(upload_file);
+    upload_file = nullptr;
+
+    char temporary_path[audio_path_length];
+    char path[audio_path_length];
+    build_path(temporary_path, sizeof(temporary_path), sd_upload_temporary_file);
+    build_path(path, sizeof(path), upload_name);
+
+    // rename() won't replace an existing file, and re-uploading a file to
+    // correct it is the obvious thing to do.
+    if(file_exists(path))
+    {
+        delete_file(path);
+    }
+
+    if(!rename_file(temporary_path, path))
+    {
+        delete_file(temporary_path);
+        *error_message = "Could not store the uploaded file";
+        return false;
+    }
+
+    Serial.printf("Stored %s\n", path);
+    return true;
+}
+
+void sd_audio_upload_cancel()
+{
+    if(!upload_file)
+    {
+        return;
+    }
+
+    close_file(upload_file);
+    upload_file = nullptr;
+    upload_expected_bytes = 0;
+    upload_received_bytes = 0;
+
+    char path[audio_path_length];
+    build_path(path, sizeof(path), sd_upload_temporary_file);
+    delete_file(path);
 }
 
 void sd_audio_service()

@@ -1,5 +1,6 @@
 #include "command_handler.h"
 #include "audio.h"
+#include "config.h"
 #include "sd_audio.h"
 
 #include <algorithm>
@@ -115,6 +116,56 @@ CommandResult CommandHandler::handle(const ClientMessage& message)
 
             return success();
         }
+
+        case ClientPayload_BeginAudioUpload:
+        {
+            const auto* upload = message.payload_as_BeginAudioUpload();
+            const char* error_message = nullptr;
+            if(!sd_audio_upload_begin(
+                   upload->name()->c_str(),
+                   upload->size(),
+                   &error_message))
+            {
+                return error(ErrorCode_INVALID_ARGUMENT, error_message);
+            }
+
+            return success();
+        }
+
+        case ClientPayload_AudioUploadChunk:
+        {
+            const auto* bytes = message.payload_as_AudioUploadChunk()->bytes();
+            if(bytes->size() > max_upload_chunk_size)
+            {
+                sd_audio_upload_cancel();
+                return error(
+                    ErrorCode_INVALID_ARGUMENT,
+                    "Upload chunk is larger than the device accepts");
+            }
+
+            const char* error_message = nullptr;
+            if(!sd_audio_upload_write(bytes->data(), bytes->size(), &error_message))
+            {
+                return error(ErrorCode_INVALID_ARGUMENT, error_message);
+            }
+
+            return success();
+        }
+
+        case ClientPayload_FinishAudioUpload:
+        {
+            const char* error_message = nullptr;
+            if(!sd_audio_upload_finish(&error_message))
+            {
+                return error(ErrorCode_INVALID_ARGUMENT, error_message);
+            }
+
+            return success();
+        }
+
+        case ClientPayload_CancelAudioUpload:
+            sd_audio_upload_cancel();
+            return success();
 
         default:
             return error(

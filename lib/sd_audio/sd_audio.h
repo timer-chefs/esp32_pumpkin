@@ -23,6 +23,22 @@ bool sd_audio_start(const char* file_name, const char** error_message);
 
 void sd_audio_stop();
 
+// Receiving a file into sd_audio_directory. The upload lands in a temporary
+// file and only takes `file_name` once every byte has arrived. Each call
+// reports failure by pointing error_message at a static explanation.
+bool sd_audio_upload_begin(
+    const char* file_name,
+    uint32_t size,
+    const char** error_message);
+bool sd_audio_upload_write(
+    const uint8_t* bytes,
+    size_t length,
+    const char** error_message);
+bool sd_audio_upload_finish(const char** error_message);
+// Abandons an upload in progress, discarding what arrived so far. Safe to
+// call when there is no upload.
+void sd_audio_upload_cancel();
+
 // Keeps the audio buffer topped up from the card. Call from loop().
 void sd_audio_service();
 

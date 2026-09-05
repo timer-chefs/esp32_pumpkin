@@ -1,7 +1,11 @@
 import {
   AdjustVolume,
   AudioChunk,
+  AudioUploadChunk,
+  BeginAudioUpload,
+  CancelAudioUpload,
   ClientPayload,
+  FinishAudioUpload,
   GetVolume,
   ListAudioFiles,
   PlayAudioFile,
@@ -91,6 +95,58 @@ export default class PumpkinClient {
       ClientPayload.PlayAudioFile,
       (builder) =>
         PlayAudioFile.createPlayAudioFile(builder, builder.createString(name)),
+      ServerPayload.Success,
+    );
+  }
+
+  /** Announces a file the device should expect to receive, and its size in bytes. */
+  static beginAudioUpload(
+    connection: PumpkinConnection,
+    name: string,
+    size: number,
+  ): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.BeginAudioUpload,
+      (builder) =>
+        BeginAudioUpload.createBeginAudioUpload(
+          builder,
+          builder.createString(name),
+          size,
+        ),
+      ServerPayload.Success,
+    );
+  }
+
+  /**
+   * Sends one chunk of the announced file. The response only arrives once the
+   * device has written it to the card, which is what paces the upload.
+   */
+  static sendAudioUploadChunk(
+    connection: PumpkinConnection,
+    bytes: Uint8Array,
+  ): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.AudioUploadChunk,
+      (builder) => {
+        const payload = AudioUploadChunk.createBytesVector(builder, bytes);
+        return AudioUploadChunk.createAudioUploadChunk(builder, payload);
+      },
+      ServerPayload.Success,
+    );
+  }
+
+  static finishAudioUpload(connection: PumpkinConnection): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.FinishAudioUpload,
+      (builder) => FinishAudioUpload.createFinishAudioUpload(builder),
+      ServerPayload.Success,
+    );
+  }
+
+  static cancelAudioUpload(connection: PumpkinConnection): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.CancelAudioUpload,
+      (builder) => CancelAudioUpload.createCancelAudioUpload(builder),
       ServerPayload.Success,
     );
   }

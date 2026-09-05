@@ -36,6 +36,11 @@ bool sd_card_is_mounted()
     return SD_MMC.cardType() != CARD_NONE;
 }
 
+uint64_t free_space()
+{
+    return SD_MMC.totalBytes() - SD_MMC.usedBytes();
+}
+
 // mode: FILE_READ, FILE_WRITE, FILE_APPEND
 File* open_file(const char* path, const char* mode)
 {
