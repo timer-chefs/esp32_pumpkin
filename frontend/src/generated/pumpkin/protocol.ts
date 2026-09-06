@@ -4,13 +4,21 @@
 
 export { AdjustVolume } from './protocol/adjust-volume.js';
 export { AudioChunk } from './protocol/audio-chunk.js';
+export { AudioFile } from './protocol/audio-file.js';
+export { AudioFileList } from './protocol/audio-file-list.js';
+export { AudioUploadChunk } from './protocol/audio-upload-chunk.js';
+export { BeginAudioUpload } from './protocol/begin-audio-upload.js';
+export { CancelAudioUpload } from './protocol/cancel-audio-upload.js';
 export { ClientMessage } from './protocol/client-message.js';
 export { ClientPayload } from './protocol/client-payload.js';
 export { Error } from './protocol/error.js';
 export { ErrorCode } from './protocol/error-code.js';
+export { FinishAudioUpload } from './protocol/finish-audio-upload.js';
 export { GetVolume } from './protocol/get-volume.js';
+export { ListAudioFiles } from './protocol/list-audio-files.js';
 export { Message } from './protocol/message.js';
 export { MessageBody } from './protocol/message-body.js';
+export { PlayAudioFile } from './protocol/play-audio-file.js';
 export { PlayShow } from './protocol/play-show.js';
 export { ResetAudio } from './protocol/reset-audio.js';
 export { ServerMessage } from './protocol/server-message.js';

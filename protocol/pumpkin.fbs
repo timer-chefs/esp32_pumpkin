@@ -20,6 +20,33 @@ table AdjustVolume {
   delta:float;
 }
 
+table ListAudioFiles {}
+
+table PlayAudioFile {
+  name:string (required);
+}
+
+table BeginAudioUpload {
+  name:string (required);
+  size:uint;
+}
+
+// Sent as a request so the device's response doubles as the go-ahead for the
+// next chunk, which is what keeps the client from running ahead of the card.
+table AudioUploadChunk {
+  bytes:[ubyte] (required);
+}
+
+// The checksum is CRC-32 (polynomial 0xEDB88320, initial and final value
+// 0xFFFFFFFF) over every byte of the file. The device reads the stored file
+// back and refuses it unless it matches, so a card that took the write but
+// can't return it doesn't leave an unplayable file behind.
+table FinishAudioUpload {
+  checksum:uint;
+}
+
+table CancelAudioUpload {}
+
 union ClientPayload {
   StartAudioStream,
   StopAudioStream,
@@ -27,7 +54,13 @@ union ClientPayload {
   AudioChunk,
   ResetAudio,
   GetVolume,
-  AdjustVolume
+  AdjustVolume,
+  ListAudioFiles,
+  PlayAudioFile,
+  BeginAudioUpload,
+  AudioUploadChunk,
+  FinishAudioUpload,
+  CancelAudioUpload
 }
 
 table ClientMessage {
@@ -53,10 +86,20 @@ table Volume {
   value:float;
 }
 
+table AudioFile {
+  name:string (required);
+  size:uint;
+}
+
+table AudioFileList {
+  files:[AudioFile] (required);
+}
+
 union ServerPayload {
   Success,
   Error,
-  Volume
+  Volume,
+  AudioFileList
 }
 
 table ServerMessage {

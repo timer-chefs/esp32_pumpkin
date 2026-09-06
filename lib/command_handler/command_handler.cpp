@@ -1,87 +1,100 @@
 #include "command_handler.h"
-#include "audio.h"
-
-#include <algorithm>
-#include <cmath>
+#include "command_registry.h"
+#include "config.h"
+#include "session_commands.h"
 
 using namespace Pumpkin::Protocol;
 
-static CommandResult success()
-{
-    return {ServerPayload_Success, ErrorCode_UNKNOWN, 0.0f, nullptr};
-}
+static CommandBinding bindings[max_registered_commands];
+static size_t binding_count = 0;
 
-static CommandResult volume(float value)
-{
-    return {ServerPayload_Volume, ErrorCode_UNKNOWN, value, nullptr};
-}
+static CompletionFn completions[max_registered_completions];
+static size_t completion_count = 0;
 
-static CommandResult error(ErrorCode code, const char* message)
+void register_commands(const CommandBinding* new_bindings, size_t count)
 {
-    return {ServerPayload_Error, code, 0.0f, message};
-}
-
-CommandHandler::CommandHandler(ShowManager& show_manager)
-    : show_manager(show_manager) //This line is the initialization of the reference EffectManger&
-{}
-
-CommandResult CommandHandler::handle(const ClientMessage& message)
-{
-    switch(message.payload_type())
+    for(size_t i = 0; i < count; ++i)
     {
-        case ClientPayload_StartAudioStream:
-            audio_started();
-            return success();
-
-        case ClientPayload_StopAudioStream:
-            audio_stoped();
-            show_manager.set_current_show(0);
-            return success();
-
-        case ClientPayload_PlayShow:
-            show_manager.set_current_show(
-                message.payload_as_PlayShow()->show_id());
-            return success();
-
-        case ClientPayload_AudioChunk:
+        if(binding_count == max_registered_commands)
         {
-            const auto* pcm = message.payload_as_AudioChunk()->pcm_s16le();
-            if(pcm->size() > 512 || pcm->size() % sizeof(int16_t) != 0)
-            {
-                return error(
-                    ErrorCode_INVALID_ARGUMENT,
-                    "Audio chunks must contain at most 512 aligned bytes");
-            }
-
-            audio_write(pcm->data(), pcm->size());
-            return success();
+            Serial.println("Command registry is full; raise max_registered_commands");
+            return;
         }
 
-        case ClientPayload_ResetAudio:
-            audio_stoped();
-            return success();
-
-        case ClientPayload_GetVolume:
-            return volume(get_volume());
-
-        case ClientPayload_AdjustVolume:
-        {
-            const float delta = message.payload_as_AdjustVolume()->delta();
-            if(!std::isfinite(delta))
-            {
-                return error(ErrorCode_INVALID_ARGUMENT, "Volume delta must be finite");
-            }
-
-            const float adjusted = std::max(
-                0.0f,
-                std::min(1.0f, get_volume() + delta));
-            set_volume(adjusted);
-            return volume(adjusted);
-        }
-
-        default:
-            return error(
-                ErrorCode_UNSUPPORTED_MESSAGE,
-                "Unsupported client message");
+        bindings[binding_count++] = new_bindings[i];
     }
+}
+
+void register_completion(CompletionFn completion)
+{
+    if(completion_count == max_registered_completions)
+    {
+        Serial.println("Completion registry is full; raise max_registered_completions");
+        return;
+    }
+
+    completions[completion_count++] = completion;
+}
+
+bool take_completed_command(
+    CommandResult& result,
+    flatbuffers::FlatBufferBuilder& builder)
+{
+    for(size_t i = 0; i < completion_count; ++i)
+    {
+        if(completions[i](result, builder))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void command_handler_init()
+{
+    register_session_commands();
+}
+
+static const CommandBinding* find_binding(ClientPayload payload_type)
+{
+    for(size_t i = 0; i < binding_count; ++i)
+    {
+        if(bindings[i].payload_type == payload_type)
+        {
+            return &bindings[i];
+        }
+    }
+
+    return nullptr;
+}
+
+void verify_registered_commands()
+{
+    for(const ClientPayload payload_type : EnumValuesClientPayload())
+    {
+        if(payload_type != ClientPayload_NONE && !find_binding(payload_type))
+        {
+            Serial.printf(
+                "No handler registered for %s\n",
+                EnumNameClientPayload(payload_type));
+        }
+    }
+}
+
+CommandResult handle_command(
+    const CommandContext& context,
+    const ClientMessage& message,
+    flatbuffers::FlatBufferBuilder& builder)
+{
+    const CommandBinding* binding = find_binding(message.payload_type());
+    if(!binding)
+    {
+        return error(
+            builder,
+            ErrorCode_UNSUPPORTED_MESSAGE,
+            "Unsupported client message");
+    }
+
+    return binding->handle(context, message, builder);
 }

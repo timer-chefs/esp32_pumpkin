@@ -1,7 +1,7 @@
 import { FolderOpen, Ghost } from "lucide-react";
 import { Alert, Button } from "react-bootstrap";
 
-import { usePresetShows } from "../app_context.tsx";
+import { usePresetShows } from "./preset_shows_slice.ts";
 
 export function PresetShowControl() {
   const { folderStatus, playGhostShow, selectAudioFolder } = usePresetShows();

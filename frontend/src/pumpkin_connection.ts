@@ -1,6 +1,7 @@
 import * as flatbuffers from "flatbuffers";
 
 import {
+  AudioFileList,
   ClientMessage,
   ClientPayload,
   Error as ProtocolError,
@@ -14,14 +15,36 @@ import { toError } from "./to_error.ts";
 
 type CreatePayload = (builder: flatbuffers.Builder) => flatbuffers.Offset;
 
-// decodeResponse only ever populates `value` for ServerPayload.Volume, so
-// that's the only payload sendRequest's callers can resolve a number for.
+/** An audio file stored on the device's SD card. */
+export interface AudioFileInfo {
+  name: string;
+  size: number;
+}
+
+/**
+ * How to read each response payload that carries data. A payload that isn't
+ * listed decodes to void, which is what an acknowledgement is. Adding a
+ * response type is one entry here: it defines both how the value is read and
+ * what sendRequest resolves with, so the two can't drift apart.
+ */
+const payloadDecoders = {
+  [ServerPayload.Volume]: (message: ServerMessage) =>
+    (message.payload(new Volume()) as Volume).value(),
+  [ServerPayload.AudioFileList]: (message: ServerMessage) =>
+    readAudioFiles(message.payload(new AudioFileList()) as AudioFileList),
+} as const;
+
+type DecodedPayload = keyof typeof payloadDecoders;
+type ResponseData = ReturnType<(typeof payloadDecoders)[DecodedPayload]>;
+
 type ResponseValue<Payload extends ServerPayload> =
-  Payload extends ServerPayload.Volume ? number : void;
+  Payload extends DecodedPayload
+    ? ReturnType<(typeof payloadDecoders)[Payload]>
+    : void;
 
 interface PendingRequest {
   expectedPayload: ServerPayload;
-  resolve: (value: number | undefined) => void;
+  resolve: (value: ResponseData | undefined) => void;
   reject: (error: Error) => void;
   timeout: ReturnType<typeof setTimeout>;
 }
@@ -121,6 +144,7 @@ export class PumpkinConnection {
     payloadType: ClientPayload,
     createPayload: CreatePayload,
     expectedPayload: Payload,
+    timeoutMs: number = REQUEST_TIMEOUT_MS,
   ): Promise<ResponseValue<Payload>> {
     const requestId = this.allocateRequestId();
 
@@ -128,11 +152,11 @@ export class PumpkinConnection {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(requestId);
         reject(new Error(`WebSocket request ${requestId} timed out`));
-      }, REQUEST_TIMEOUT_MS);
+      }, timeoutMs);
 
       this.pendingRequests.set(requestId, {
         expectedPayload,
-        resolve: resolve as (value: number | undefined) => void,
+        resolve: resolve as (value: ResponseData | undefined) => void,
         reject,
         timeout,
       });
@@ -275,7 +299,7 @@ function decodeResponse(data: Uint8Array):
   | {
       requestId: number;
       payloadType: ServerPayload;
-      value?: number;
+      value?: ResponseData;
       error?: Error;
     }
   | undefined {
@@ -306,14 +330,25 @@ function decodeResponse(data: Uint8Array):
     };
   }
 
-  if (payloadType === ServerPayload.Volume) {
-    const payload = serverMessage.payload(new Volume()) as Volume;
-    return {
-      requestId: serverMessage.requestId(),
-      payloadType,
-      value: payload.value(),
-    };
+  const decode: ((message: ServerMessage) => ResponseData) | undefined =
+    payloadDecoders[payloadType as DecodedPayload];
+
+  return {
+    requestId: serverMessage.requestId(),
+    payloadType,
+    value: decode?.(serverMessage),
+  };
+}
+
+function readAudioFiles(payload: AudioFileList): AudioFileInfo[] {
+  const files: AudioFileInfo[] = [];
+
+  for (let index = 0; index < payload.filesLength(); index++) {
+    const file = payload.files(index);
+    if (file) {
+      files.push({ name: file.name() ?? "", size: file.size() });
+    }
   }
 
-  return { requestId: serverMessage.requestId(), payloadType };
+  return files;
 }

@@ -8,19 +8,26 @@
 #include "show_manager.h"
 #include "command_handler.h"
 #include "preset_shows.h"
+#include "sd_audio.h"
+#include "sd_card.h"
+#include "sd_upload.h"
 #include "wifi_manager.h"
 
 bool is_audio_ready = false;
 
 EffectManager effect_manager;
 ShowManager show_manager(effect_manager);
-CommandHandler command_handler(show_manager);
 
 void setup()
 {
     Serial.begin(baud_rate);
 
     led_strip_init();
+
+    command_handler_init();
+
+    sd_card_init();
+    sd_audio_init();
 
     wifi_manager_init();
 
@@ -43,6 +50,8 @@ void setup()
         Serial.println("Audio init failed");
     }
 
+    verify_registered_commands();
+
     Serial.println("System ready");
 }
 
@@ -52,8 +61,16 @@ void loop()
 
     web_interface_service();
     
+    sd_upload_service();
+
     if(is_audio_ready)
     {
+        sd_audio_service();
+        if(sd_audio_take_playback_finished())
+        {
+            show_manager.set_current_show(0);
+        }
+
         audio_service();
         effect_manager.update(led_strip, num_leds);
         FastLED.show();
