@@ -151,8 +151,11 @@ size_t list_files(
 
         // Hidden entries are the card's own bookkeeping (and the sidecar
         // files some desktops leave behind), never something to play.
+        // A name that doesn't fit would be listed truncated and then fail
+        // to open, which is worse than not listing it.
         const bool is_listable = !entry.isDirectory() &&
                                  name[0] != '.' &&
+                                 strlen(name) < max_file_name_length &&
                                  has_extension(name, extension);
         if(!is_listable)
         {

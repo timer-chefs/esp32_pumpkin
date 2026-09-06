@@ -86,6 +86,15 @@ static bool playback_finished = false;
 
 static void close_playing_file();
 
+static void close_upload_file()
+{
+    if(upload_file)
+    {
+        close_file(upload_file);
+        upload_file = nullptr;
+    }
+}
+
 static void build_path(char* path, size_t size, const char* file_name)
 {
     snprintf(path, size, "%s/%s", sd_audio_directory, file_name);
@@ -327,10 +336,12 @@ static bool read_source_sample(int16_t& sample)
 {
     const size_t frame_bytes = playing_format.channels * sizeof(int16_t);
 
-    if(source_block_offset + frame_bytes > source_block_size &&
-       !refill_source_block())
+    while(source_block_offset + frame_bytes > source_block_size)
     {
-        return false;
+        if(!refill_source_block())
+        {
+            return false;
+        }
     }
 
     int16_t frame[2];
@@ -633,8 +644,12 @@ bool sd_audio_upload_write(
 
     if(write_file(upload_file, bytes, length) != length)
     {
-        sd_audio_upload_cancel();
+        // Let go of the handle and get the card back first: a delete issued
+        // at a wedged card just fails, leaving the temporary file behind.
+        close_upload_file();
         sd_card_remount();
+        sd_audio_upload_cancel();
+
         *error_message = "Could not write to the SD card";
         return false;
     }
@@ -658,13 +673,22 @@ bool sd_audio_upload_finish(uint32_t checksum, const char** error_message)
         return false;
     }
 
-    close_file(upload_file);
-    upload_file = nullptr;
+    close_upload_file();
 
     char temporary_path[audio_path_length];
     char path[audio_path_length];
     build_path(temporary_path, sizeof(temporary_path), sd_upload_temporary_file);
     build_path(path, sizeof(path), upload_name);
+
+    // Check what landed on the card before it replaces anything. Verifying
+    // after the swap would mean a re-upload that fails verification takes
+    // the copy already on the card down with it.
+    if(!verify_stored_file(temporary_path, upload_received_bytes, checksum, error_message))
+    {
+        Serial.printf("Discarding upload of %s: %s\n", upload_name, *error_message);
+        delete_file(temporary_path);
+        return false;
+    }
 
     // rename() won't replace an existing file, and re-uploading a file to
     // correct it is the obvious thing to do.
@@ -680,29 +704,24 @@ bool sd_audio_upload_finish(uint32_t checksum, const char** error_message)
         return false;
     }
 
-    if(!verify_stored_file(path, upload_received_bytes, checksum, error_message))
-    {
-        // Better no file than one that fails halfway through playing.
-        Serial.printf("Discarding %s: %s\n", path, *error_message);
-        delete_file(path);
-        return false;
-    }
-
     Serial.printf("Stored %s (%u bytes, verified)\n", path, (unsigned)upload_received_bytes);
     return true;
 }
 
 void sd_audio_upload_cancel()
 {
-    if(!upload_file)
+    // The handle may already be closed, by the write failure that is asking
+    // for the upload to be dropped.
+    const bool had_upload = upload_file != nullptr || upload_expected_bytes != 0;
+
+    close_upload_file();
+    upload_expected_bytes = 0;
+    upload_received_bytes = 0;
+
+    if(!had_upload)
     {
         return;
     }
-
-    close_file(upload_file);
-    upload_file = nullptr;
-    upload_expected_bytes = 0;
-    upload_received_bytes = 0;
 
     char path[audio_path_length];
     build_path(path, sizeof(path), sd_upload_temporary_file);

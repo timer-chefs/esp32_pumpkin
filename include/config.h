@@ -67,13 +67,11 @@ constexpr uint8_t pin_led2 = GPIO_NUM_4;
 //WiFi Provisioning Pins:
 constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
 
-// SD_MMC defaults to SDMMC_FREQ_HIGHSPEED (40 MHz) on this board, which is
-// more than jumper wiring and the internal pull-ups can carry: short
-// transfers get through, but a sustained read wedges the card until it is
-// remounted. Playback needs 32 kB/s and uploads are limited by WiFi long
-// before the card, so there is a lot of room to trade speed for reliability.
-// Raise it toward SDMMC_FREQ_DEFAULT (20 MHz) if the card is on a proper
-// board with external pull-ups.
+// SDMMC_FREQ_HIGHSPEED, which is also what the Arduino core picks for this
+// board by default. Playback only needs 32 kB/s; the speed is worth having
+// for uploads, which the device reads back in full to verify. Lower it if a
+// card proves unreliable -- `pio run -e test_sd_read` reports what a given
+// card and clock actually manage.
 constexpr int sd_card_frequency_khz = 40000;
 
 // SD card audio library

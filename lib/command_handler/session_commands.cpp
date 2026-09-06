@@ -66,7 +66,7 @@ static CommandResult handle_audio_chunk(
         return error(
             builder,
             ErrorCode_INVALID_ARGUMENT,
-            "Audio chunks must contain at most 512 aligned bytes");
+            "Audio chunk is larger than the device accepts, or misaligned");
     }
 
     audio_write(pcm->data(), pcm->size());
