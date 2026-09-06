@@ -1,4 +1,4 @@
-import { useAppContext } from "../../app/app_context.tsx";
+import { useSlice } from "../../app/app_context.tsx";
 import { runAction, type Slice } from "../../app/slice.ts";
 import { audioSessionManager } from "../../audio_session.ts";
 import api, { type AudioFileInfo } from "../../pumpkin_client.ts";
@@ -158,31 +158,6 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
-export interface SdCardControls {
-  error: SdCardState["error"];
-  files: SdCardState["files"];
-  isLoading: SdCardState["isLoading"];
-  playingFile: SdCardState["playingFile"];
-  upload: SdCardState["upload"];
-  cancelUpload: SdCardActions["cancelUpload"];
-  playFile: SdCardActions["playFile"];
-  refresh: SdCardActions["refresh"];
-  stop: SdCardActions["stopPlayback"];
-  uploadFile: SdCardActions["uploadFile"];
-}
-
-export function useSdCard(): SdCardControls {
-  const { state, actions } = useAppContext();
-  return {
-    error: state.sdCard.error,
-    files: state.sdCard.files,
-    isLoading: state.sdCard.isLoading,
-    playingFile: state.sdCard.playingFile,
-    upload: state.sdCard.upload,
-    cancelUpload: actions.sdCard.cancelUpload,
-    playFile: actions.sdCard.playFile,
-    refresh: actions.sdCard.refresh,
-    stop: actions.sdCard.stopPlayback,
-    uploadFile: actions.sdCard.uploadFile,
-  };
+export function useSdCard() {
+  return useSlice("sdCard");
 }

@@ -6,11 +6,11 @@ import { useAudioSource } from "./audio_source_slice.ts";
 
 export function AudioSourceControl() {
   const {
-    activeSource,
+    active,
     fileStatus,
     microphoneStatus,
     streamFileEnabled,
-    selectAudioFile,
+    selectFile,
     startFile,
     startFileMode,
     startMicrophone,
@@ -28,27 +28,27 @@ export function AudioSourceControl() {
 
       <div className="source-selector" role="group" aria-label="Audio source">
         <Button
-          variant={activeSource === "microphone" ? "dark" : "outline-dark"}
+          variant={active === "microphone" ? "dark" : "outline-dark"}
           className="source-button"
-          disabled={activeSource === "microphone"}
+          disabled={active === "microphone"}
           onClick={startMicrophone}
         >
           <Mic aria-hidden="true" />
           Microphone
         </Button>
         <Button
-          variant={activeSource === "file" ? "dark" : "outline-dark"}
+          variant={active === "file" ? "dark" : "outline-dark"}
           className="source-button"
-          disabled={activeSource === "file"}
+          disabled={active === "file"}
           onClick={startFileMode}
         >
           <FileAudio aria-hidden="true" />
           Audio file
         </Button>
         <Button
-          variant={activeSource === "sdCard" ? "dark" : "outline-dark"}
+          variant={active === "sdCard" ? "dark" : "outline-dark"}
           className="source-button"
-          disabled={activeSource === "sdCard"}
+          disabled={active === "sdCard"}
           onClick={startSdCardMode}
         >
           <Music aria-hidden="true" />
@@ -57,11 +57,11 @@ export function AudioSourceControl() {
       </div>
 
       <div className="source-workspace">
-        {activeSource === null && (
+        {active === null && (
           <p className="empty-state mb-0">No source active</p>
         )}
 
-        {activeSource === "microphone" && (
+        {active === "microphone" && (
           <div className="active-source-row" aria-live="polite">
             <Stack direction="horizontal" gap={3}>
               {microphoneStatus === "starting" ? (
@@ -86,7 +86,7 @@ export function AudioSourceControl() {
           </div>
         )}
 
-        {activeSource === "file" && (
+        {active === "file" && (
           <div className="file-source">
             <Form.Group controlId="audio-file">
               <Form.Label className="fw-semibold">Audio file</Form.Label>
@@ -94,7 +94,7 @@ export function AudioSourceControl() {
                 type="file"
                 accept="audio/*"
                 onChange={(event) =>
-                  selectAudioFile(
+                  selectFile(
                     (event.currentTarget as HTMLInputElement).files?.[0] ??
                       null,
                   )
@@ -132,7 +132,7 @@ export function AudioSourceControl() {
           </div>
         )}
 
-        {activeSource === "sdCard" && <SdCardFileList />}
+        {active === "sdCard" && <SdCardFileList />}
       </div>
     </section>
   );

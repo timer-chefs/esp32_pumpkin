@@ -4,8 +4,8 @@ import { Button, ButtonGroup, Spinner } from "react-bootstrap";
 import { useVolume } from "./volume_slice.ts";
 
 export function VolumeControl() {
-  const { volume, decrease, increase } = useVolume();
-  const volumePercentage = volume === null ? null : Math.round(volume * 100);
+  const { level, decrease, increase } = useVolume();
+  const volumePercentage = level === null ? null : Math.round(level * 100);
 
   return (
     <section className="utility-section" aria-labelledby="volume-heading">

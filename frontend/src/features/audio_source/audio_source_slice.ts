@@ -1,4 +1,4 @@
-import { useAppContext } from "../../app/app_context.tsx";
+import { useSlice } from "../../app/app_context.tsx";
 import { runAction, type Slice } from "../../app/slice.ts";
 import { streamAudioFile } from "../../audio_file.ts";
 import { audioSessionManager, type AudioSession } from "../../audio_session.ts";
@@ -183,33 +183,6 @@ async function requestMicrophone(): Promise<MediaStream> {
   }
 }
 
-export interface AudioSourceControls {
-  activeSource: AudioSourceState["active"];
-  fileStatus: AudioSourceState["fileStatus"];
-  microphoneStatus: AudioSourceState["microphoneStatus"];
-  streamFileEnabled: AudioSourceState["streamFileEnabled"];
-  selectAudioFile: AudioSourceActions["selectFile"];
-  startFile: AudioSourceActions["startFile"];
-  startFileMode: AudioSourceActions["startFileMode"];
-  startMicrophone: AudioSourceActions["startMicrophone"];
-  startSdCardMode: AudioSourceActions["startSdCardMode"];
-  stopAudio: AudioSourceActions["stopAudio"];
-  stopMicrophone: AudioSourceActions["stopMicrophone"];
-}
-
-export function useAudioSource(): AudioSourceControls {
-  const { state, actions } = useAppContext();
-  return {
-    activeSource: state.audioSource.active,
-    fileStatus: state.audioSource.fileStatus,
-    microphoneStatus: state.audioSource.microphoneStatus,
-    streamFileEnabled: state.audioSource.streamFileEnabled,
-    selectAudioFile: actions.audioSource.selectFile,
-    startFile: actions.audioSource.startFile,
-    startFileMode: actions.audioSource.startFileMode,
-    startMicrophone: actions.audioSource.startMicrophone,
-    startSdCardMode: actions.audioSource.startSdCardMode,
-    stopAudio: actions.audioSource.stopAudio,
-    stopMicrophone: actions.audioSource.stopMicrophone,
-  };
+export function useAudioSource() {
+  return useSlice("audioSource");
 }

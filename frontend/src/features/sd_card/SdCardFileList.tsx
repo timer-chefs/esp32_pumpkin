@@ -6,8 +6,15 @@ import "./sd_card.css";
 import { SdCardUpload } from "./SdCardUpload.tsx";
 
 export function SdCardFileList() {
-  const { error, files, isLoading, playingFile, playFile, refresh, stop } =
-    useSdCard();
+  const {
+    error,
+    files,
+    isLoading,
+    playingFile,
+    playFile,
+    refresh,
+    stopPlayback,
+  } = useSdCard();
 
   return (
     <div className="sd-card-source">
@@ -28,7 +35,7 @@ export function SdCardFileList() {
           size="sm"
           className="icon-label-button"
           disabled={playingFile === null}
-          onClick={stop}
+          onClick={stopPlayback}
         >
           <Square aria-hidden="true" />
           Stop

@@ -1,4 +1,4 @@
-import { useAppContext } from "../../app/app_context.tsx";
+import { useSlice } from "../../app/app_context.tsx";
 import { runAction, type Slice } from "../../app/slice.ts";
 import api from "../../pumpkin_client.ts";
 
@@ -33,17 +33,6 @@ export const volumeSlice: Slice<VolumeState, VolumeActions> = {
   },
 };
 
-export interface VolumeControls {
-  volume: VolumeState["level"];
-  decrease: VolumeActions["decrease"];
-  increase: VolumeActions["increase"];
-}
-
-export function useVolume(): VolumeControls {
-  const { state, actions } = useAppContext();
-  return {
-    volume: state.volume.level,
-    decrease: actions.volume.decrease,
-    increase: actions.volume.increase,
-  };
+export function useVolume() {
+  return useSlice("volume");
 }

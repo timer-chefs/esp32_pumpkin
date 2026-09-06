@@ -1,4 +1,4 @@
-import { useAppContext } from "../../app/app_context.tsx";
+import { useSlice } from "../../app/app_context.tsx";
 import { runAction, type Slice } from "../../app/slice.ts";
 import api from "../../pumpkin_client.ts";
 
@@ -80,17 +80,6 @@ export const presetShowsSlice: Slice<PresetShowsState, PresetShowsActions> = {
   },
 };
 
-export interface PresetShowControls {
-  folderStatus: PresetShowsState["folderStatus"];
-  playGhostShow: PresetShowsActions["playGhostShow"];
-  selectAudioFolder: PresetShowsActions["selectAudioFolder"];
-}
-
-export function usePresetShows(): PresetShowControls {
-  const { state, actions } = useAppContext();
-  return {
-    folderStatus: state.presetShows.folderStatus,
-    playGhostShow: actions.presetShows.playGhostShow,
-    selectAudioFolder: actions.presetShows.selectAudioFolder,
-  };
+export function usePresetShows() {
+  return useSlice("presetShows");
 }
