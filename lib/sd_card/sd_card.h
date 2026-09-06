@@ -14,6 +14,9 @@ struct FileInfo
 };
 
 void sd_card_init();
+// Re-runs the card's init sequence, which is what gets it talking again
+// after a transfer has failed. Any open file must be closed first.
+bool sd_card_remount();
 bool sd_card_is_mounted();
 uint64_t free_space();
 

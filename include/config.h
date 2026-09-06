@@ -67,6 +67,15 @@ constexpr uint8_t pin_led2 = GPIO_NUM_4;
 //WiFi Provisioning Pins:
 constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
 
+// SD_MMC defaults to SDMMC_FREQ_HIGHSPEED (40 MHz) on this board, which is
+// more than jumper wiring and the internal pull-ups can carry: short
+// transfers get through, but a sustained read wedges the card until it is
+// remounted. Playback needs 32 kB/s and uploads are limited by WiFi long
+// before the card, so there is a lot of room to trade speed for reliability.
+// Raise it toward SDMMC_FREQ_DEFAULT (20 MHz) if the card is on a proper
+// board with external pull-ups.
+constexpr int sd_card_frequency_khz = 4000;
+
 // SD card audio library
 // Audio files live in their own directory on the card so the listing isn't
 // polluted by whatever else the card happens to carry.
@@ -79,8 +88,15 @@ constexpr uint8_t audio_path_length = max_file_name_length + 32;
 // audio_catch_up_high_water_ms so topping the buffer up never looks like a
 // network burst to the catch-up logic.
 constexpr uint16_t sd_audio_target_buffer_ms = 60;
-// How much of the file to read from the card at a time.
+// How much of the file to read from the card at a time. Must be a whole
+// number of sectors, so the driver can DMA straight into the read buffer.
 constexpr uint16_t sd_audio_read_block_size = 1024;
+constexpr uint32_t sd_sector_size = 512;
+// The SD driver rejects a buffer for DMA unless it is aligned to the cache
+// line, and falls back to allocating a bounce buffer for every transfer.
+constexpr size_t sd_dma_alignment = 64;
+// How many times to remount and resume before giving up on a file.
+constexpr uint8_t max_sd_read_recoveries = 3;
 // Largest upload chunk the device accepts. The client acknowledges its way
 // through a file a couple of chunks at a time, so this also caps how much of
 // an upload can be in flight anywhere between the browser and the card.

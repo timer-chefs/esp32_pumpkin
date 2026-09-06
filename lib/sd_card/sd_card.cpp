@@ -1,6 +1,21 @@
 #include "sd_card.h"
 #include "config.h"
 
+static bool mount()
+{
+    // 1-bit SDIO mode. Never format on a failed mount: the card carries the
+    // audio files, so a card that can't be read has to be looked at rather
+    // than wiped.
+    if(!SD_MMC.begin("/sdcard", true, false, sd_card_frequency_khz))
+    {
+        Serial.println("SD card mount failed.");
+        return false;
+    }
+
+    Serial.println("SD Card mounted successfully.");
+    return true;
+}
+
 void sd_card_init()
 {
     pinMode(pin_sd_clk, INPUT_PULLUP);
@@ -19,16 +34,15 @@ void sd_card_init()
         pin_sd_d2,
         pin_sd_d3);
 
-    // 1-bit SDIO mode. Never format on a failed mount: the card carries the
-    // audio files, so a card that can't be read has to be looked at rather
-    // than wiped.
-    if(!SD_MMC.begin("/sdcard", true, false))
-    {
-        Serial.println("SD card mount failed.");
-        return;
-    }
+    mount();
+}
 
-    Serial.println("SD Card mounted successfully.");
+bool sd_card_remount()
+{
+    Serial.println("Remounting the SD card");
+
+    SD_MMC.end();
+    return mount();
 }
 
 bool sd_card_is_mounted()
