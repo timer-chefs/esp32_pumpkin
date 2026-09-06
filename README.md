@@ -59,6 +59,10 @@ You can encode a file with the expected format with the following command:
 ffmpeg -i song.mp3 -ac 1 -ar 16000 -c:a pcm_s16le song.wav
 ```
 
+### Upload through the UI
+
+You can also upload songs through the web UI that get saved to the ESP32. It will transcode the songs to the correct format for you, on the fly.
+
 ## Development
 
 ### Dependencies
