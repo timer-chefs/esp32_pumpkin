@@ -135,11 +135,21 @@ export default class PumpkinClient {
     );
   }
 
-  static finishAudioUpload(connection: PumpkinConnection): Promise<void> {
+  /**
+   * Completes an upload. The device reads the whole file back off the card to
+   * check it against `checksum` before accepting it, so this answers a good
+   * deal slower than the other requests.
+   */
+  static finishAudioUpload(
+    connection: PumpkinConnection,
+    checksum: number,
+    timeoutMs: number,
+  ): Promise<void> {
     return connection.sendRequest(
       ClientPayload.FinishAudioUpload,
-      (builder) => FinishAudioUpload.createFinishAudioUpload(builder),
+      (builder) => FinishAudioUpload.createFinishAudioUpload(builder, checksum),
       ServerPayload.Success,
+      timeoutMs,
     );
   }
 

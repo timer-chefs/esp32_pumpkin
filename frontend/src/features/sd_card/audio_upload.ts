@@ -22,7 +22,16 @@ const RATE_WINDOW_MS = 3000;
 
 const MAX_NAME_LENGTH = 63;
 
+// Verifying means the device reading the whole file back off the card, so
+// allow for a slow card rather than a slow network: a floor, plus time at a
+// pessimistic read rate.
+const VERIFY_TIMEOUT_FLOOR_MS = 30_000;
+const VERIFY_TIMEOUT_BYTES_PER_MS = 25;
+
+export type UploadPhase = "sending" | "verifying";
+
 export interface UploadProgress {
+  phase: UploadPhase;
   bytesSent: number;
   totalBytes: number;
   /** Measured end-to-end, from the device's acknowledgements. Null until enough have arrived. */
@@ -52,7 +61,22 @@ export async function uploadAudioFile(
 
   try {
     await sendChunks(connection, wav, onProgress, signal);
-    await api.finishAudioUpload(connection);
+
+    // The device now reads the whole file back to check it, which takes as
+    // long as the card needs.
+    onProgress({
+      phase: "verifying",
+      bytesSent: wav.length,
+      totalBytes: wav.length,
+      bytesPerSecond: null,
+      secondsRemaining: null,
+    });
+
+    await api.finishAudioUpload(
+      connection,
+      crc32(wav),
+      VERIFY_TIMEOUT_FLOOR_MS + wav.length / VERIFY_TIMEOUT_BYTES_PER_MS,
+    );
   } catch (error) {
     // Let the device drop what it has rather than leaving a part file behind.
     await api.cancelAudioUpload(connection).catch(() => {});
@@ -74,6 +98,7 @@ async function sendChunks(
 
   const report = () =>
     onProgress({
+      phase: "sending",
       bytesSent,
       totalBytes: wav.length,
       bytesPerSecond: rate.bytesPerSecond,
@@ -179,6 +204,23 @@ function encodeWav(pcm: Int16Array<ArrayBuffer>): Uint8Array {
     WAV_HEADER_BYTES,
   );
   return bytes;
+}
+
+/**
+ * CRC-32 as the device computes it: polynomial 0xEDB88320, initial and final
+ * value 0xFFFFFFFF. The same value zlib and `cksum -a crc32` produce.
+ */
+export function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff;
+
+  for (let index = 0; index < bytes.length; index++) {
+    crc ^= bytes[index];
+    for (let bit = 0; bit < 8; bit++) {
+      crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+  }
+
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 function writeAscii(view: DataView, offset: number, text: string): void {

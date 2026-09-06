@@ -144,6 +144,7 @@ export class PumpkinConnection {
     payloadType: ClientPayload,
     createPayload: CreatePayload,
     expectedPayload: Payload,
+    timeoutMs: number = REQUEST_TIMEOUT_MS,
   ): Promise<ResponseValue<Payload>> {
     const requestId = this.allocateRequestId();
 
@@ -151,7 +152,7 @@ export class PumpkinConnection {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(requestId);
         reject(new Error(`WebSocket request ${requestId} timed out`));
-      }, REQUEST_TIMEOUT_MS);
+      }, timeoutMs);
 
       this.pendingRequests.set(requestId, {
         expectedPayload,

@@ -3,13 +3,18 @@ import { runAction, type Slice } from "../../app/slice.ts";
 import { audioSessionManager } from "../../audio_session.ts";
 import api, { type AudioFileInfo } from "../../pumpkin_client.ts";
 import { toError } from "../../to_error.ts";
-import { toStoredName, uploadAudioFile } from "./audio_upload.ts";
+import {
+  toStoredName,
+  uploadAudioFile,
+  type UploadPhase,
+} from "./audio_upload.ts";
 
 export interface UploadState {
   name: string;
   // Decoding and resampling the file in the browser comes first; only then
-  // is there a byte count to make progress against.
-  phase: "converting" | "sending";
+  // is there a byte count to make progress against. The device has the last
+  // word, reading the file back off the card before it accepts it.
+  phase: "converting" | UploadPhase;
   bytesSent: number;
   totalBytes: number;
   bytesPerSecond: number | null;
@@ -127,7 +132,7 @@ export const sdCardSlice: Slice<SdCardState, SdCardActions> = {
             await uploadAudioFile(await app.connection(), file, {
               signal: controller.signal,
               onProgress: (progress) =>
-                update({ upload: { name, phase: "sending", ...progress } }),
+                update({ upload: { name, ...progress } }),
             });
 
             await refresh();

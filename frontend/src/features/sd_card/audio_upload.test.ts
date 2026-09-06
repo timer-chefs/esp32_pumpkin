@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { decodeAudioFile } from "../../audio_file.ts";
-import { toStoredName, uploadAudioFile } from "./audio_upload.ts";
+import { crc32, toStoredName, uploadAudioFile } from "./audio_upload.ts";
 import api from "../../pumpkin_client.ts";
 import type { PumpkinConnection } from "../../pumpkin_connection.ts";
 
@@ -79,6 +79,31 @@ describe("uploadAudioFile", () => {
 
     expect(api.finishAudioUpload).toHaveBeenCalledOnce();
     expect(api.cancelAudioUpload).not.toHaveBeenCalled();
+  });
+
+  it("hands the device the checksum of exactly what it sent", async () => {
+    await uploadAudioFile(connection, file);
+
+    const [, checksum] = vi.mocked(api.finishAudioUpload).mock.calls[0];
+    expect(checksum).toBe(crc32(sentBytes()));
+  });
+
+  it("allows the device time to read the file back before giving up", async () => {
+    await uploadAudioFile(connection, file);
+
+    const [, , timeoutMs] = vi.mocked(api.finishAudioUpload).mock.calls[0];
+    expect(timeoutMs).toBeGreaterThanOrEqual(30_000);
+  });
+
+  it("reports the wait while the device verifies the file", async () => {
+    const phases: string[] = [];
+
+    await uploadAudioFile(connection, file, {
+      onProgress: (update) => phases.push(update.phase),
+    });
+
+    expect(phases.at(-1)).toBe("verifying");
+    expect(phases).toContain("sending");
   });
 
   it("waits for acknowledgements instead of buffering the whole file", async () => {

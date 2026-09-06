@@ -22,8 +22,17 @@ static getSizePrefixedRootAsFinishAudioUpload(bb:flatbuffers.ByteBuffer, obj?:Fi
   return (obj || new FinishAudioUpload()).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 }
 
+checksum():number {
+  const offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+}
+
 static startFinishAudioUpload(builder:flatbuffers.Builder) {
-  builder.startObject(0);
+  builder.startObject(1);
+}
+
+static addChecksum(builder:flatbuffers.Builder, checksum:number) {
+  builder.addFieldInt32(0, checksum, 0);
 }
 
 static endFinishAudioUpload(builder:flatbuffers.Builder):flatbuffers.Offset {
@@ -31,8 +40,9 @@ static endFinishAudioUpload(builder:flatbuffers.Builder):flatbuffers.Offset {
   return offset;
 }
 
-static createFinishAudioUpload(builder:flatbuffers.Builder):flatbuffers.Offset {
+static createFinishAudioUpload(builder:flatbuffers.Builder, checksum:number):flatbuffers.Offset {
   FinishAudioUpload.startFinishAudioUpload(builder);
+  FinishAudioUpload.addChecksum(builder, checksum);
   return FinishAudioUpload.endFinishAudioUpload(builder);
 }
 }

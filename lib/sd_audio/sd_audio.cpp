@@ -481,6 +481,74 @@ void sd_audio_stop()
     audio_stoped();
 }
 
+// CRC-32, as described in the protocol: polynomial 0xEDB88320, initial and
+// final value 0xFFFFFFFF. Written out rather than taken from ROM so that it
+// is plainly the same computation the client makes.
+static uint32_t crc32_update(uint32_t crc, const uint8_t* bytes, size_t length)
+{
+    for(size_t i = 0; i < length; ++i)
+    {
+        crc ^= bytes[i];
+        for(uint8_t bit = 0; bit < 8; ++bit)
+        {
+            crc = (crc >> 1) ^ (0xEDB88320u & (uint32_t)(-(int32_t)(crc & 1)));
+        }
+    }
+
+    return crc;
+}
+
+// Reads the file back off the card. Uploads never overlap playback, so the
+// playback block buffer is free to borrow, and it is already DMA-aligned.
+static bool verify_stored_file(
+    const char* path,
+    uint32_t expected_size,
+    uint32_t expected_checksum,
+    const char** error_message)
+{
+    File* file = open_file(path, FILE_READ);
+    if(!file)
+    {
+        *error_message = "Could not read the stored file back";
+        return false;
+    }
+
+    if(file->size() != expected_size)
+    {
+        close_file(file);
+        *error_message = "The stored file is the wrong size";
+        return false;
+    }
+
+    uint32_t crc = 0xFFFFFFFFu;
+    uint32_t offset = 0;
+
+    while(offset < expected_size)
+    {
+        const size_t to_read = min((uint32_t)sizeof(source_block), expected_size - offset);
+        const size_t bytes_read = read_file(file, source_block, to_read);
+        if(bytes_read == 0)
+        {
+            close_file(file);
+            *error_message = "The card could not read the file back";
+            return false;
+        }
+
+        crc = crc32_update(crc, source_block, bytes_read);
+        offset += bytes_read;
+    }
+
+    close_file(file);
+
+    if((crc ^ 0xFFFFFFFFu) != expected_checksum)
+    {
+        *error_message = "The file did not survive being written to the card";
+        return false;
+    }
+
+    return true;
+}
+
 static bool is_wav_file_name(const char* file_name)
 {
     const size_t length = strlen(file_name);
@@ -575,7 +643,7 @@ bool sd_audio_upload_write(
     return true;
 }
 
-bool sd_audio_upload_finish(const char** error_message)
+bool sd_audio_upload_finish(uint32_t checksum, const char** error_message)
 {
     if(!upload_file)
     {
@@ -612,7 +680,15 @@ bool sd_audio_upload_finish(const char** error_message)
         return false;
     }
 
-    Serial.printf("Stored %s\n", path);
+    if(!verify_stored_file(path, upload_received_bytes, checksum, error_message))
+    {
+        // Better no file than one that fails halfway through playing.
+        Serial.printf("Discarding %s: %s\n", path, *error_message);
+        delete_file(path);
+        return false;
+    }
+
+    Serial.printf("Stored %s (%u bytes, verified)\n", path, (unsigned)upload_received_bytes);
     return true;
 }
 

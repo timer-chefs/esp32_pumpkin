@@ -34,7 +34,10 @@ bool sd_audio_upload_write(
     const uint8_t* bytes,
     size_t length,
     const char** error_message);
-bool sd_audio_upload_finish(const char** error_message);
+// Reads the stored file back and refuses it unless it matches `checksum`,
+// so a card that accepted the write but can't return it is caught here
+// rather than halfway through playing the file.
+bool sd_audio_upload_finish(uint32_t checksum, const char** error_message);
 // Abandons an upload in progress, discarding what arrived so far. Safe to
 // call when there is no upload.
 void sd_audio_upload_cancel();

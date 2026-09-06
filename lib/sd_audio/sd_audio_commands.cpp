@@ -93,11 +93,14 @@ static CommandResult handle_audio_upload_chunk(
 }
 
 static CommandResult handle_finish_audio_upload(
-    const ClientMessage&,
+    const ClientMessage& message,
     flatbuffers::FlatBufferBuilder& builder)
 {
     const char* error_message = nullptr;
-    if(!sd_audio_upload_finish(&error_message))
+    const uint32_t checksum =
+        message.payload_as_FinishAudioUpload()->checksum();
+
+    if(!sd_audio_upload_finish(checksum, &error_message))
     {
         return error(builder, ErrorCode_INVALID_ARGUMENT, error_message);
     }

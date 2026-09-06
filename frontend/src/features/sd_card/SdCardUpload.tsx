@@ -84,7 +84,7 @@ function UploadProgress({ upload, onCancel }: UploadProgressProps) {
       </Stack>
       <ProgressBar
         now={percentage}
-        animated={upload.phase === "converting"}
+        animated={upload.phase !== "sending"}
         label={`${percentage}%`}
         aria-label="Upload progress"
       />
@@ -95,6 +95,10 @@ function UploadProgress({ upload, onCancel }: UploadProgressProps) {
 function describe(upload: UploadState, percentage: number): string {
   if (upload.phase === "converting") {
     return "Converting...";
+  }
+
+  if (upload.phase === "verifying") {
+    return "Verifying on the device...";
   }
 
   const parts = [`${percentage}%`];

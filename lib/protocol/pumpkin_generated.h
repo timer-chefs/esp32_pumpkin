@@ -799,8 +799,15 @@ inline ::flatbuffers::Offset<AudioUploadChunk> CreateAudioUploadChunkDirect(
 
 struct FinishAudioUpload FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef FinishAudioUploadBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CHECKSUM = 4
+  };
+  uint32_t checksum() const {
+    return GetField<uint32_t>(VT_CHECKSUM, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_CHECKSUM, 4) &&
            verifier.EndTable();
   }
 };
@@ -809,6 +816,9 @@ struct FinishAudioUploadBuilder {
   typedef FinishAudioUpload Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_checksum(uint32_t checksum) {
+    fbb_.AddElement<uint32_t>(FinishAudioUpload::VT_CHECKSUM, checksum, 0);
+  }
   explicit FinishAudioUploadBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -821,8 +831,10 @@ struct FinishAudioUploadBuilder {
 };
 
 inline ::flatbuffers::Offset<FinishAudioUpload> CreateFinishAudioUpload(
-    ::flatbuffers::FlatBufferBuilder &_fbb) {
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t checksum = 0) {
   FinishAudioUploadBuilder builder_(_fbb);
+  builder_.add_checksum(checksum);
   return builder_.Finish();
 }
 
