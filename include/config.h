@@ -24,6 +24,8 @@ constexpr uint8_t max_websocket_frames_per_loop = 8;
 constexpr uint16_t response_builder_size = 2048;
 // Upper bound on the commands feature libraries can register between them.
 constexpr uint8_t max_registered_commands = 24;
+// ...and on the commands that answer after the fact.
+constexpr uint8_t max_registered_completions = 4;
 // Largest chunk of streamed audio a client may send in one message.
 constexpr uint16_t max_audio_chunk_size = 512;
 
@@ -95,6 +97,9 @@ constexpr uint32_t sd_sector_size = 512;
 constexpr size_t sd_dma_alignment = 64;
 // How many times to remount and resume before giving up on a file.
 constexpr uint8_t max_sd_read_recoveries = 3;
+// How much of an uploaded file to read back per turn round loop(). Small
+// enough that playback and the web socket don't notice it.
+constexpr uint32_t sd_verify_bytes_per_service = 8192;
 // Largest upload chunk the device accepts. The client acknowledges its way
 // through a file a couple of chunks at a time, so this also caps how much of
 // an upload can be in flight anywhere between the browser and the card.

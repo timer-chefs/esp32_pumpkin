@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <flatbuffers/flatbuffers.h>
 
+#include "command_registry.h"
 #include "command_result.h"
 #include "pumpkin_generated.h"
 
@@ -17,7 +18,10 @@ void command_handler_init();
 void verify_registered_commands();
 
 // Answers one client message, building the response payload into `builder`.
+// A result of deferred() means the answer comes later, through
+// take_completed_command().
 CommandResult handle_command(
+    const CommandContext& context,
     const Pumpkin::Protocol::ClientMessage& message,
     flatbuffers::FlatBufferBuilder& builder);
 

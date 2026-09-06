@@ -1,259 +1,100 @@
 #include "sd_audio.h"
 
 #include "audio.h"
+#include "audio_files.h"
 #include "config.h"
 #include "sd_audio_commands.h"
+#include "sd_upload.h"
+#include "wav_reader.h"
 
 #include <cstring>
-
-struct WavFormat
-{
-    uint16_t channels;
-    uint32_t sample_rate;
-    uint16_t bits_per_sample;
-};
-
-struct __attribute__((packed)) RiffChunkHeader
-{
-    char id[4];
-    uint32_t size;
-};
-
-struct __attribute__((packed)) WavFormatChunk
-{
-    uint16_t audio_format;
-    uint16_t channels;
-    uint32_t sample_rate;
-    uint32_t byte_rate;
-    uint16_t block_align;
-    uint16_t bits_per_sample;
-};
-
-static constexpr uint16_t wav_format_pcm = 1;
-// Files written by some tools describe plain 16-bit PCM through the
-// extensible header instead of the plain one.
-static constexpr uint16_t wav_format_extensible = 0xFFFE;
 
 static constexpr size_t output_bytes_per_frame = (bits_per_sample / 8) * channels;
 static constexpr size_t output_bytes_per_ms = (sample_rate * output_bytes_per_frame) / 1000;
 static constexpr size_t target_buffer_bytes = sd_audio_target_buffer_ms * output_bytes_per_ms;
 static constexpr size_t output_chunk_samples = 128;
 
-static File* playing_file = nullptr;
-static WavFormat playing_format = {};
-static char playing_path[audio_path_length] = {};
-static uint32_t file_size_bytes = 0;
-
-// Where the audio sits in the file, and where the next read starts. The read
-// offset is always sector-aligned, so it can be a little behind the audio at
-// the start and reach past it at the end.
-static uint32_t data_start_offset = 0;
-static uint32_t data_end_offset = 0;
-static uint32_t read_offset = 0;
-static uint8_t recovery_attempts = 0;
-
-// The card is read a block at a time and consumed one source frame at a time.
 static_assert(
     sd_audio_read_block_size % sd_sector_size == 0,
     "The read block has to be a whole number of sectors");
-alignas(sd_dma_alignment) static uint8_t source_block[sd_audio_read_block_size];
-static size_t source_block_size = 0;
-static size_t source_block_offset = 0;
 
-// Linear resampling state. `resample_phase` is the position between
-// previous_sample and next_sample, in source samples.
-static int16_t previous_sample = 0;
-static int16_t next_sample = 0;
-static float resample_phase = 0.0f;
-static float resample_step = 1.0f;
-
-// An upload in progress, writing to the temporary file until every
-// announced byte has arrived.
-static File* upload_file = nullptr;
-static char upload_name[max_file_name_length] = {};
-static uint32_t upload_expected_bytes = 0;
-static uint32_t upload_received_bytes = 0;
-
-// Set when a read fails with data still to come, which is a very different
-// thing from the file ending and mustn't be reported as one.
-static bool read_failed = false;
-
-static bool is_playing = false;
-// The file has been read to its end, but the audio it produced is still
-// working its way through the buffer and the I2S hardware.
-static bool is_draining = false;
-static bool playback_finished = false;
-
-static void close_playing_file();
-
-static void close_upload_file()
+// The card is read a sector-aligned block at a time and consumed one source
+// frame at a time. `read_offset` is always sector-aligned, so the block can
+// start a little before the audio and reach past the end of it.
+struct BlockReader
 {
-    if(upload_file)
-    {
-        close_file(upload_file);
-        upload_file = nullptr;
-    }
-}
+    alignas(sd_dma_alignment) uint8_t block[sd_audio_read_block_size];
+    size_t block_size;
+    size_t block_offset;
+    uint32_t read_offset;
+    uint8_t recovery_attempts;
+    // A read that failed with data still to come is a very different thing
+    // from the file ending, and mustn't be reported as one.
+    bool failed;
+};
 
-static void build_path(char* path, size_t size, const char* file_name)
+// Linear resampling state: `phase` is the position between `previous` and
+// `next`, in source samples.
+struct Resampler
 {
-    snprintf(path, size, "%s/%s", sd_audio_directory, file_name);
-}
+    int16_t previous;
+    int16_t next;
+    float phase;
+    float step;
+};
+
+struct Playback
+{
+    File* file;
+    char path[audio_path_length];
+    WavInfo info;
+    uint32_t file_size;
+    uint32_t data_end;
+
+    BlockReader reader;
+    Resampler resampler;
+
+    bool is_playing;
+    // The file has been read to its end, but the audio it produced is still
+    // working its way through the buffer and the I2S hardware.
+    bool is_draining;
+    bool finished;
+};
+
+static Playback playback = {};
 
 void sd_audio_init()
 {
     register_sd_audio_commands();
-
-    create_directory(sd_audio_directory);
-
-    // An upload that was cut short by a reset leaves its temporary file
-    // behind, and nothing will ever claim it.
-    char path[audio_path_length];
-    build_path(path, sizeof(path), sd_upload_temporary_file);
-    if(file_exists(path))
-    {
-        delete_file(path);
-    }
+    audio_files_init();
 }
 
 bool sd_audio_list_files(FileInfo* entries, size_t max_entries, size_t* count)
 {
-    if(!sd_card_is_mounted())
-    {
-        *count = 0;
-        return false;
-    }
-
-    *count = list_files(sd_audio_directory, ".wav", entries, max_entries);
-    return true;
+    return list_audio_files(entries, max_entries, count);
 }
 
-static bool read_exact(File* file, void* destination, size_t size)
+static void close_playing_file()
 {
-    return read_file(file, static_cast<uint8_t*>(destination), size) == size;
-}
-
-static bool skip_bytes(File* file, uint32_t size)
-{
-    return file->seek(file->position() + size);
-}
-
-static bool parse_wav_header(
-    File* file,
-    WavFormat& format,
-    uint32_t& data_size,
-    const char** error_message)
-{
-    char riff_header[12];
-    if(!read_exact(file, riff_header, sizeof(riff_header)) ||
-       memcmp(riff_header, "RIFF", 4) != 0 ||
-       memcmp(riff_header + 8, "WAVE", 4) != 0)
+    if(playback.file)
     {
-        *error_message = "Not a RIFF/WAVE file";
-        return false;
+        close_file(playback.file);
+        playback.file = nullptr;
     }
-
-    bool has_format = false;
-    RiffChunkHeader chunk;
-
-    while(read_exact(file, &chunk, sizeof(chunk)))
-    {
-        if(memcmp(chunk.id, "fmt ", 4) == 0)
-        {
-            WavFormatChunk format_chunk;
-            if(chunk.size < sizeof(format_chunk) ||
-               !read_exact(file, &format_chunk, sizeof(format_chunk)))
-            {
-                *error_message = "Malformed WAV format chunk";
-                return false;
-            }
-
-            if(format_chunk.audio_format != wav_format_pcm &&
-               format_chunk.audio_format != wav_format_extensible)
-            {
-                *error_message = "WAV file is not uncompressed PCM";
-                return false;
-            }
-
-            format.channels = format_chunk.channels;
-            format.sample_rate = format_chunk.sample_rate;
-            format.bits_per_sample = format_chunk.bits_per_sample;
-            has_format = true;
-
-            // Anything past the fields we read (e.g. the extensible header's
-            // extra data) is of no interest.
-            if(!skip_bytes(file, chunk.size - sizeof(format_chunk)))
-            {
-                *error_message = "Truncated WAV file";
-                return false;
-            }
-        }
-        else if(memcmp(chunk.id, "data", 4) == 0)
-        {
-            if(!has_format)
-            {
-                *error_message = "WAV file has no format chunk";
-                return false;
-            }
-
-            // A truncated file can claim more data than it holds.
-            const uint32_t available = file->size() - file->position();
-            data_size = min(chunk.size, available);
-            return true;
-        }
-        else if(!skip_bytes(file, chunk.size + (chunk.size % 2)))
-        {
-            // Chunks are padded to an even number of bytes.
-            break;
-        }
-    }
-
-    *error_message = "WAV file has no data chunk";
-    return false;
-}
-
-static bool is_supported(const WavFormat& format, const char** error_message)
-{
-    if(format.bits_per_sample != 16)
-    {
-        *error_message = "Only 16-bit WAV files can be played";
-        return false;
-    }
-
-    if(format.channels != 1 && format.channels != 2)
-    {
-        *error_message = "Only mono and stereo WAV files can be played";
-        return false;
-    }
-
-    if(format.sample_rate < 8000 || format.sample_rate > 48000)
-    {
-        *error_message = "WAV sample rate must be between 8 and 48 kHz";
-        return false;
-    }
-
-    return true;
-}
-
-static bool is_bare_file_name(const char* file_name)
-{
-    return file_name[0] != '\0' &&
-           file_name[0] != '.' &&
-           strlen(file_name) < max_file_name_length &&
-           strchr(file_name, '/') == nullptr &&
-           strchr(file_name, '\\') == nullptr;
 }
 
 // Gets the card talking again and picks the file back up where it stopped.
 static bool recover_playback()
 {
-    if(recovery_attempts >= max_sd_read_recoveries)
+    if(playback.reader.recovery_attempts >= max_sd_read_recoveries)
     {
         return false;
     }
 
-    recovery_attempts++;
-    Serial.printf("Recovering the SD card (attempt %u)\n", recovery_attempts);
+    playback.reader.recovery_attempts++;
+    Serial.printf(
+        "Recovering the SD card (attempt %u)\n",
+        playback.reader.recovery_attempts);
 
     close_playing_file();
     if(!sd_card_remount())
@@ -261,13 +102,13 @@ static bool recover_playback()
         return false;
     }
 
-    playing_file = open_file(playing_path, FILE_READ);
-    if(!playing_file)
+    playback.file = open_file(playback.path, FILE_READ);
+    if(!playback.file)
     {
         return false;
     }
 
-    if(!playing_file->seek(read_offset))
+    if(!playback.file->seek(playback.reader.read_offset))
     {
         close_playing_file();
         return false;
@@ -276,79 +117,84 @@ static bool recover_playback()
     return true;
 }
 
-static bool refill_source_block()
+static bool refill_block()
 {
-    if(read_offset >= data_end_offset)
+    BlockReader& reader = playback.reader;
+
+    if(reader.read_offset >= playback.data_end)
     {
         return false;
     }
 
     // Read whole sectors from a sector-aligned offset. FatFs passes a
     // request like that straight through to the SD driver with this buffer
-    // as the destination, which is the driver's direct DMA path. Reading
-    // from the middle of a sector instead makes FatFs hand it a pointer
-    // part-way into the buffer, and an unaligned destination costs a
-    // bounce buffer the driver has to allocate and copy for every read.
-    const uint32_t remaining = data_end_offset - read_offset;
+    // as the destination, which is its direct DMA path. Reading from the
+    // middle of a sector instead makes FatFs hand it a pointer part-way
+    // into the buffer, and an unaligned destination costs a bounce buffer
+    // the driver has to allocate and copy for every read.
+    const uint32_t remaining = playback.data_end - reader.read_offset;
     const uint32_t whole_sectors =
         ((remaining + sd_sector_size - 1) / sd_sector_size) * sd_sector_size;
 
-    size_t to_read = min((uint32_t)sizeof(source_block), whole_sectors);
-    to_read = min((uint32_t)to_read, file_size_bytes - read_offset);
+    size_t to_read = min((uint32_t)sizeof(reader.block), whole_sectors);
+    to_read = min((uint32_t)to_read, playback.file_size - reader.read_offset);
 
-    size_t bytes_read = read_file(playing_file, source_block, to_read);
+    size_t bytes_read = read_file(playback.file, reader.block, to_read);
     if(bytes_read == 0)
     {
         Serial.printf(
             "SD read of %u bytes failed at offset %u of %u (free heap %u)\n",
             (unsigned)to_read,
-            (unsigned)read_offset,
-            (unsigned)file_size_bytes,
+            (unsigned)reader.read_offset,
+            (unsigned)playback.file_size,
             (unsigned)ESP.getFreeHeap());
 
         if(!recover_playback())
         {
-            read_failed = true;
+            reader.failed = true;
             return false;
         }
 
-        bytes_read = read_file(playing_file, source_block, to_read);
+        bytes_read = read_file(playback.file, reader.block, to_read);
         if(bytes_read == 0)
         {
-            read_failed = true;
+            reader.failed = true;
             return false;
         }
     }
 
     // The first block starts before the audio does, and the last one can
     // reach past the end of it.
-    source_block_offset = read_offset < data_start_offset
-        ? data_start_offset - read_offset
+    reader.block_offset = reader.read_offset < playback.info.data_start
+        ? playback.info.data_start - reader.read_offset
         : 0;
-    source_block_size = min((uint32_t)bytes_read, data_end_offset - read_offset);
-    read_offset += bytes_read;
+    reader.block_size = min(
+        (uint32_t)bytes_read,
+        playback.data_end - reader.read_offset);
+    reader.read_offset += bytes_read;
 
-    return source_block_offset < source_block_size;
+    return reader.block_offset < reader.block_size;
 }
 
 // Reads the next frame from the file and mixes it down to a single sample.
 static bool read_source_sample(int16_t& sample)
 {
-    const size_t frame_bytes = playing_format.channels * sizeof(int16_t);
+    BlockReader& reader = playback.reader;
+    const size_t frame_bytes = playback.info.channels * sizeof(int16_t);
 
-    while(source_block_offset + frame_bytes > source_block_size)
+    while(reader.block_offset + frame_bytes > reader.block_size)
     {
-        if(!refill_source_block())
+        if(!refill_block())
         {
             return false;
         }
     }
 
     int16_t frame[2];
-    memcpy(frame, source_block + source_block_offset, playing_format.channels * sizeof(int16_t));
-    source_block_offset += playing_format.channels * sizeof(int16_t);
+    memcpy(frame, reader.block + reader.block_offset, frame_bytes);
+    reader.block_offset += frame_bytes;
 
-    sample = playing_format.channels == 2
+    sample = playback.info.channels == 2
         ? (int16_t)(((int32_t)frame[0] + frame[1]) / 2)
         : frame[0];
 
@@ -359,11 +205,12 @@ static bool read_source_sample(int16_t& sample)
 // were produced, which is short of `max_samples` only at the end of the file.
 static size_t read_output_samples(int16_t* output, size_t max_samples)
 {
+    Resampler& resampler = playback.resampler;
     size_t produced = 0;
 
     while(produced < max_samples)
     {
-        while(resample_phase >= 1.0f)
+        while(resampler.phase >= 1.0f)
         {
             int16_t sample;
             if(!read_source_sample(sample))
@@ -371,26 +218,18 @@ static size_t read_output_samples(int16_t* output, size_t max_samples)
                 return produced;
             }
 
-            previous_sample = next_sample;
-            next_sample = sample;
-            resample_phase -= 1.0f;
+            resampler.previous = resampler.next;
+            resampler.next = sample;
+            resampler.phase -= 1.0f;
         }
 
         output[produced++] = (int16_t)(
-            previous_sample + (next_sample - previous_sample) * resample_phase);
-        resample_phase += resample_step;
+            resampler.previous +
+            (resampler.next - resampler.previous) * resampler.phase);
+        resampler.phase += resampler.step;
     }
 
     return produced;
-}
-
-static void close_playing_file()
-{
-    if(playing_file)
-    {
-        close_file(playing_file);
-        playing_file = nullptr;
-    }
 }
 
 bool sd_audio_start(const char* file_name, const char** error_message)
@@ -401,336 +240,94 @@ bool sd_audio_start(const char* file_name, const char** error_message)
         return false;
     }
 
-    if(upload_file)
+    if(sd_upload_is_busy())
     {
         *error_message = "An upload is in progress";
         return false;
     }
 
-    if(!is_bare_file_name(file_name))
+    *error_message = audio_file_name_problem(file_name);
+    if(*error_message)
     {
-        *error_message = "Invalid audio file name";
         return false;
     }
 
-    char path[audio_path_length];
-    build_path(path, sizeof(path), file_name);
-
     sd_audio_stop();
+    build_audio_path(playback.path, sizeof(playback.path), file_name);
 
-    playing_file = open_file(path, FILE_READ);
-    if(!playing_file)
+    playback.file = open_file(playback.path, FILE_READ);
+    if(!playback.file)
     {
         *error_message = "Audio file not found on the SD card";
         return false;
     }
 
-    uint32_t data_size = 0;
-    if(!parse_wav_header(playing_file, playing_format, data_size, error_message) ||
-       !is_supported(playing_format, error_message))
+    if(!read_wav_info(playback.file, playback.info, error_message))
     {
         close_playing_file();
         return false;
     }
 
-    strlcpy(playing_path, path, sizeof(playing_path));
-    file_size_bytes = playing_file->size();
-    data_start_offset = playing_file->position();
-    data_end_offset = data_start_offset + data_size;
+    playback.file_size = playback.file->size();
+    playback.data_end = playback.info.data_start + playback.info.data_size;
+
+    playback.reader = {};
     // Reads start at the sector the audio begins in, not at the audio
     // itself, so every one of them is sector-aligned.
-    read_offset = data_start_offset - (data_start_offset % sd_sector_size);
-    if(!playing_file->seek(read_offset))
+    playback.reader.read_offset =
+        playback.info.data_start - (playback.info.data_start % sd_sector_size);
+
+    if(!playback.file->seek(playback.reader.read_offset))
     {
         *error_message = "Could not read the audio file";
         close_playing_file();
         return false;
     }
 
-    recovery_attempts = 0;
-    source_block_size = 0;
-    source_block_offset = 0;
-    previous_sample = 0;
-    next_sample = 0;
-    resample_step = (float)playing_format.sample_rate / (float)sample_rate;
+    playback.resampler = {};
+    playback.resampler.step =
+        (float)playback.info.sample_rate / (float)sample_rate;
     // Enough to pull both interpolation endpoints before the first output
     // sample, so playback starts on the file's very first sample.
-    resample_phase = 2.0f;
+    playback.resampler.phase = 2.0f;
 
     // Drop whatever the previous source left behind before taking over.
     audio_stoped();
     audio_started();
 
-    is_playing = true;
-    is_draining = false;
-    playback_finished = false;
-    read_failed = false;
+    playback.is_playing = true;
+    playback.is_draining = false;
+    playback.finished = false;
 
     Serial.printf(
         "Playing %s (%u Hz, %u channel(s), %u bytes of audio)\n",
-        path,
-        (unsigned)playing_format.sample_rate,
-        (unsigned)playing_format.channels,
-        (unsigned)data_size);
+        playback.path,
+        (unsigned)playback.info.sample_rate,
+        (unsigned)playback.info.channels,
+        (unsigned)playback.info.data_size);
 
     return true;
 }
 
 void sd_audio_stop()
 {
-    if(!is_playing && !is_draining)
+    if(!playback.is_playing && !playback.is_draining)
     {
         return;
     }
 
     close_playing_file();
-    is_playing = false;
-    is_draining = false;
-    read_offset = 0;
-    data_end_offset = 0;
+    playback.is_playing = false;
+    playback.is_draining = false;
+    playback.reader.read_offset = 0;
+    playback.data_end = 0;
 
     audio_stoped();
 }
 
-// CRC-32, as described in the protocol: polynomial 0xEDB88320, initial and
-// final value 0xFFFFFFFF. Written out rather than taken from ROM so that it
-// is plainly the same computation the client makes.
-static uint32_t crc32_update(uint32_t crc, const uint8_t* bytes, size_t length)
-{
-    for(size_t i = 0; i < length; ++i)
-    {
-        crc ^= bytes[i];
-        for(uint8_t bit = 0; bit < 8; ++bit)
-        {
-            crc = (crc >> 1) ^ (0xEDB88320u & (uint32_t)(-(int32_t)(crc & 1)));
-        }
-    }
-
-    return crc;
-}
-
-// Reads the file back off the card. Uploads never overlap playback, so the
-// playback block buffer is free to borrow, and it is already DMA-aligned.
-static bool verify_stored_file(
-    const char* path,
-    uint32_t expected_size,
-    uint32_t expected_checksum,
-    const char** error_message)
-{
-    File* file = open_file(path, FILE_READ);
-    if(!file)
-    {
-        *error_message = "Could not read the stored file back";
-        return false;
-    }
-
-    if(file->size() != expected_size)
-    {
-        close_file(file);
-        *error_message = "The stored file is the wrong size";
-        return false;
-    }
-
-    uint32_t crc = 0xFFFFFFFFu;
-    uint32_t offset = 0;
-
-    while(offset < expected_size)
-    {
-        const size_t to_read = min((uint32_t)sizeof(source_block), expected_size - offset);
-        const size_t bytes_read = read_file(file, source_block, to_read);
-        if(bytes_read == 0)
-        {
-            close_file(file);
-            *error_message = "The card could not read the file back";
-            return false;
-        }
-
-        crc = crc32_update(crc, source_block, bytes_read);
-        offset += bytes_read;
-    }
-
-    close_file(file);
-
-    if((crc ^ 0xFFFFFFFFu) != expected_checksum)
-    {
-        *error_message = "The file did not survive being written to the card";
-        return false;
-    }
-
-    return true;
-}
-
-static bool is_wav_file_name(const char* file_name)
-{
-    const size_t length = strlen(file_name);
-    return length > 4 && strcasecmp(file_name + length - 4, ".wav") == 0;
-}
-
-bool sd_audio_upload_begin(
-    const char* file_name,
-    uint32_t size,
-    const char** error_message)
-{
-    if(!sd_card_is_mounted())
-    {
-        *error_message = "No SD card detected";
-        return false;
-    }
-
-    // Playback reads the card from loop(), and interleaving that with the
-    // writes would starve one of them.
-    if(is_playing || is_draining)
-    {
-        *error_message = "Cannot upload while audio is playing";
-        return false;
-    }
-
-    if(!is_bare_file_name(file_name) || !is_wav_file_name(file_name))
-    {
-        *error_message = "Invalid audio file name";
-        return false;
-    }
-
-    if(size == 0)
-    {
-        *error_message = "Cannot upload an empty file";
-        return false;
-    }
-
-    if(size > free_space())
-    {
-        *error_message = "Not enough free space on the SD card";
-        return false;
-    }
-
-    // Whatever came before never finished, so it has no claim on the card.
-    sd_audio_upload_cancel();
-
-    char path[audio_path_length];
-    build_path(path, sizeof(path), sd_upload_temporary_file);
-
-    upload_file = open_file(path, FILE_WRITE);
-    if(!upload_file)
-    {
-        *error_message = "Could not write to the SD card";
-        return false;
-    }
-
-    strlcpy(upload_name, file_name, sizeof(upload_name));
-    upload_expected_bytes = size;
-    upload_received_bytes = 0;
-
-    Serial.printf("Receiving %s (%u bytes)\n", upload_name, (unsigned)size);
-    return true;
-}
-
-bool sd_audio_upload_write(
-    const uint8_t* bytes,
-    size_t length,
-    const char** error_message)
-{
-    if(!upload_file)
-    {
-        *error_message = "No upload in progress";
-        return false;
-    }
-
-    if(upload_received_bytes + length > upload_expected_bytes)
-    {
-        sd_audio_upload_cancel();
-        *error_message = "Upload sent more data than it announced";
-        return false;
-    }
-
-    if(write_file(upload_file, bytes, length) != length)
-    {
-        // Let go of the handle and get the card back first: a delete issued
-        // at a wedged card just fails, leaving the temporary file behind.
-        close_upload_file();
-        sd_card_remount();
-        sd_audio_upload_cancel();
-
-        *error_message = "Could not write to the SD card";
-        return false;
-    }
-
-    upload_received_bytes += length;
-    return true;
-}
-
-bool sd_audio_upload_finish(uint32_t checksum, const char** error_message)
-{
-    if(!upload_file)
-    {
-        *error_message = "No upload in progress";
-        return false;
-    }
-
-    if(upload_received_bytes != upload_expected_bytes)
-    {
-        sd_audio_upload_cancel();
-        *error_message = "Upload ended before every byte arrived";
-        return false;
-    }
-
-    close_upload_file();
-
-    char temporary_path[audio_path_length];
-    char path[audio_path_length];
-    build_path(temporary_path, sizeof(temporary_path), sd_upload_temporary_file);
-    build_path(path, sizeof(path), upload_name);
-
-    // Check what landed on the card before it replaces anything. Verifying
-    // after the swap would mean a re-upload that fails verification takes
-    // the copy already on the card down with it.
-    if(!verify_stored_file(temporary_path, upload_received_bytes, checksum, error_message))
-    {
-        Serial.printf("Discarding upload of %s: %s\n", upload_name, *error_message);
-        delete_file(temporary_path);
-        return false;
-    }
-
-    // rename() won't replace an existing file, and re-uploading a file to
-    // correct it is the obvious thing to do.
-    if(file_exists(path))
-    {
-        delete_file(path);
-    }
-
-    if(!rename_file(temporary_path, path))
-    {
-        delete_file(temporary_path);
-        *error_message = "Could not store the uploaded file";
-        return false;
-    }
-
-    Serial.printf("Stored %s (%u bytes, verified)\n", path, (unsigned)upload_received_bytes);
-    return true;
-}
-
-void sd_audio_upload_cancel()
-{
-    // The handle may already be closed, by the write failure that is asking
-    // for the upload to be dropped.
-    const bool had_upload = upload_file != nullptr || upload_expected_bytes != 0;
-
-    close_upload_file();
-    upload_expected_bytes = 0;
-    upload_received_bytes = 0;
-
-    if(!had_upload)
-    {
-        return;
-    }
-
-    char path[audio_path_length];
-    build_path(path, sizeof(path), sd_upload_temporary_file);
-    delete_file(path);
-}
-
 void sd_audio_service()
 {
-    while(is_playing && audio_buffered_bytes() < target_buffer_bytes)
+    while(playback.is_playing && audio_buffered_bytes() < target_buffer_bytes)
     {
         int16_t samples[output_chunk_samples];
         const size_t produced = read_output_samples(samples, output_chunk_samples);
@@ -745,24 +342,24 @@ void sd_audio_service()
         if(produced < output_chunk_samples)
         {
             close_playing_file();
-            is_playing = false;
-            is_draining = true;
+            playback.is_playing = false;
+            playback.is_draining = true;
 
-            if(read_failed)
+            if(playback.reader.failed)
             {
                 Serial.println("Reading the SD card failed");
             }
         }
     }
 
-    if(is_draining && audio_buffered_bytes() == 0)
+    if(playback.is_draining && audio_buffered_bytes() == 0)
     {
-        is_draining = false;
-        playback_finished = true;
+        playback.is_draining = false;
+        playback.finished = true;
         audio_stoped();
 
         Serial.println(
-            read_failed
+            playback.reader.failed
                 ? "SD card playback ended early"
                 : "SD card playback finished");
     }
@@ -770,7 +367,7 @@ void sd_audio_service()
 
 bool sd_audio_take_playback_finished()
 {
-    const bool finished = playback_finished;
-    playback_finished = false;
+    const bool finished = playback.finished;
+    playback.finished = false;
     return finished;
 }

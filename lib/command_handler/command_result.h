@@ -13,6 +13,14 @@ struct CommandResult
     flatbuffers::Offset<void> payload;
 };
 
+// A command that can't answer straight away. The transport remembers who
+// asked and sends the answer when the command reports one, rather than
+// blocking loop() until it is ready.
+inline CommandResult deferred()
+{
+    return {Pumpkin::Protocol::ServerPayload_NONE, 0};
+}
+
 inline CommandResult success(flatbuffers::FlatBufferBuilder& builder)
 {
     return {

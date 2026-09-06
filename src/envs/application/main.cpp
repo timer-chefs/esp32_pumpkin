@@ -10,6 +10,7 @@
 #include "preset_shows.h"
 #include "sd_audio.h"
 #include "sd_card.h"
+#include "sd_upload.h"
 #include "wifi_manager.h"
 
 bool is_audio_ready = false;
@@ -60,6 +61,8 @@ void loop()
 
     web_interface_service();
     
+    sd_upload_service();
+
     if(is_audio_ready)
     {
         sd_audio_service();

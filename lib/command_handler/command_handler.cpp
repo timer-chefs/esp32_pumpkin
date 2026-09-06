@@ -8,6 +8,9 @@ using namespace Pumpkin::Protocol;
 static CommandBinding bindings[max_registered_commands];
 static size_t binding_count = 0;
 
+static CompletionFn completions[max_registered_completions];
+static size_t completion_count = 0;
+
 void register_commands(const CommandBinding* new_bindings, size_t count)
 {
     for(size_t i = 0; i < count; ++i)
@@ -20,6 +23,32 @@ void register_commands(const CommandBinding* new_bindings, size_t count)
 
         bindings[binding_count++] = new_bindings[i];
     }
+}
+
+void register_completion(CompletionFn completion)
+{
+    if(completion_count == max_registered_completions)
+    {
+        Serial.println("Completion registry is full; raise max_registered_completions");
+        return;
+    }
+
+    completions[completion_count++] = completion;
+}
+
+bool take_completed_command(
+    CommandResult& result,
+    flatbuffers::FlatBufferBuilder& builder)
+{
+    for(size_t i = 0; i < completion_count; ++i)
+    {
+        if(completions[i](result, builder))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void command_handler_init()
@@ -54,6 +83,7 @@ void verify_registered_commands()
 }
 
 CommandResult handle_command(
+    const CommandContext& context,
     const ClientMessage& message,
     flatbuffers::FlatBufferBuilder& builder)
 {
@@ -66,5 +96,5 @@ CommandResult handle_command(
             "Unsupported client message");
     }
 
-    return binding->handle(message, builder);
+    return binding->handle(context, message, builder);
 }

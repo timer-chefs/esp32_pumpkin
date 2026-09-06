@@ -3,7 +3,8 @@
 #include "audio.h"
 #include "config.h"
 #include "command_handler.h"
-#include "sd_audio.h"
+#include "command_registry.h"
+#include "sd_upload.h"
 
 #include <WiFi.h>
 #include <WebServer.h>
@@ -19,6 +20,11 @@ static WebSocketsServer webSocket(web_socket_port);
 // message. Safe because messages are handled one at a time from loop().
 static flatbuffers::FlatBufferBuilder response_builder(response_builder_size);
 static uint16_t connected_clients = 0;
+
+// A command that answers later leaves its caller here until it does. Only
+// one command defers at a time, so one slot is enough.
+static uint8_t deferred_client = 0;
+static uint32_t deferred_request_id = 0;
 
 using namespace Pumpkin::Protocol;
 
@@ -74,11 +80,22 @@ static void handle_binary_message(
     }
 
     response_builder.Clear();
-    const CommandResult result = handle_command(*client_message, response_builder);
-    if(client_message->request_id() != 0)
+    const CommandResult result =
+        handle_command({client_num}, *client_message, response_builder);
+
+    if(client_message->request_id() == 0)
     {
-        send_response(client_num, client_message->request_id(), result);
+        return;
     }
+
+    if(result.payload_type == ServerPayload_NONE)
+    {
+        deferred_client = client_num;
+        deferred_request_id = client_message->request_id();
+        return;
+    }
+
+    send_response(client_num, client_message->request_id(), result);
 }
 
 static void web_socket_event(uint8_t client_num, WStype_t type,
@@ -98,8 +115,15 @@ static void web_socket_event(uint8_t client_num, WStype_t type,
             connected_clients--;
             Serial.printf("Client %u disconnected (total: %u)\n", client_num, connected_clients);
 
-            // A client that drops mid-upload is never going to finish it.
-            sd_audio_upload_cancel();
+            // A client that drops mid-upload is never going to finish it,
+            // but another client's upload is none of its business.
+            sd_upload_client_disconnected(client_num);
+
+            // Nothing to answer if the client that was waiting is gone.
+            if(deferred_request_id != 0 && deferred_client == client_num)
+            {
+                deferred_request_id = 0;
+            }
             break;
         }
 
@@ -186,8 +210,29 @@ void web_interface_stop()
     Serial.println("Web interface stopped");
 }
 
+// Sends the answer to a command that couldn't give one straight away.
+static void service_deferred_response()
+{
+    if(deferred_request_id == 0)
+    {
+        return;
+    }
+
+    response_builder.Clear();
+    CommandResult result;
+    if(!take_completed_command(result, response_builder))
+    {
+        return;
+    }
+
+    send_response(deferred_client, deferred_request_id, result);
+    deferred_request_id = 0;
+}
+
 void web_interface_service() {
     server.handleClient();
+
+    service_deferred_response();
 
     // webSocket.loop() only dequeues one already-buffered frame per call.
     // Audio-chunk and command frames (e.g. a button press) share the same

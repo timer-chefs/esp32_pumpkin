@@ -20,6 +20,7 @@ static CommandResult volume_result(
 }
 
 static CommandResult handle_start_audio_stream(
+    const CommandContext&,
     const ClientMessage&,
     flatbuffers::FlatBufferBuilder& builder)
 {
@@ -30,6 +31,7 @@ static CommandResult handle_start_audio_stream(
 }
 
 static CommandResult handle_stop_audio_stream(
+    const CommandContext&,
     const ClientMessage&,
     flatbuffers::FlatBufferBuilder& builder)
 {
@@ -40,6 +42,7 @@ static CommandResult handle_stop_audio_stream(
 }
 
 static CommandResult handle_reset_audio(
+    const CommandContext&,
     const ClientMessage&,
     flatbuffers::FlatBufferBuilder& builder)
 {
@@ -49,6 +52,7 @@ static CommandResult handle_reset_audio(
 }
 
 static CommandResult handle_play_show(
+    const CommandContext&,
     const ClientMessage& message,
     flatbuffers::FlatBufferBuilder& builder)
 {
@@ -57,6 +61,7 @@ static CommandResult handle_play_show(
 }
 
 static CommandResult handle_audio_chunk(
+    const CommandContext&,
     const ClientMessage& message,
     flatbuffers::FlatBufferBuilder& builder)
 {
@@ -74,6 +79,7 @@ static CommandResult handle_audio_chunk(
 }
 
 static CommandResult handle_get_volume(
+    const CommandContext&,
     const ClientMessage&,
     flatbuffers::FlatBufferBuilder& builder)
 {
@@ -81,6 +87,7 @@ static CommandResult handle_get_volume(
 }
 
 static CommandResult handle_adjust_volume(
+    const CommandContext&,
     const ClientMessage& message,
     flatbuffers::FlatBufferBuilder& builder)
 {
