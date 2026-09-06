@@ -3,17 +3,18 @@
 
 static bool mount()
 {
-    // 1-bit SDIO mode. Never format on a failed mount: the card carries the
-    // audio files, so a card that can't be read has to be looked at rather
-    // than wiped.
-    if(!SD_MMC.begin("/sdcard", true, false, sd_card_frequency_khz))
+    constexpr bool four_bit_mode = false;
+    if(SD_MMC.begin("/sdcard", four_bit_mode, false, sd_card_frequency_khz))
     {
-        Serial.println("SD card mount failed.");
-        return false;
+        Serial.println("SD card mounted successfully in 4-bit mode");
+        return true;
     }
 
-    Serial.println("SD Card mounted successfully.");
-    return true;
+    Serial.println("Mounting failed");
+    SD_MMC.end();
+
+
+    return false;
 }
 
 void sd_card_init()

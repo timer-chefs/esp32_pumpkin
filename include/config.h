@@ -74,7 +74,7 @@ constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
 // before the card, so there is a lot of room to trade speed for reliability.
 // Raise it toward SDMMC_FREQ_DEFAULT (20 MHz) if the card is on a proper
 // board with external pull-ups.
-constexpr int sd_card_frequency_khz = 4000;
+constexpr int sd_card_frequency_khz = 40000;
 
 // SD card audio library
 // Audio files live in their own directory on the card so the listing isn't
