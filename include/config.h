@@ -52,7 +52,7 @@ constexpr uint16_t audio_catch_up_step_ms = 4;
 constexpr uint16_t audio_catch_up_crossfade_ms = 3;
 
 // LED strip
-constexpr uint8_t pin_led_strip = GPIO_NUM_48;
+constexpr uint8_t pin_led_strip = GPIO_NUM_1;
 constexpr uint8_t num_leds = 2;
 constexpr uint8_t max_brightness = 255;
 constexpr uint16_t brightness_scaling_factor = 50;
@@ -72,7 +72,7 @@ constexpr uint8_t pin_led1 = GPIO_NUM_2;
 constexpr uint8_t pin_led2 = GPIO_NUM_4;
 
 //WiFi Provisioning Pins:
-constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_1;
+constexpr uint8_t pin_wifi_provisioning_btn = GPIO_NUM_21;
 
 // SDMMC_FREQ_HIGHSPEED, which is also what the Arduino core picks for this
 // board by default. Playback only needs 32 kB/s; the speed is worth having
@@ -125,5 +125,9 @@ constexpr uint8_t pin_sd_d3 = GPIO_NUM_10;
 //Serial
 constexpr uint32_t baud_rate = 115200;
 constexpr bool enable_audio_stats_logging = false;
+
+//Servo Pins
+constexpr uint8_t pin_servo_eye_lid = GPIO_NUM_41;
+constexpr uint8_t pin_servo_eye_ball = GPIO_NUM_38; 
 
 #endif // ESP32_PUMPKIN_CONFIG_H
