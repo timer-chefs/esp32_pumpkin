@@ -117,6 +117,24 @@ constexpr uint8_t pin_sd_d1 = GPIO_NUM_14;
 constexpr uint8_t pin_sd_d2 = GPIO_NUM_9;
 constexpr uint8_t pin_sd_d3 = GPIO_NUM_10;
 
+// Servo
+// A hobby servo expects one pulse every 20 ms (50 Hz), and reads the width of
+// that pulse as the angle to hold. 500-2500 us is the widest range the
+// library will send; a servo that buzzes or strains at either end wants a
+// narrower one -- check the datasheet for the specific servo.
+constexpr uint16_t servo_frequency_hz = 50;
+constexpr uint16_t servo_min_pulse_us = 500;
+constexpr uint16_t servo_max_pulse_us = 2500;
+constexpr uint8_t servo_min_angle = 0;
+constexpr uint8_t servo_max_angle = 180;
+// Sweep demo: how far to move per step and how long to let the servo catch up
+// before the next one, so the horn tracks the commanded angle instead of
+// chasing it.
+constexpr uint8_t servo_sweep_step_degrees = 1;
+constexpr uint16_t servo_sweep_step_delay_ms = 15;
+// How long to rest at each end of the sweep.
+constexpr uint16_t servo_sweep_hold_ms = 500;
+
 //Serial
 constexpr uint32_t baud_rate = 115200;
 constexpr bool enable_audio_stats_logging = false;
