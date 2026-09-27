@@ -5,7 +5,7 @@ set -euo pipefail
 protocol_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 project_dir="$(cd -- "$protocol_dir/.." && pwd)"
 typescript_output="$project_dir/frontend/src/generated"
-cpp_output="$project_dir/lib/protocol"
+cpp_output="$project_dir/firmware/lib/protocol"
 expected_flatc_version="flatc version 25.9.23"
 temporary_output="$(mktemp -d)"
 

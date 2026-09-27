@@ -47,9 +47,9 @@ npm --prefix frontend run build
 
 ```sh
 # Builds and uploads
-pio run -e application upload
+pio run -d firmware -e application upload
 # Uploads the client source code to the ESP's file system
-pio run -e application uploadfs
+pio run -d firmware -e application uploadfs
 ```
 
 ### Client-server protocol contract

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     publicDir: "public",
     plugins: [react()],
     build: {
-      outDir: "../.littlefs",
+      outDir: "../firmware/.littlefs",
       emptyOutDir: true,
     },
     server: {
