@@ -8,7 +8,7 @@ on:
       - ".github/workflows/validate-protocol.yml"
       - "protocol/**"
       - "frontend/src/generated/**"
-      - "lib/protocol/**"
+      - "firmware/lib/protocol/**"
   pull_request:
     paths: *protocol-paths
 
@@ -37,11 +37,11 @@ jobs:
 
       - name: Check generated bindings
         run: |
-          changes="$(git status --porcelain -- frontend/src/generated lib/protocol)"
+          changes="$(git status --porcelain -- frontend/src/generated firmware/lib/protocol)"
           if [[ -n "$changes" ]]; then
             echo "::error::Generated protocol bindings are out of date."
-            echo "Run ./protocol/generate.sh, then commit the changes in frontend/src/generated and lib/protocol."
-            git diff -- frontend/src/generated lib/protocol
+            echo "Run ./protocol/generate.sh, then commit the changes in frontend/src/generated and firmware/lib/protocol."
+            git diff -- frontend/src/generated firmware/lib/protocol
             printf '%s\n' "$changes"
             exit 1
           fi

@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v7
       - id: get-envs
         run: |
-          envs=$(grep -oP '(?<=^\[env:)[^\]]+' platformio.ini | jq -Rsc 'split("\n") | map(select(. != ""))')
+          envs=$(grep -oP '(?<=^\[env:)[^\]]+' firmware/platformio.ini | jq -Rsc 'split("\n") | map(select(. != ""))')
           echo "environments=$envs" >> "$GITHUB_OUTPUT"
 
   build:
@@ -36,18 +36,18 @@ jobs:
             ~/.platformio/.cache
             ~/.platformio/packages
             ~/.platformio/platforms
-          key: ${{ runner.os }}-platformio-${{ hashFiles('platformio.ini') }}
+          key: ${{ runner.os }}-platformio-${{ hashFiles('firmware/platformio.ini') }}
           restore-keys: |
             ${{ runner.os }}-platformio-
       - name: Cache PlatformIO build
         uses: actions/cache@v6
         with:
           path: |
-            .pio/build/${{ matrix.environment }}
-            .pio/libdeps/${{ matrix.environment }}
-          key: ${{ runner.os }}-pio-build-${{ matrix.environment }}-${{ hashFiles('platformio.ini') }}-${{ github.sha }}
+            firmware/.pio/build/${{ matrix.environment }}
+            firmware/.pio/libdeps/${{ matrix.environment }}
+          key: ${{ runner.os }}-pio-build-${{ matrix.environment }}-${{ hashFiles('firmware/platformio.ini') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-pio-build-${{ matrix.environment }}-${{ hashFiles('platformio.ini') }}-
+            ${{ runner.os }}-pio-build-${{ matrix.environment }}-${{ hashFiles('firmware/platformio.ini') }}-
       - uses: actions/setup-python@v6
         with:
           python-version: '3.14'
@@ -55,7 +55,7 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Build ${{ matrix.environment }}
-        run: pio run -e ${{ matrix.environment }}
+        run: pio run -d firmware -e ${{ matrix.environment }}
 
   # We can't depend on jobs with dynamic names. So this job acts as a collected
   # "success" status for all of its dependencies. It will only have a "success"
