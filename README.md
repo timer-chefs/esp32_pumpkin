@@ -1,51 +1,8 @@
 # ESP32 Pumpkin
 
-## Pinout
+## Hardware
 
-### Audio (PCM5102A DAC)
-
-ESP32-S3 Pin | PCM5102A Pin | Notes
----|---|---
-GPIO 16 | BCK | Bit Clock
-GPIO 17 | LCK | Left/Right Clock (Word Select)
-GPIO 18 | DIN | Data In
-GND | GND | Ground
-GND | SCK | Let the module select an internal clock
-3.3V | VIN | Most modules have an onboard regulator
-3.3V | XSMT | Un-mute
-
-### LED Strip
-
-ESP32-S3 Pin | Connection
----|---
-GPIO 48 | LED Strip Data
-
-### Status LEDs
-
-ESP32-S3 Pin | Connection
----|---
-GPIO 1 | LED 0
-GPIO 2 | LED 1
-GPIO 4 | LED 2
-
-### SD Card (SDIO)
-
-ESP32-S3 Pin | SD Card Pin
----|---
-GPIO 12 | CLK
-GPIO 11 | CMD
-GPIO 13 | D0
-GPIO 14 | D1
-GPIO 9 | D2
-GPIO 10 | D3
-
-### WiFi Provisioning Button
-This button triggeres the wifi provisioning functionality. This allows the user to change the network to which the system connects to.
-
-ESP32-S3 Pin | Connection
---- | ---
-GPIO 3 (internal pull-up) | Button pin 1
-GND | Button pin 2
+See [hardware/](hardware/) for the bill of materials and schematic.
 
 ## Transfer songs to the SD card
 
