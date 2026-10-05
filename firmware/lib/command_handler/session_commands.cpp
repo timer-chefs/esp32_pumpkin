@@ -60,6 +60,71 @@ static CommandResult handle_play_show(
     return success(builder);
 }
 
+static bool find_effect(LightEffectId light_effect, EffectId& effect)
+{
+    switch(light_effect)
+    {
+        case LightEffectId_CANDLE:
+            effect = EffectId::Candle;
+            return true;
+
+        case LightEffectId_AUDIO_REACTIVE:
+            effect = EffectId::AudioReactive;
+            return true;
+    }
+
+    return false;
+}
+
+static CommandResult handle_play_preset(
+    const CommandContext&,
+    const ClientMessage& message,
+    flatbuffers::FlatBufferBuilder& builder)
+{
+    const auto* preset = message.payload_as_PlayPreset();
+    const auto* light = preset->light();
+
+    EffectId effect;
+    if(light && !find_effect(light->effect(), effect))
+    {
+        return error(
+            builder,
+            ErrorCode_INVALID_ARGUMENT,
+            "Unknown light effect");
+    }
+
+    // The sound is what can fail, so it goes before anything else changes:
+    // a preset whose sound is missing doesn't leave its lights behind.
+    if(preset->sound())
+    {
+        const char* error_message = nullptr;
+        if(!sd_audio_start(preset->sound()->c_str(), &error_message))
+        {
+            return error(builder, ErrorCode_INVALID_ARGUMENT, error_message);
+        }
+    }
+    else
+    {
+        sd_audio_stop();
+    }
+
+    if(light)
+    {
+        const Color* color = light->color();
+        show_manager.set_light(effect, CRGB(color->r(), color->g(), color->b()));
+    }
+
+    // Nothing plays eye effects yet.
+    if(preset->eye() != EyeEffectId_NONE)
+    {
+        Serial.printf(
+            "Eye effect %s is not implemented yet\n",
+            EnumNameEyeEffectId(preset->eye()));
+    }
+
+    return success(builder);
+}
+
 static CommandResult handle_audio_chunk(
     const CommandContext&,
     const ClientMessage& message,
@@ -112,6 +177,7 @@ static const CommandBinding bindings[] = {
     {ClientPayload_StopAudioStream, handle_stop_audio_stream},
     {ClientPayload_ResetAudio, handle_reset_audio},
     {ClientPayload_PlayShow, handle_play_show},
+    {ClientPayload_PlayPreset, handle_play_preset},
     {ClientPayload_AudioChunk, handle_audio_chunk},
     {ClientPayload_GetVolume, handle_get_volume},
     {ClientPayload_AdjustVolume, handle_adjust_volume},

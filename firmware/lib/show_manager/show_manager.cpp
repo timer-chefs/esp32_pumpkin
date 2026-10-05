@@ -18,10 +18,15 @@ void ShowManager::set_current_show(uint16_t show_id)
         Serial.printf("Unknown show: %u\n", show_id);
         return;
     }
+    set_light(show->effect, show->color);
     current_show = show;
+}
 
-    effect_manager.set_effect(current_show->effect);
-    effect_manager.set_color(current_show->color);
+void ShowManager::set_light(EffectId effect, const CRGB& color)
+{
+    current_show = nullptr;
+    effect_manager.set_effect(effect);
+    effect_manager.set_color(color);
 }
 
 const Show* ShowManager::find_show(uint16_t show_id) const

@@ -1,0 +1,59 @@
+.preset-grid {
+  display: grid;
+  /* Three across on a phone, as many as fit on anything wider. */
+  grid-template-columns: repeat(auto-fit, minmax(min(7.5rem, 30%), 1fr));
+  gap: 0.75rem;
+}
+
+/* Doubled up to outrank .btn, whose stylesheet loads after this one. */
+.btn.preset-button {
+  --bs-btn-bg: var(--pumpkin-surface);
+  --bs-btn-color: var(--pumpkin-ink);
+  --bs-btn-border-color: var(--pumpkin-line);
+  --bs-btn-hover-bg: var(--pumpkin-surface);
+  --bs-btn-hover-color: var(--pumpkin-ink);
+  --bs-btn-hover-border-color: var(--pumpkin-ink);
+  --bs-btn-active-bg: color-mix(in srgb, var(--preset-color) 12%, white);
+  --bs-btn-active-color: var(--pumpkin-ink);
+  --bs-btn-active-border-color: var(--pumpkin-ink);
+  min-width: 0;
+  min-height: 8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 6px;
+  /* A long press is a press, not a request to select the label. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.preset-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--preset-color) 55%, var(--pumpkin-ink));
+  background: color-mix(in srgb, var(--preset-color) 28%, white);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--preset-color) 50%, var(--pumpkin-line));
+}
+
+.preset-icon svg {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.preset-name {
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.preset-sound {
+  max-width: 100%;
+  font-size: 0.75rem;
+}

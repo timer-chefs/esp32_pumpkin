@@ -16,6 +16,10 @@ You can encode a file with the expected format with the following command:
 ffmpeg -i song.mp3 -ac 1 -ar 16000 -c:a pcm_s16le song.wav
 ```
 
+### Presets
+
+The presets page plays its sounds from the same directory: `ghost.wav`, `witch.wav`, `scream.wav`, `wolf.wav` and `thunder.wav`. A preset whose sound isn't on the card says so on its button. The presets themselves are defined in `frontend/src/features/presets/presets.ts`.
+
 ### Upload through the UI
 
 You can also upload songs through the web UI that get saved to the ESP32. It will transcode the songs to the correct format for you, on the fly.

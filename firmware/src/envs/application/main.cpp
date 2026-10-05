@@ -7,6 +7,7 @@
 #include "web_interface.h"
 #include "show_manager.h"
 #include "command_handler.h"
+#include "eye_commands.h"
 #include "preset_shows.h"
 #include "sd_audio.h"
 #include "sd_card.h"
@@ -17,6 +18,7 @@ bool is_audio_ready = false;
 
 EffectManager effect_manager;
 ShowManager show_manager(effect_manager);
+Eye eye;
 
 void setup()
 {
@@ -25,6 +27,7 @@ void setup()
     led_strip_init();
 
     command_handler_init();
+    register_eye_commands(eye);
 
     sd_card_init();
     sd_audio_init();

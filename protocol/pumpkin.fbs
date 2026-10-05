@@ -47,6 +47,62 @@ table FinishAudioUpload {
 
 table CancelAudioUpload {}
 
+enum LightEffectId:ubyte {
+  CANDLE = 0,
+  AUDIO_REACTIVE = 1
+}
+
+struct Color {
+  r:ubyte;
+  g:ubyte;
+  b:ubyte;
+}
+
+table Light {
+  effect:LightEffectId = CANDLE;
+  color:Color (required);
+}
+
+// Things the eye can do on its own. Nothing on the device plays these yet;
+// they are here so presets can already say which one they want.
+enum EyeEffectId:ubyte {
+  // Leaves the eye doing whatever it was doing.
+  NONE = 0,
+  // Looks around at random.
+  WANDER = 1,
+  // Glances quickly from side to side.
+  SHIFTY = 2,
+  // Holds still, wide open.
+  STARE = 3,
+  // Closes and stays shut.
+  SLEEP = 4
+}
+
+// Sets the whole scene at once. The preset itself lives with the client --
+// the device only plays what it is sent -- so presets can be added or
+// changed without touching the firmware.
+table PlayPreset {
+  // Absent leaves the lights as they are.
+  light:Light;
+  // A file in the SD card's audio directory, played in place of whatever is
+  // playing. Absent stops what is playing and plays nothing.
+  sound:string;
+  eye:EyeEffectId = NONE;
+}
+
+// Turns the eye: negative is left, 0 straight ahead, positive right.
+// Dragging a slider sends a stream of these and only the latest one matters,
+// so the client sends them as messages rather than requests.
+table MoveEye {
+  at:byte;
+}
+
+// Opens or closes the eye lid: 0 is shut, 255 wide open. Sent the same way
+// as MoveEye.
+table MoveEyeLid {
+  openness:ubyte = 255;
+}
+
 union ClientPayload {
   StartAudioStream,
   StopAudioStream,
@@ -60,7 +116,10 @@ union ClientPayload {
   BeginAudioUpload,
   AudioUploadChunk,
   FinishAudioUpload,
-  CancelAudioUpload
+  CancelAudioUpload,
+  PlayPreset,
+  MoveEye,
+  MoveEyeLid
 }
 
 table ClientMessage {

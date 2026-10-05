@@ -5,10 +5,17 @@ import {
   BeginAudioUpload,
   CancelAudioUpload,
   ClientPayload,
+  Color,
+  type EyeEffectId,
   FinishAudioUpload,
   GetVolume,
+  Light,
+  type LightEffectId,
   ListAudioFiles,
+  MoveEye,
+  MoveEyeLid,
   PlayAudioFile,
+  PlayPreset,
   PlayShow,
   ResetAudio,
   ServerPayload,
@@ -18,6 +25,15 @@ import {
 import type { AudioFileInfo, PumpkinConnection } from "./pumpkin_connection.ts";
 
 export type { AudioFileInfo };
+
+/** What a preset asks of the device. See PlayPreset in the protocol. */
+export interface PresetScene {
+  /** Null leaves the lights as they are. */
+  light: { effect: LightEffectId; color: string } | null;
+  /** A file in the SD card's audio directory, or null to play nothing. */
+  sound: string | null;
+  eye: EyeEffectId;
+}
 
 export default class PumpkinClient {
   static startAudioStream(connection: PumpkinConnection): void {
@@ -160,4 +176,69 @@ export default class PumpkinClient {
       ServerPayload.Success,
     );
   }
+
+  /**
+   * Sets the lights, sound and eye in one go. Fails, changing nothing but
+   * the sound, if the sound isn't on the SD card.
+   */
+  static playPreset(
+    connection: PumpkinConnection,
+    scene: PresetScene,
+  ): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.PlayPreset,
+      (builder) => {
+        const sound =
+          scene.sound === null ? null : builder.createString(scene.sound);
+
+        let light: number | null = null;
+        if (scene.light) {
+          const [r, g, b] = parseHexColor(scene.light.color);
+          Light.startLight(builder);
+          Light.addEffect(builder, scene.light.effect);
+          Light.addColor(builder, Color.createColor(builder, r, g, b));
+          light = Light.endLight(builder);
+        }
+
+        PlayPreset.startPlayPreset(builder);
+        if (light !== null) {
+          PlayPreset.addLight(builder, light);
+        }
+        if (sound !== null) {
+          PlayPreset.addSound(builder, sound);
+        }
+        PlayPreset.addEye(builder, scene.eye);
+        return PlayPreset.endPlayPreset(builder);
+      },
+      ServerPayload.Success,
+    );
+  }
+
+  /** Turns the eye: negative is left, 0 straight ahead, positive right. */
+  static moveEye(connection: PumpkinConnection, at: number): void {
+    connection.sendMessage(ClientPayload.MoveEye, (builder) =>
+      MoveEye.createMoveEye(builder, at),
+    );
+  }
+
+  /** Opens or closes the eye lid: 0 is shut, 255 wide open. */
+  static moveEyeLid(connection: PumpkinConnection, openness: number): void {
+    connection.sendMessage(ClientPayload.MoveEyeLid, (builder) =>
+      MoveEyeLid.createMoveEyeLid(builder, openness),
+    );
+  }
+}
+
+/** Splits a "#rrggbb" color, the format a color input produces, into bytes. */
+function parseHexColor(color: string): [number, number, number] {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  if (!match) {
+    throw new Error(`Expected a color like #ff8800, got "${color}"`);
+  }
+
+  return [
+    parseInt(match[1], 16),
+    parseInt(match[2], 16),
+    parseInt(match[3], 16),
+  ];
 }

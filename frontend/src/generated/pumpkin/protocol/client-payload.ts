@@ -10,7 +10,10 @@ import { CancelAudioUpload } from '../../pumpkin/protocol/cancel-audio-upload.js
 import { FinishAudioUpload } from '../../pumpkin/protocol/finish-audio-upload.js';
 import { GetVolume } from '../../pumpkin/protocol/get-volume.js';
 import { ListAudioFiles } from '../../pumpkin/protocol/list-audio-files.js';
+import { MoveEye } from '../../pumpkin/protocol/move-eye.js';
+import { MoveEyeLid } from '../../pumpkin/protocol/move-eye-lid.js';
 import { PlayAudioFile } from '../../pumpkin/protocol/play-audio-file.js';
+import { PlayPreset } from '../../pumpkin/protocol/play-preset.js';
 import { PlayShow } from '../../pumpkin/protocol/play-show.js';
 import { ResetAudio } from '../../pumpkin/protocol/reset-audio.js';
 import { StartAudioStream } from '../../pumpkin/protocol/start-audio-stream.js';
@@ -31,13 +34,16 @@ export enum ClientPayload {
   BeginAudioUpload = 10,
   AudioUploadChunk = 11,
   FinishAudioUpload = 12,
-  CancelAudioUpload = 13
+  CancelAudioUpload = 13,
+  PlayPreset = 14,
+  MoveEye = 15,
+  MoveEyeLid = 16
 }
 
 export function unionToClientPayload(
   type: ClientPayload,
-  accessor: (obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|PlayAudioFile|PlayShow|ResetAudio|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|PlayAudioFile|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null
-): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|PlayAudioFile|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null {
+  accessor: (obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null
+): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null {
   switch(ClientPayload[type]) {
     case 'NONE': return null; 
     case 'StartAudioStream': return accessor(new StartAudioStream())! as StartAudioStream;
@@ -53,15 +59,18 @@ export function unionToClientPayload(
     case 'AudioUploadChunk': return accessor(new AudioUploadChunk())! as AudioUploadChunk;
     case 'FinishAudioUpload': return accessor(new FinishAudioUpload())! as FinishAudioUpload;
     case 'CancelAudioUpload': return accessor(new CancelAudioUpload())! as CancelAudioUpload;
+    case 'PlayPreset': return accessor(new PlayPreset())! as PlayPreset;
+    case 'MoveEye': return accessor(new MoveEye())! as MoveEye;
+    case 'MoveEyeLid': return accessor(new MoveEyeLid())! as MoveEyeLid;
     default: return null;
   }
 }
 
 export function unionListToClientPayload(
   type: ClientPayload, 
-  accessor: (index: number, obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|PlayAudioFile|PlayShow|ResetAudio|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|PlayAudioFile|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null, 
+  accessor: (index: number, obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null, 
   index: number
-): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|PlayAudioFile|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null {
+): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null {
   switch(ClientPayload[type]) {
     case 'NONE': return null; 
     case 'StartAudioStream': return accessor(index, new StartAudioStream())! as StartAudioStream;
@@ -77,6 +86,9 @@ export function unionListToClientPayload(
     case 'AudioUploadChunk': return accessor(index, new AudioUploadChunk())! as AudioUploadChunk;
     case 'FinishAudioUpload': return accessor(index, new FinishAudioUpload())! as FinishAudioUpload;
     case 'CancelAudioUpload': return accessor(index, new CancelAudioUpload())! as CancelAudioUpload;
+    case 'PlayPreset': return accessor(index, new PlayPreset())! as PlayPreset;
+    case 'MoveEye': return accessor(index, new MoveEye())! as MoveEye;
+    case 'MoveEyeLid': return accessor(index, new MoveEyeLid())! as MoveEyeLid;
     default: return null;
   }
 }

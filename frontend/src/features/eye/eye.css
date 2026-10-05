@@ -1,0 +1,159 @@
+.eye-panel {
+  --eye-thumb-size: 2.75rem;
+  --eye-track-size: 0.5rem;
+  --eye-lid-length: 8.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--pumpkin-surface);
+  border: 1px solid var(--pumpkin-line);
+  border-radius: 6px;
+}
+
+.eye-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  background: transparent;
+  cursor: grab;
+  /* Otherwise a drag on a phone scrolls the page instead. */
+  touch-action: none;
+}
+
+.eye-slider:active {
+  cursor: grabbing;
+}
+
+.eye-slider:focus-visible {
+  outline: none;
+}
+
+.eye-slider::-webkit-slider-runnable-track {
+  height: var(--eye-track-size);
+  background: var(--pumpkin-line);
+  border-radius: 999px;
+}
+
+.eye-slider::-moz-range-track {
+  height: var(--eye-track-size);
+  background: var(--pumpkin-line);
+  border-radius: 999px;
+}
+
+.eye-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--eye-thumb-size);
+  height: var(--eye-thumb-size);
+  margin-top: calc((var(--eye-track-size) - var(--eye-thumb-size)) / 2);
+  border: 3px solid var(--pumpkin-ink);
+  border-radius: 50%;
+}
+
+.eye-slider::-moz-range-thumb {
+  width: var(--eye-thumb-size);
+  height: var(--eye-thumb-size);
+  border: 3px solid var(--pumpkin-ink);
+  border-radius: 50%;
+}
+
+.eye-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-warning-rgb), 0.5);
+}
+
+.eye-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-warning-rgb), 0.5);
+}
+
+.eye-look {
+  min-width: 0;
+}
+
+.eye-look-slider {
+  width: 100%;
+  height: var(--eye-thumb-size);
+}
+
+/* An eyeball, its pupil turned towards --look and its lid drawn down by
+   --shut, both set from the slider's state. */
+.eye-look-slider::-webkit-slider-thumb {
+  background:
+    linear-gradient(
+      to bottom,
+      #e07b24 calc(var(--shut) * 100%),
+      transparent calc(var(--shut) * 100%)
+    ),
+    radial-gradient(
+      circle at calc(50% + var(--look) * 20%) 50%,
+      var(--pumpkin-ink) 0 20%,
+      #e07b24 21% 38%,
+      #ffffff 39%
+    );
+}
+
+.eye-look-slider::-moz-range-thumb {
+  background:
+    linear-gradient(
+      to bottom,
+      #e07b24 calc(var(--shut) * 100%),
+      transparent calc(var(--shut) * 100%)
+    ),
+    radial-gradient(
+      circle at calc(50% + var(--look) * 20%) 50%,
+      var(--pumpkin-ink) 0 20%,
+      #e07b24 21% 38%,
+      #ffffff 39%
+    );
+}
+
+.eye-look-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  color: var(--pumpkin-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04rem;
+  text-transform: uppercase;
+}
+
+.eye-lid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--pumpkin-muted);
+}
+
+.eye-lid svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* A horizontal slider turned on its side: unlike a vertical writing mode,
+   custom styling survives it in every browser. Turning it anticlockwise
+   puts the minimum, shut, at the bottom. */
+.eye-lid-track {
+  position: relative;
+  width: var(--eye-thumb-size);
+  height: var(--eye-lid-length);
+}
+
+.eye-lid-slider {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--eye-lid-length);
+  height: var(--eye-thumb-size);
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.eye-lid-slider::-webkit-slider-thumb {
+  background: #e07b24;
+}
+
+.eye-lid-slider::-moz-range-thumb {
+  background: #e07b24;
+}

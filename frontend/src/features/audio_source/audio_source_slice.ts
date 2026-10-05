@@ -3,16 +3,24 @@ import { runAction, type Slice } from "../../app/slice.ts";
 import { streamAudioFile } from "../../audio_file.ts";
 import { audioSessionManager, type AudioSession } from "../../audio_session.ts";
 import api from "../../pumpkin_client.ts";
-import workletUrl from "../../worklet_processor.ts?worker&url";
+import { streamMicrophone } from "./microphone.ts";
 
 export type AudioSource = "microphone" | "file" | "sdCard";
 export type MicrophoneStatus = "starting" | "streaming";
+export type PushToTalkStatus = "starting" | "talking";
 export type StatusTone = "neutral" | "success";
+
+// How long a push-to-talk session stays open after the button is let go:
+// long enough for what the device has buffered to play out, so the last word
+// isn't clipped.
+const TALK_TAIL_MS = 250;
 
 export interface AudioSourceState {
   active: AudioSource | null;
   fileStatus: { message: string; tone: StatusTone } | null;
   microphoneStatus: MicrophoneStatus | null;
+  /** Null unless the push-to-talk button is being held. */
+  pushToTalk: PushToTalkStatus | null;
   streamFileEnabled: boolean;
 }
 
@@ -26,6 +34,11 @@ export interface AudioSourceActions {
   startSdCardMode: () => void;
   stopAudio: () => void;
   stopMicrophone: () => void;
+  /** Streams the microphone for as long as the button stays pressed. */
+  pressToTalk: () => void;
+  releaseToTalk: () => void;
+  /** Used by whoever takes the device over, so nothing streamed from here outlives it. */
+  stopStreaming: () => Promise<void>;
 }
 
 export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
@@ -33,23 +46,49 @@ export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
     active: null,
     fileStatus: null,
     microphoneStatus: null,
+    pushToTalk: null,
     streamFileEnabled: false,
   },
-  createActions: ({ update, app }) => {
+  createActions: ({ getState, update, app }) => {
     let selectedFile: File | null = null;
+
+    // Each push-to-talk press gets its own number, so a press that was let
+    // go while its session was still starting can tell, once it has
+    // started, that nobody wants it any more.
+    let lastPress = 0;
+    let heldPress = 0;
+    let talkSession: AudioSession | null = null;
 
     const streamFile = (file: File) =>
       streamAudioFile(file, (message, tone = "neutral") => {
         update({ fileStatus: { message, tone } });
       });
 
+    const endTalk = () => {
+      heldPress = 0;
+      talkSession = null;
+      update({ pushToTalk: null });
+    };
+
     // Hands the device back from whatever is currently driving it.
-    const stopAudio = async (): Promise<void> => {
+    const releaseDevice = async (): Promise<void> => {
       await audioSessionManager.stop();
       await app.actions().sdCard.stopPlaybackIfPlaying();
 
-      update({ fileStatus: null, microphoneStatus: null });
+      const { active } = getState();
+      update({
+        // The other sources keep their controls up once stopped, but the
+        // microphone has nothing left to show.
+        active: active === "microphone" ? null : active,
+        fileStatus: null,
+        microphoneStatus: null,
+      });
       app.actions().status.set({ mode: "Idle", streaming: null });
+    };
+
+    const stopAudio = async (): Promise<void> => {
+      endTalk();
+      await releaseDevice();
     };
 
     const startMicrophone = async (): Promise<void> => {
@@ -57,36 +96,10 @@ export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
       update({ active: "microphone", microphoneStatus: "starting" });
       app.actions().status.set({ mode: "Starting microphone" });
 
-      let session: AudioSession | null = null;
       try {
-        session = await audioSessionManager.start({
-          onError: (error) => console.error("Microphone session error:", error),
-        });
-
-        const mediaStream = await requestMicrophone();
-        if (!audioSessionManager.isActive(session)) {
-          mediaStream.getTracks().forEach((track) => track.stop());
+        if (!(await streamMicrophone())) {
           return;
         }
-        session.attachMediaStream(mediaStream);
-
-        const audioContext = new AudioContext({ sampleRate: 16_000 });
-        session.attachAudioContext(audioContext);
-        await audioContext.audioWorklet.addModule(workletUrl);
-
-        if (!audioSessionManager.isActive(session)) {
-          return;
-        }
-
-        const sourceNode = audioContext.createMediaStreamSource(mediaStream);
-        const processorNode = new AudioWorkletNode(
-          audioContext,
-          "pcm-processor",
-        );
-        session.attachSourceNode(sourceNode);
-        session.attachProcessorNode(processorNode);
-        processorNode.port.onmessage = (event) => session?.send(event.data);
-        sourceNode.connect(processorNode);
 
         update({ microphoneStatus: "streaming" });
         app.actions().status.set({
@@ -95,13 +108,73 @@ export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
         });
       } catch (error) {
         console.error("Could not start microphone streaming:", error);
-        if (session) {
-          await audioSessionManager.stop(session, { notifyServer: false });
-        }
-        if (app.getState().audioSource.active === "microphone") {
+        if (getState().active === "microphone") {
           update({ active: null, microphoneStatus: null });
           app.actions().status.set({ mode: "Idle", streaming: null });
         }
+      }
+    };
+
+    const pressToTalk = async (): Promise<void> => {
+      if (heldPress) {
+        return;
+      }
+
+      const press = ++lastPress;
+      heldPress = press;
+      const isHeld = () => heldPress === press;
+      update({ pushToTalk: "starting" });
+
+      try {
+        await releaseDevice();
+        if (!isHeld()) {
+          return;
+        }
+        app.actions().status.set({ mode: "Push to talk" });
+
+        const session = await streamMicrophone();
+        if (!isHeld()) {
+          if (session) {
+            await audioSessionManager.stop(session);
+          }
+          return;
+        }
+        if (!session) {
+          // Something else took the device over while this was starting.
+          endTalk();
+          return;
+        }
+
+        talkSession = session;
+        update({ pushToTalk: "talking" });
+        app.actions().status.set({ streaming: "Microphone" });
+      } catch (error) {
+        console.error("Could not start push to talk:", error);
+        if (isHeld()) {
+          endTalk();
+          app.actions().status.set({ mode: "Idle", streaming: null });
+        }
+      }
+    };
+
+    const releaseToTalk = async (): Promise<void> => {
+      if (!heldPress) {
+        return;
+      }
+
+      const session = talkSession;
+      endTalk();
+      app.actions().status.set({ mode: "Idle", streaming: null });
+
+      // A press let go before its session was up stops that session itself,
+      // once it has one (see pressToTalk).
+      if (!session) {
+        return;
+      }
+
+      session.stopCapture();
+      if (await session.wait(TALK_TAIL_MS)) {
+        await audioSessionManager.stop(session);
       }
     };
 
@@ -170,18 +243,15 @@ export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
           await stopAudio();
           update({ active: null });
         }),
+
+      pressToTalk: () => runAction(pressToTalk),
+
+      releaseToTalk: () => runAction(releaseToTalk),
+
+      stopStreaming: stopAudio,
     };
   },
 };
-
-async function requestMicrophone(): Promise<MediaStream> {
-  try {
-    return await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch (error) {
-    alert("Microphone access failed.");
-    throw error;
-  }
-}
 
 export function useAudioSource() {
   return useSlice("audioSource");
