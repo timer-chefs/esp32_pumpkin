@@ -128,6 +128,19 @@ constexpr bool enable_audio_stats_logging = false;
 
 //Servo Pins
 constexpr uint8_t pin_servo_eye_lid = GPIO_NUM_41;
-constexpr uint8_t pin_servo_eye_ball = GPIO_NUM_38; 
+constexpr uint8_t pin_servo_eye_ball = GPIO_NUM_38;
+
+// Servo
+// A hobby servo reads the width of a pulse sent every 20 ms as the angle to
+// hold. 500-2500 us, spread over 0-180 degrees, is the widest range the
+// library will send. The eye's calibration narrows that down to the angles
+// its mechanism can actually reach.
+constexpr uint16_t servo_min_pulse_us = 500;
+constexpr uint16_t servo_max_pulse_us = 2500;
+constexpr uint8_t servo_max_angle = 180;
+// The NVS namespace the eye's calibration is stored under. NVS lives in
+// flash, so the calibration stays with the device rather than with
+// whichever SD card is in it.
+constexpr const char* eye_calibration_namespace = "eye";
 
 #endif // ESP32_PUMPKIN_CONFIG_H

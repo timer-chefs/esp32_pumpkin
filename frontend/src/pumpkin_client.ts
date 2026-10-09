@@ -7,7 +7,9 @@ import {
   ClientPayload,
   Color,
   type EyeEffectId,
+  EyeServoId,
   FinishAudioUpload,
+  GetEyeCalibration,
   GetVolume,
   Light,
   type LightEffectId,
@@ -17,14 +19,30 @@ import {
   PlayAudioFile,
   PlayPreset,
   PlayShow,
+  PreviewServoAngle,
   ResetAudio,
+  SaveServoCalibration,
   ServerPayload,
+  ServoRange,
   StartAudioStream,
   StopAudioStream,
 } from "./generated/pumpkin/protocol.ts";
-import type { AudioFileInfo, PumpkinConnection } from "./pumpkin_connection.ts";
+import type {
+  AudioFileInfo,
+  EyeCalibrationInfo,
+  PumpkinConnection,
+  ServoRangeInfo,
+} from "./pumpkin_connection.ts";
 
-export type { AudioFileInfo };
+export type { AudioFileInfo, EyeCalibrationInfo, ServoRangeInfo };
+
+/** One of the eye's servos, named as in EyeCalibrationInfo. */
+export type EyeServo = keyof EyeCalibrationInfo;
+
+const servoIds: Record<EyeServo, EyeServoId> = {
+  ball: EyeServoId.BALL,
+  lid: EyeServoId.LID,
+};
 
 /** What a preset asks of the device. See PlayPreset in the protocol. */
 export interface PresetScene {
@@ -225,6 +243,58 @@ export default class PumpkinClient {
   static moveEyeLid(connection: PumpkinConnection, openness: number): void {
     connection.sendMessage(ClientPayload.MoveEyeLid, (builder) =>
       MoveEyeLid.createMoveEyeLid(builder, openness),
+    );
+  }
+
+  /**
+   * Holds a servo at a raw angle, 0-180, ignoring its calibration, so the
+   * ends of its range can be found by eye.
+   */
+  static previewServoAngle(
+    connection: PumpkinConnection,
+    servo: EyeServo,
+    angle: number,
+  ): void {
+    connection.sendMessage(ClientPayload.PreviewServoAngle, (builder) =>
+      PreviewServoAngle.createPreviewServoAngle(
+        builder,
+        servoIds[servo],
+        angle,
+      ),
+    );
+  }
+
+  static getEyeCalibration(
+    connection: PumpkinConnection,
+  ): Promise<EyeCalibrationInfo> {
+    return connection.sendRequest(
+      ClientPayload.GetEyeCalibration,
+      (builder) => GetEyeCalibration.createGetEyeCalibration(builder),
+      ServerPayload.EyeCalibration,
+    );
+  }
+
+  /**
+   * Stores a servo's range on the device. Moving the eye and its lid maps
+   * onto it from then on.
+   */
+  static saveServoCalibration(
+    connection: PumpkinConnection,
+    servo: EyeServo,
+    range: ServoRangeInfo,
+  ): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.SaveServoCalibration,
+      (builder) => {
+        SaveServoCalibration.startSaveServoCalibration(builder);
+        SaveServoCalibration.addServo(builder, servoIds[servo]);
+        SaveServoCalibration.addRange(
+          builder,
+          ServoRange.createServoRange(builder, range.min, range.max),
+        );
+        return SaveServoCalibration.endSaveServoCalibration(builder);
+      },
+      ServerPayload.Success,
     );
   }
 }

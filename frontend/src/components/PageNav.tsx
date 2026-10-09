@@ -5,6 +5,7 @@ import type { Page } from "../app/page.ts";
 const titles: Record<Page, string> = {
   presets: "Presets",
   audio: "Audio",
+  calibration: "Calibration",
 };
 
 export function PageNav({ page }: { page: Page }) {

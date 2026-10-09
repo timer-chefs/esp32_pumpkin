@@ -5,10 +5,12 @@ import {
   ClientMessage,
   ClientPayload,
   Error as ProtocolError,
+  EyeCalibration,
   Message,
   MessageBody,
   ServerMessage,
   ServerPayload,
+  type ServoRange,
   Volume,
 } from "./generated/pumpkin/protocol.ts";
 import { toError } from "./to_error.ts";
@@ -19,6 +21,18 @@ type CreatePayload = (builder: flatbuffers.Builder) => flatbuffers.Offset;
 export interface AudioFileInfo {
   name: string;
   size: number;
+}
+
+/** The servo angles, 0-180, an eye control's range maps to. See ServoRange in the protocol. */
+export interface ServoRangeInfo {
+  min: number;
+  max: number;
+}
+
+/** The ranges the eye's servos move by. */
+export interface EyeCalibrationInfo {
+  ball: ServoRangeInfo;
+  lid: ServoRangeInfo;
 }
 
 /**
@@ -32,6 +46,8 @@ const payloadDecoders = {
     (message.payload(new Volume()) as Volume).value(),
   [ServerPayload.AudioFileList]: (message: ServerMessage) =>
     readAudioFiles(message.payload(new AudioFileList()) as AudioFileList),
+  [ServerPayload.EyeCalibration]: (message: ServerMessage) =>
+    readEyeCalibration(message.payload(new EyeCalibration()) as EyeCalibration),
 } as const;
 
 type DecodedPayload = keyof typeof payloadDecoders;
@@ -351,4 +367,15 @@ function readAudioFiles(payload: AudioFileList): AudioFileInfo[] {
   }
 
   return files;
+}
+
+function readEyeCalibration(payload: EyeCalibration): EyeCalibrationInfo {
+  return {
+    ball: readServoRange(payload.ball()),
+    lid: readServoRange(payload.lid()),
+  };
+}
+
+function readServoRange(range: ServoRange | null): ServoRangeInfo {
+  return { min: range?.minAngle() ?? 0, max: range?.maxAngle() ?? 0 };
 }

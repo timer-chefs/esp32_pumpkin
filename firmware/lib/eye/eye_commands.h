@@ -3,7 +3,8 @@
 
 #include "eye.h"
 
-// Lets clients move `eye`, which has to outlive the registration.
+// Lets clients move and calibrate `eye`, which has to outlive the
+// registration.
 void register_eye_commands(Eye& eye);
 
 #endif //EYE_COMMANDS_H

@@ -69,6 +69,17 @@ struct MoveEyeBuilder;
 struct MoveEyeLid;
 struct MoveEyeLidBuilder;
 
+struct ServoRange;
+
+struct PreviewServoAngle;
+struct PreviewServoAngleBuilder;
+
+struct GetEyeCalibration;
+struct GetEyeCalibrationBuilder;
+
+struct SaveServoCalibration;
+struct SaveServoCalibrationBuilder;
+
 struct ClientMessage;
 struct ClientMessageBuilder;
 
@@ -86,6 +97,9 @@ struct AudioFileBuilder;
 
 struct AudioFileList;
 struct AudioFileListBuilder;
+
+struct EyeCalibration;
+struct EyeCalibrationBuilder;
 
 struct ServerMessage;
 struct ServerMessageBuilder;
@@ -162,6 +176,36 @@ inline const char *EnumNameEyeEffectId(EyeEffectId e) {
   return EnumNamesEyeEffectId()[index];
 }
 
+enum EyeServoId : uint8_t {
+  EyeServoId_BALL = 0,
+  EyeServoId_LID = 1,
+  EyeServoId_MIN = EyeServoId_BALL,
+  EyeServoId_MAX = EyeServoId_LID
+};
+
+inline const EyeServoId (&EnumValuesEyeServoId())[2] {
+  static const EyeServoId values[] = {
+    EyeServoId_BALL,
+    EyeServoId_LID
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesEyeServoId() {
+  static const char * const names[3] = {
+    "BALL",
+    "LID",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameEyeServoId(EyeServoId e) {
+  if (::flatbuffers::IsOutRange(e, EyeServoId_BALL, EyeServoId_LID)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesEyeServoId()[index];
+}
+
 enum ClientPayload : uint8_t {
   ClientPayload_NONE = 0,
   ClientPayload_StartAudioStream = 1,
@@ -180,11 +224,14 @@ enum ClientPayload : uint8_t {
   ClientPayload_PlayPreset = 14,
   ClientPayload_MoveEye = 15,
   ClientPayload_MoveEyeLid = 16,
+  ClientPayload_PreviewServoAngle = 17,
+  ClientPayload_GetEyeCalibration = 18,
+  ClientPayload_SaveServoCalibration = 19,
   ClientPayload_MIN = ClientPayload_NONE,
-  ClientPayload_MAX = ClientPayload_MoveEyeLid
+  ClientPayload_MAX = ClientPayload_SaveServoCalibration
 };
 
-inline const ClientPayload (&EnumValuesClientPayload())[17] {
+inline const ClientPayload (&EnumValuesClientPayload())[20] {
   static const ClientPayload values[] = {
     ClientPayload_NONE,
     ClientPayload_StartAudioStream,
@@ -202,13 +249,16 @@ inline const ClientPayload (&EnumValuesClientPayload())[17] {
     ClientPayload_CancelAudioUpload,
     ClientPayload_PlayPreset,
     ClientPayload_MoveEye,
-    ClientPayload_MoveEyeLid
+    ClientPayload_MoveEyeLid,
+    ClientPayload_PreviewServoAngle,
+    ClientPayload_GetEyeCalibration,
+    ClientPayload_SaveServoCalibration
   };
   return values;
 }
 
 inline const char * const *EnumNamesClientPayload() {
-  static const char * const names[18] = {
+  static const char * const names[21] = {
     "NONE",
     "StartAudioStream",
     "StopAudioStream",
@@ -226,13 +276,16 @@ inline const char * const *EnumNamesClientPayload() {
     "PlayPreset",
     "MoveEye",
     "MoveEyeLid",
+    "PreviewServoAngle",
+    "GetEyeCalibration",
+    "SaveServoCalibration",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameClientPayload(ClientPayload e) {
-  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_MoveEyeLid)) return "";
+  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_SaveServoCalibration)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesClientPayload()[index];
 }
@@ -305,6 +358,18 @@ template<> struct ClientPayloadTraits<Pumpkin::Protocol::MoveEyeLid> {
   static const ClientPayload enum_value = ClientPayload_MoveEyeLid;
 };
 
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::PreviewServoAngle> {
+  static const ClientPayload enum_value = ClientPayload_PreviewServoAngle;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::GetEyeCalibration> {
+  static const ClientPayload enum_value = ClientPayload_GetEyeCalibration;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::SaveServoCalibration> {
+  static const ClientPayload enum_value = ClientPayload_SaveServoCalibration;
+};
+
 bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *obj, ClientPayload type);
 bool VerifyClientPayloadVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
@@ -350,35 +415,38 @@ enum ServerPayload : uint8_t {
   ServerPayload_Error = 2,
   ServerPayload_Volume = 3,
   ServerPayload_AudioFileList = 4,
+  ServerPayload_EyeCalibration = 5,
   ServerPayload_MIN = ServerPayload_NONE,
-  ServerPayload_MAX = ServerPayload_AudioFileList
+  ServerPayload_MAX = ServerPayload_EyeCalibration
 };
 
-inline const ServerPayload (&EnumValuesServerPayload())[5] {
+inline const ServerPayload (&EnumValuesServerPayload())[6] {
   static const ServerPayload values[] = {
     ServerPayload_NONE,
     ServerPayload_Success,
     ServerPayload_Error,
     ServerPayload_Volume,
-    ServerPayload_AudioFileList
+    ServerPayload_AudioFileList,
+    ServerPayload_EyeCalibration
   };
   return values;
 }
 
 inline const char * const *EnumNamesServerPayload() {
-  static const char * const names[6] = {
+  static const char * const names[7] = {
     "NONE",
     "Success",
     "Error",
     "Volume",
     "AudioFileList",
+    "EyeCalibration",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameServerPayload(ServerPayload e) {
-  if (::flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_AudioFileList)) return "";
+  if (::flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_EyeCalibration)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesServerPayload()[index];
 }
@@ -401,6 +469,10 @@ template<> struct ServerPayloadTraits<Pumpkin::Protocol::Volume> {
 
 template<> struct ServerPayloadTraits<Pumpkin::Protocol::AudioFileList> {
   static const ServerPayload enum_value = ServerPayload_AudioFileList;
+};
+
+template<> struct ServerPayloadTraits<Pumpkin::Protocol::EyeCalibration> {
+  static const ServerPayload enum_value = ServerPayload_EyeCalibration;
 };
 
 bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *obj, ServerPayload type);
@@ -482,6 +554,29 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) Color FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(Color, 3);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) ServoRange FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint8_t min_angle_;
+  uint8_t max_angle_;
+
+ public:
+  ServoRange()
+      : min_angle_(0),
+        max_angle_(0) {
+  }
+  ServoRange(uint8_t _min_angle, uint8_t _max_angle)
+      : min_angle_(::flatbuffers::EndianScalar(_min_angle)),
+        max_angle_(::flatbuffers::EndianScalar(_max_angle)) {
+  }
+  uint8_t min_angle() const {
+    return ::flatbuffers::EndianScalar(min_angle_);
+  }
+  uint8_t max_angle() const {
+    return ::flatbuffers::EndianScalar(max_angle_);
+  }
+};
+FLATBUFFERS_STRUCT_END(ServoRange, 2);
 
 struct StartAudioStream FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef StartAudioStreamBuilder Builder;
@@ -1210,6 +1305,138 @@ inline ::flatbuffers::Offset<MoveEyeLid> CreateMoveEyeLid(
   return builder_.Finish();
 }
 
+struct PreviewServoAngle FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef PreviewServoAngleBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SERVO = 4,
+    VT_ANGLE = 6
+  };
+  Pumpkin::Protocol::EyeServoId servo() const {
+    return static_cast<Pumpkin::Protocol::EyeServoId>(GetField<uint8_t>(VT_SERVO, 0));
+  }
+  uint8_t angle() const {
+    return GetField<uint8_t>(VT_ANGLE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_SERVO, 1) &&
+           VerifyField<uint8_t>(verifier, VT_ANGLE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct PreviewServoAngleBuilder {
+  typedef PreviewServoAngle Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_servo(Pumpkin::Protocol::EyeServoId servo) {
+    fbb_.AddElement<uint8_t>(PreviewServoAngle::VT_SERVO, static_cast<uint8_t>(servo), 0);
+  }
+  void add_angle(uint8_t angle) {
+    fbb_.AddElement<uint8_t>(PreviewServoAngle::VT_ANGLE, angle, 0);
+  }
+  explicit PreviewServoAngleBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<PreviewServoAngle> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<PreviewServoAngle>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<PreviewServoAngle> CreatePreviewServoAngle(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    Pumpkin::Protocol::EyeServoId servo = Pumpkin::Protocol::EyeServoId_BALL,
+    uint8_t angle = 0) {
+  PreviewServoAngleBuilder builder_(_fbb);
+  builder_.add_angle(angle);
+  builder_.add_servo(servo);
+  return builder_.Finish();
+}
+
+struct GetEyeCalibration FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef GetEyeCalibrationBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct GetEyeCalibrationBuilder {
+  typedef GetEyeCalibration Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit GetEyeCalibrationBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<GetEyeCalibration> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<GetEyeCalibration>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<GetEyeCalibration> CreateGetEyeCalibration(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  GetEyeCalibrationBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct SaveServoCalibration FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SaveServoCalibrationBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SERVO = 4,
+    VT_RANGE = 6
+  };
+  Pumpkin::Protocol::EyeServoId servo() const {
+    return static_cast<Pumpkin::Protocol::EyeServoId>(GetField<uint8_t>(VT_SERVO, 0));
+  }
+  const Pumpkin::Protocol::ServoRange *range() const {
+    return GetStruct<const Pumpkin::Protocol::ServoRange *>(VT_RANGE);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_SERVO, 1) &&
+           VerifyFieldRequired<Pumpkin::Protocol::ServoRange>(verifier, VT_RANGE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct SaveServoCalibrationBuilder {
+  typedef SaveServoCalibration Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_servo(Pumpkin::Protocol::EyeServoId servo) {
+    fbb_.AddElement<uint8_t>(SaveServoCalibration::VT_SERVO, static_cast<uint8_t>(servo), 0);
+  }
+  void add_range(const Pumpkin::Protocol::ServoRange *range) {
+    fbb_.AddStruct(SaveServoCalibration::VT_RANGE, range);
+  }
+  explicit SaveServoCalibrationBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SaveServoCalibration> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SaveServoCalibration>(end);
+    fbb_.Required(o, SaveServoCalibration::VT_RANGE);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SaveServoCalibration> CreateSaveServoCalibration(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    Pumpkin::Protocol::EyeServoId servo = Pumpkin::Protocol::EyeServoId_BALL,
+    const Pumpkin::Protocol::ServoRange *range = nullptr) {
+  SaveServoCalibrationBuilder builder_(_fbb);
+  builder_.add_range(range);
+  builder_.add_servo(servo);
+  return builder_.Finish();
+}
+
 struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ClientMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1274,6 +1501,15 @@ struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   const Pumpkin::Protocol::MoveEyeLid *payload_as_MoveEyeLid() const {
     return payload_type() == Pumpkin::Protocol::ClientPayload_MoveEyeLid ? static_cast<const Pumpkin::Protocol::MoveEyeLid *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::PreviewServoAngle *payload_as_PreviewServoAngle() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_PreviewServoAngle ? static_cast<const Pumpkin::Protocol::PreviewServoAngle *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::GetEyeCalibration *payload_as_GetEyeCalibration() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_GetEyeCalibration ? static_cast<const Pumpkin::Protocol::GetEyeCalibration *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::SaveServoCalibration *payload_as_SaveServoCalibration() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_SaveServoCalibration ? static_cast<const Pumpkin::Protocol::SaveServoCalibration *>(payload()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1347,6 +1583,18 @@ template<> inline const Pumpkin::Protocol::MoveEye *ClientMessage::payload_as<Pu
 
 template<> inline const Pumpkin::Protocol::MoveEyeLid *ClientMessage::payload_as<Pumpkin::Protocol::MoveEyeLid>() const {
   return payload_as_MoveEyeLid();
+}
+
+template<> inline const Pumpkin::Protocol::PreviewServoAngle *ClientMessage::payload_as<Pumpkin::Protocol::PreviewServoAngle>() const {
+  return payload_as_PreviewServoAngle();
+}
+
+template<> inline const Pumpkin::Protocol::GetEyeCalibration *ClientMessage::payload_as<Pumpkin::Protocol::GetEyeCalibration>() const {
+  return payload_as_GetEyeCalibration();
+}
+
+template<> inline const Pumpkin::Protocol::SaveServoCalibration *ClientMessage::payload_as<Pumpkin::Protocol::SaveServoCalibration>() const {
+  return payload_as_SaveServoCalibration();
 }
 
 struct ClientMessageBuilder {
@@ -1637,6 +1885,59 @@ inline ::flatbuffers::Offset<AudioFileList> CreateAudioFileListDirect(
       files__);
 }
 
+struct EyeCalibration FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef EyeCalibrationBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_BALL = 4,
+    VT_LID = 6
+  };
+  const Pumpkin::Protocol::ServoRange *ball() const {
+    return GetStruct<const Pumpkin::Protocol::ServoRange *>(VT_BALL);
+  }
+  const Pumpkin::Protocol::ServoRange *lid() const {
+    return GetStruct<const Pumpkin::Protocol::ServoRange *>(VT_LID);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyFieldRequired<Pumpkin::Protocol::ServoRange>(verifier, VT_BALL, 1) &&
+           VerifyFieldRequired<Pumpkin::Protocol::ServoRange>(verifier, VT_LID, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct EyeCalibrationBuilder {
+  typedef EyeCalibration Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_ball(const Pumpkin::Protocol::ServoRange *ball) {
+    fbb_.AddStruct(EyeCalibration::VT_BALL, ball);
+  }
+  void add_lid(const Pumpkin::Protocol::ServoRange *lid) {
+    fbb_.AddStruct(EyeCalibration::VT_LID, lid);
+  }
+  explicit EyeCalibrationBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<EyeCalibration> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<EyeCalibration>(end);
+    fbb_.Required(o, EyeCalibration::VT_BALL);
+    fbb_.Required(o, EyeCalibration::VT_LID);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<EyeCalibration> CreateEyeCalibration(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const Pumpkin::Protocol::ServoRange *ball = nullptr,
+    const Pumpkin::Protocol::ServoRange *lid = nullptr) {
+  EyeCalibrationBuilder builder_(_fbb);
+  builder_.add_lid(lid);
+  builder_.add_ball(ball);
+  return builder_.Finish();
+}
+
 struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ServerMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1666,6 +1967,9 @@ struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const Pumpkin::Protocol::AudioFileList *payload_as_AudioFileList() const {
     return payload_type() == Pumpkin::Protocol::ServerPayload_AudioFileList ? static_cast<const Pumpkin::Protocol::AudioFileList *>(payload()) : nullptr;
   }
+  const Pumpkin::Protocol::EyeCalibration *payload_as_EyeCalibration() const {
+    return payload_type() == Pumpkin::Protocol::ServerPayload_EyeCalibration ? static_cast<const Pumpkin::Protocol::EyeCalibration *>(payload()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_REQUEST_ID, 4) &&
@@ -1690,6 +1994,10 @@ template<> inline const Pumpkin::Protocol::Volume *ServerMessage::payload_as<Pum
 
 template<> inline const Pumpkin::Protocol::AudioFileList *ServerMessage::payload_as<Pumpkin::Protocol::AudioFileList>() const {
   return payload_as_AudioFileList();
+}
+
+template<> inline const Pumpkin::Protocol::EyeCalibration *ServerMessage::payload_as<Pumpkin::Protocol::EyeCalibration>() const {
+  return payload_as_EyeCalibration();
 }
 
 struct ServerMessageBuilder {
@@ -1866,6 +2174,18 @@ inline bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *o
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::MoveEyeLid *>(obj);
       return verifier.VerifyTable(ptr);
     }
+    case ClientPayload_PreviewServoAngle: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::PreviewServoAngle *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_GetEyeCalibration: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::GetEyeCalibration *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_SaveServoCalibration: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::SaveServoCalibration *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
     default: return true;
   }
 }
@@ -1901,6 +2221,10 @@ inline bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *o
     }
     case ServerPayload_AudioFileList: {
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::AudioFileList *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ServerPayload_EyeCalibration: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::EyeCalibration *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

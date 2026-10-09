@@ -103,6 +103,39 @@ table MoveEyeLid {
   openness:ubyte = 255;
 }
 
+// The eye's two servos.
+enum EyeServoId:ubyte {
+  // Turns the eye from side to side.
+  BALL = 0,
+  // Opens and closes the lid over it.
+  LID = 1
+}
+
+// The servo angles, 0-180, that the ends of an eye control map to: MoveEye's
+// far left and far right for the ball, MoveEyeLid's shut and wide open for
+// the lid. `min_angle` may be the larger of the two, for a servo that is
+// mounted the other way round.
+struct ServoRange {
+  min_angle:ubyte;
+  max_angle:ubyte;
+}
+
+// Holds a servo at a raw angle, 0-180, ignoring its calibration, so the ends
+// of its range can be found by eye. Sent the same way as MoveEye.
+table PreviewServoAngle {
+  servo:EyeServoId;
+  angle:ubyte;
+}
+
+table GetEyeCalibration {}
+
+// Stores a servo's range on the device, where it survives a restart.
+// MoveEye and MoveEyeLid move the eye by it from then on.
+table SaveServoCalibration {
+  servo:EyeServoId;
+  range:ServoRange (required);
+}
+
 union ClientPayload {
   StartAudioStream,
   StopAudioStream,
@@ -119,7 +152,10 @@ union ClientPayload {
   CancelAudioUpload,
   PlayPreset,
   MoveEye,
-  MoveEyeLid
+  MoveEyeLid,
+  PreviewServoAngle,
+  GetEyeCalibration,
+  SaveServoCalibration
 }
 
 table ClientMessage {
@@ -154,11 +190,19 @@ table AudioFileList {
   files:[AudioFile] (required);
 }
 
+// The ranges the eye's servos move by. A servo that has never been
+// calibrated moves through all of 0-180.
+table EyeCalibration {
+  ball:ServoRange (required);
+  lid:ServoRange (required);
+}
+
 union ServerPayload {
   Success,
   Error,
   Volume,
-  AudioFileList
+  AudioFileList,
+  EyeCalibration
 }
 
 table ServerMessage {

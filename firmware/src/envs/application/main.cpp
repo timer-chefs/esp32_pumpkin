@@ -26,6 +26,8 @@ void setup()
 
     led_strip_init();
 
+    eye.begin();
+
     command_handler_init();
     register_eye_commands(eye);
 
