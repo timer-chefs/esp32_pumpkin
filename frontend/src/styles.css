@@ -10,6 +10,14 @@
   text-rendering: optimizeLegibility;
 }
 
+/* Pulling down at the top of the page reloads it on phones, which drops the
+   WebSocket to the pumpkin. Turning off overscroll on the root scroller
+   disables pull-to-refresh (and the bounce that goes with it). */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 h1,
 h2 {
   font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
