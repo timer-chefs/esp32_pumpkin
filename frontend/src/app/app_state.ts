@@ -2,6 +2,10 @@ import type {
   AudioSourceActions,
   AudioSourceState,
 } from "../features/audio_source/audio_source_slice.ts";
+import type {
+  CalibrationActions,
+  CalibrationState,
+} from "../features/calibration/calibration_slice.ts";
 import type { EyeActions, EyeState } from "../features/eye/eye_slice.ts";
 import type {
   PresetsActions,
@@ -22,6 +26,7 @@ import type { StatusActions, StatusState } from "./status_slice.ts";
 
 export interface AppState {
   audioSource: AudioSourceState;
+  calibration: CalibrationState;
   eye: EyeState;
   presets: PresetsState;
   sdCard: SdCardState;
@@ -31,6 +36,7 @@ export interface AppState {
 
 export interface AppActions {
   audioSource: AudioSourceActions;
+  calibration: CalibrationActions;
   eye: EyeActions;
   presets: PresetsActions;
   sdCard: SdCardActions;

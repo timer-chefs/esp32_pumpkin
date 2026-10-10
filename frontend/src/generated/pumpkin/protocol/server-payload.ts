@@ -4,6 +4,7 @@
 
 import { AudioFileList } from '../../pumpkin/protocol/audio-file-list.js';
 import { Error } from '../../pumpkin/protocol/error.js';
+import { EyeCalibration } from '../../pumpkin/protocol/eye-calibration.js';
 import { Success } from '../../pumpkin/protocol/success.js';
 import { Volume } from '../../pumpkin/protocol/volume.js';
 
@@ -13,34 +14,37 @@ export enum ServerPayload {
   Success = 1,
   Error = 2,
   Volume = 3,
-  AudioFileList = 4
+  AudioFileList = 4,
+  EyeCalibration = 5
 }
 
 export function unionToServerPayload(
   type: ServerPayload,
-  accessor: (obj:AudioFileList|Error|Success|Volume) => AudioFileList|Error|Success|Volume|null
-): AudioFileList|Error|Success|Volume|null {
+  accessor: (obj:AudioFileList|Error|EyeCalibration|Success|Volume) => AudioFileList|Error|EyeCalibration|Success|Volume|null
+): AudioFileList|Error|EyeCalibration|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(new Success())! as Success;
     case 'Error': return accessor(new Error())! as Error;
     case 'Volume': return accessor(new Volume())! as Volume;
     case 'AudioFileList': return accessor(new AudioFileList())! as AudioFileList;
+    case 'EyeCalibration': return accessor(new EyeCalibration())! as EyeCalibration;
     default: return null;
   }
 }
 
 export function unionListToServerPayload(
   type: ServerPayload, 
-  accessor: (index: number, obj:AudioFileList|Error|Success|Volume) => AudioFileList|Error|Success|Volume|null, 
+  accessor: (index: number, obj:AudioFileList|Error|EyeCalibration|Success|Volume) => AudioFileList|Error|EyeCalibration|Success|Volume|null, 
   index: number
-): AudioFileList|Error|Success|Volume|null {
+): AudioFileList|Error|EyeCalibration|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(index, new Success())! as Success;
     case 'Error': return accessor(index, new Error())! as Error;
     case 'Volume': return accessor(index, new Volume())! as Volume;
     case 'AudioFileList': return accessor(index, new AudioFileList())! as AudioFileList;
+    case 'EyeCalibration': return accessor(index, new EyeCalibration())! as EyeCalibration;
     default: return null;
   }
 }

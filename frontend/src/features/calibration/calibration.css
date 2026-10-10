@@ -1,0 +1,66 @@
+.calibration-panel {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1rem 1.5rem;
+  background: var(--pumpkin-surface);
+  border: 1px solid var(--pumpkin-line);
+  border-radius: 6px;
+}
+
+.calibration-end-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.calibration-end-label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.calibration-end-label span {
+  font-size: 0.875rem;
+}
+
+.calibration-readout {
+  min-width: 4.5rem;
+  display: inline-grid;
+  place-items: center;
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: var(--pumpkin-surface);
+  border-top: 1px solid var(--pumpkin-ink);
+  border-bottom: 1px solid var(--pumpkin-ink);
+}
+
+.calibration-slider {
+  width: 100%;
+  /* Tall enough to take hold of with a thumb. */
+  height: 2.75rem;
+  accent-color: #e07b24;
+  cursor: grab;
+  /* Otherwise a drag on a phone scrolls the page instead. */
+  touch-action: none;
+}
+
+.calibration-slider:active {
+  cursor: grabbing;
+}
+
+.calibration-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--pumpkin-line);
+}
+
+.calibration-actions > span {
+  margin-right: auto;
+  font-size: 0.875rem;
+}

@@ -8,6 +8,7 @@ import { AudioUploadChunk } from '../../pumpkin/protocol/audio-upload-chunk.js';
 import { BeginAudioUpload } from '../../pumpkin/protocol/begin-audio-upload.js';
 import { CancelAudioUpload } from '../../pumpkin/protocol/cancel-audio-upload.js';
 import { FinishAudioUpload } from '../../pumpkin/protocol/finish-audio-upload.js';
+import { GetEyeCalibration } from '../../pumpkin/protocol/get-eye-calibration.js';
 import { GetVolume } from '../../pumpkin/protocol/get-volume.js';
 import { ListAudioFiles } from '../../pumpkin/protocol/list-audio-files.js';
 import { MoveEye } from '../../pumpkin/protocol/move-eye.js';
@@ -15,7 +16,9 @@ import { MoveEyeLid } from '../../pumpkin/protocol/move-eye-lid.js';
 import { PlayAudioFile } from '../../pumpkin/protocol/play-audio-file.js';
 import { PlayPreset } from '../../pumpkin/protocol/play-preset.js';
 import { PlayShow } from '../../pumpkin/protocol/play-show.js';
+import { PreviewServoAngle } from '../../pumpkin/protocol/preview-servo-angle.js';
 import { ResetAudio } from '../../pumpkin/protocol/reset-audio.js';
+import { SaveServoCalibration } from '../../pumpkin/protocol/save-servo-calibration.js';
 import { StartAudioStream } from '../../pumpkin/protocol/start-audio-stream.js';
 import { StopAudioStream } from '../../pumpkin/protocol/stop-audio-stream.js';
 
@@ -37,13 +40,16 @@ export enum ClientPayload {
   CancelAudioUpload = 13,
   PlayPreset = 14,
   MoveEye = 15,
-  MoveEyeLid = 16
+  MoveEyeLid = 16,
+  PreviewServoAngle = 17,
+  GetEyeCalibration = 18,
+  SaveServoCalibration = 19
 }
 
 export function unionToClientPayload(
   type: ClientPayload,
-  accessor: (obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null
-): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null {
+  accessor: (obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetEyeCalibration|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|PreviewServoAngle|ResetAudio|SaveServoCalibration|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetEyeCalibration|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|PreviewServoAngle|ResetAudio|SaveServoCalibration|StartAudioStream|StopAudioStream|null
+): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetEyeCalibration|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|PreviewServoAngle|ResetAudio|SaveServoCalibration|StartAudioStream|StopAudioStream|null {
   switch(ClientPayload[type]) {
     case 'NONE': return null; 
     case 'StartAudioStream': return accessor(new StartAudioStream())! as StartAudioStream;
@@ -62,15 +68,18 @@ export function unionToClientPayload(
     case 'PlayPreset': return accessor(new PlayPreset())! as PlayPreset;
     case 'MoveEye': return accessor(new MoveEye())! as MoveEye;
     case 'MoveEyeLid': return accessor(new MoveEyeLid())! as MoveEyeLid;
+    case 'PreviewServoAngle': return accessor(new PreviewServoAngle())! as PreviewServoAngle;
+    case 'GetEyeCalibration': return accessor(new GetEyeCalibration())! as GetEyeCalibration;
+    case 'SaveServoCalibration': return accessor(new SaveServoCalibration())! as SaveServoCalibration;
     default: return null;
   }
 }
 
 export function unionListToClientPayload(
   type: ClientPayload, 
-  accessor: (index: number, obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null, 
+  accessor: (index: number, obj:AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetEyeCalibration|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|PreviewServoAngle|ResetAudio|SaveServoCalibration|StartAudioStream|StopAudioStream) => AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetEyeCalibration|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|PreviewServoAngle|ResetAudio|SaveServoCalibration|StartAudioStream|StopAudioStream|null, 
   index: number
-): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|ResetAudio|StartAudioStream|StopAudioStream|null {
+): AdjustVolume|AudioChunk|AudioUploadChunk|BeginAudioUpload|CancelAudioUpload|FinishAudioUpload|GetEyeCalibration|GetVolume|ListAudioFiles|MoveEye|MoveEyeLid|PlayAudioFile|PlayPreset|PlayShow|PreviewServoAngle|ResetAudio|SaveServoCalibration|StartAudioStream|StopAudioStream|null {
   switch(ClientPayload[type]) {
     case 'NONE': return null; 
     case 'StartAudioStream': return accessor(index, new StartAudioStream())! as StartAudioStream;
@@ -89,6 +98,9 @@ export function unionListToClientPayload(
     case 'PlayPreset': return accessor(index, new PlayPreset())! as PlayPreset;
     case 'MoveEye': return accessor(index, new MoveEye())! as MoveEye;
     case 'MoveEyeLid': return accessor(index, new MoveEyeLid())! as MoveEyeLid;
+    case 'PreviewServoAngle': return accessor(index, new PreviewServoAngle())! as PreviewServoAngle;
+    case 'GetEyeCalibration': return accessor(index, new GetEyeCalibration())! as GetEyeCalibration;
+    case 'SaveServoCalibration': return accessor(index, new SaveServoCalibration())! as SaveServoCalibration;
     default: return null;
   }
 }

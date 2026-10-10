@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 import { audioSourceSlice } from "../features/audio_source/audio_source_slice.ts";
+import { calibrationSlice } from "../features/calibration/calibration_slice.ts";
 import { eyeSlice } from "../features/eye/eye_slice.ts";
 import { presetsSlice } from "../features/presets/presets_slice.ts";
 import { sdCardSlice } from "../features/sd_card/sd_card_slice.ts";
@@ -19,6 +20,7 @@ const slices: {
   [Name in keyof AppState]: Slice<AppState[Name], AppActions[Name]>;
 } = {
   audioSource: audioSourceSlice,
+  calibration: calibrationSlice,
   eye: eyeSlice,
   presets: presetsSlice,
   sdCard: sdCardSlice,
