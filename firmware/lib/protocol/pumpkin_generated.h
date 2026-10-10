@@ -55,6 +55,20 @@ struct FinishAudioUploadBuilder;
 struct CancelAudioUpload;
 struct CancelAudioUploadBuilder;
 
+struct Color;
+
+struct Light;
+struct LightBuilder;
+
+struct PlayPreset;
+struct PlayPresetBuilder;
+
+struct MoveEye;
+struct MoveEyeBuilder;
+
+struct MoveEyeLid;
+struct MoveEyeLidBuilder;
+
 struct ClientMessage;
 struct ClientMessageBuilder;
 
@@ -79,6 +93,75 @@ struct ServerMessageBuilder;
 struct Message;
 struct MessageBuilder;
 
+enum LightEffectId : uint8_t {
+  LightEffectId_CANDLE = 0,
+  LightEffectId_AUDIO_REACTIVE = 1,
+  LightEffectId_MIN = LightEffectId_CANDLE,
+  LightEffectId_MAX = LightEffectId_AUDIO_REACTIVE
+};
+
+inline const LightEffectId (&EnumValuesLightEffectId())[2] {
+  static const LightEffectId values[] = {
+    LightEffectId_CANDLE,
+    LightEffectId_AUDIO_REACTIVE
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesLightEffectId() {
+  static const char * const names[3] = {
+    "CANDLE",
+    "AUDIO_REACTIVE",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameLightEffectId(LightEffectId e) {
+  if (::flatbuffers::IsOutRange(e, LightEffectId_CANDLE, LightEffectId_AUDIO_REACTIVE)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesLightEffectId()[index];
+}
+
+enum EyeEffectId : uint8_t {
+  EyeEffectId_NONE = 0,
+  EyeEffectId_WANDER = 1,
+  EyeEffectId_SHIFTY = 2,
+  EyeEffectId_STARE = 3,
+  EyeEffectId_SLEEP = 4,
+  EyeEffectId_MIN = EyeEffectId_NONE,
+  EyeEffectId_MAX = EyeEffectId_SLEEP
+};
+
+inline const EyeEffectId (&EnumValuesEyeEffectId())[5] {
+  static const EyeEffectId values[] = {
+    EyeEffectId_NONE,
+    EyeEffectId_WANDER,
+    EyeEffectId_SHIFTY,
+    EyeEffectId_STARE,
+    EyeEffectId_SLEEP
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesEyeEffectId() {
+  static const char * const names[6] = {
+    "NONE",
+    "WANDER",
+    "SHIFTY",
+    "STARE",
+    "SLEEP",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameEyeEffectId(EyeEffectId e) {
+  if (::flatbuffers::IsOutRange(e, EyeEffectId_NONE, EyeEffectId_SLEEP)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesEyeEffectId()[index];
+}
+
 enum ClientPayload : uint8_t {
   ClientPayload_NONE = 0,
   ClientPayload_StartAudioStream = 1,
@@ -94,11 +177,14 @@ enum ClientPayload : uint8_t {
   ClientPayload_AudioUploadChunk = 11,
   ClientPayload_FinishAudioUpload = 12,
   ClientPayload_CancelAudioUpload = 13,
+  ClientPayload_PlayPreset = 14,
+  ClientPayload_MoveEye = 15,
+  ClientPayload_MoveEyeLid = 16,
   ClientPayload_MIN = ClientPayload_NONE,
-  ClientPayload_MAX = ClientPayload_CancelAudioUpload
+  ClientPayload_MAX = ClientPayload_MoveEyeLid
 };
 
-inline const ClientPayload (&EnumValuesClientPayload())[14] {
+inline const ClientPayload (&EnumValuesClientPayload())[17] {
   static const ClientPayload values[] = {
     ClientPayload_NONE,
     ClientPayload_StartAudioStream,
@@ -113,13 +199,16 @@ inline const ClientPayload (&EnumValuesClientPayload())[14] {
     ClientPayload_BeginAudioUpload,
     ClientPayload_AudioUploadChunk,
     ClientPayload_FinishAudioUpload,
-    ClientPayload_CancelAudioUpload
+    ClientPayload_CancelAudioUpload,
+    ClientPayload_PlayPreset,
+    ClientPayload_MoveEye,
+    ClientPayload_MoveEyeLid
   };
   return values;
 }
 
 inline const char * const *EnumNamesClientPayload() {
-  static const char * const names[15] = {
+  static const char * const names[18] = {
     "NONE",
     "StartAudioStream",
     "StopAudioStream",
@@ -134,13 +223,16 @@ inline const char * const *EnumNamesClientPayload() {
     "AudioUploadChunk",
     "FinishAudioUpload",
     "CancelAudioUpload",
+    "PlayPreset",
+    "MoveEye",
+    "MoveEyeLid",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameClientPayload(ClientPayload e) {
-  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_CancelAudioUpload)) return "";
+  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_MoveEyeLid)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesClientPayload()[index];
 }
@@ -199,6 +291,18 @@ template<> struct ClientPayloadTraits<Pumpkin::Protocol::FinishAudioUpload> {
 
 template<> struct ClientPayloadTraits<Pumpkin::Protocol::CancelAudioUpload> {
   static const ClientPayload enum_value = ClientPayload_CancelAudioUpload;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::PlayPreset> {
+  static const ClientPayload enum_value = ClientPayload_PlayPreset;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::MoveEye> {
+  static const ClientPayload enum_value = ClientPayload_MoveEye;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::MoveEyeLid> {
+  static const ClientPayload enum_value = ClientPayload_MoveEyeLid;
 };
 
 bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *obj, ClientPayload type);
@@ -349,6 +453,35 @@ template<> struct MessageBodyTraits<Pumpkin::Protocol::ServerMessage> {
 
 bool VerifyMessageBody(::flatbuffers::Verifier &verifier, const void *obj, MessageBody type);
 bool VerifyMessageBodyVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) Color FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint8_t r_;
+  uint8_t g_;
+  uint8_t b_;
+
+ public:
+  Color()
+      : r_(0),
+        g_(0),
+        b_(0) {
+  }
+  Color(uint8_t _r, uint8_t _g, uint8_t _b)
+      : r_(::flatbuffers::EndianScalar(_r)),
+        g_(::flatbuffers::EndianScalar(_g)),
+        b_(::flatbuffers::EndianScalar(_b)) {
+  }
+  uint8_t r() const {
+    return ::flatbuffers::EndianScalar(r_);
+  }
+  uint8_t g() const {
+    return ::flatbuffers::EndianScalar(g_);
+  }
+  uint8_t b() const {
+    return ::flatbuffers::EndianScalar(b_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Color, 3);
 
 struct StartAudioStream FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef StartAudioStreamBuilder Builder;
@@ -867,6 +1000,216 @@ inline ::flatbuffers::Offset<CancelAudioUpload> CreateCancelAudioUpload(
   return builder_.Finish();
 }
 
+struct Light FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LightBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_EFFECT = 4,
+    VT_COLOR = 6
+  };
+  Pumpkin::Protocol::LightEffectId effect() const {
+    return static_cast<Pumpkin::Protocol::LightEffectId>(GetField<uint8_t>(VT_EFFECT, 0));
+  }
+  const Pumpkin::Protocol::Color *color() const {
+    return GetStruct<const Pumpkin::Protocol::Color *>(VT_COLOR);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_EFFECT, 1) &&
+           VerifyFieldRequired<Pumpkin::Protocol::Color>(verifier, VT_COLOR, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct LightBuilder {
+  typedef Light Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_effect(Pumpkin::Protocol::LightEffectId effect) {
+    fbb_.AddElement<uint8_t>(Light::VT_EFFECT, static_cast<uint8_t>(effect), 0);
+  }
+  void add_color(const Pumpkin::Protocol::Color *color) {
+    fbb_.AddStruct(Light::VT_COLOR, color);
+  }
+  explicit LightBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<Light> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<Light>(end);
+    fbb_.Required(o, Light::VT_COLOR);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<Light> CreateLight(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    Pumpkin::Protocol::LightEffectId effect = Pumpkin::Protocol::LightEffectId_CANDLE,
+    const Pumpkin::Protocol::Color *color = nullptr) {
+  LightBuilder builder_(_fbb);
+  builder_.add_color(color);
+  builder_.add_effect(effect);
+  return builder_.Finish();
+}
+
+struct PlayPreset FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef PlayPresetBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_LIGHT = 4,
+    VT_SOUND = 6,
+    VT_EYE = 8
+  };
+  const Pumpkin::Protocol::Light *light() const {
+    return GetPointer<const Pumpkin::Protocol::Light *>(VT_LIGHT);
+  }
+  const ::flatbuffers::String *sound() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_SOUND);
+  }
+  Pumpkin::Protocol::EyeEffectId eye() const {
+    return static_cast<Pumpkin::Protocol::EyeEffectId>(GetField<uint8_t>(VT_EYE, 0));
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_LIGHT) &&
+           verifier.VerifyTable(light()) &&
+           VerifyOffset(verifier, VT_SOUND) &&
+           verifier.VerifyString(sound()) &&
+           VerifyField<uint8_t>(verifier, VT_EYE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct PlayPresetBuilder {
+  typedef PlayPreset Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_light(::flatbuffers::Offset<Pumpkin::Protocol::Light> light) {
+    fbb_.AddOffset(PlayPreset::VT_LIGHT, light);
+  }
+  void add_sound(::flatbuffers::Offset<::flatbuffers::String> sound) {
+    fbb_.AddOffset(PlayPreset::VT_SOUND, sound);
+  }
+  void add_eye(Pumpkin::Protocol::EyeEffectId eye) {
+    fbb_.AddElement<uint8_t>(PlayPreset::VT_EYE, static_cast<uint8_t>(eye), 0);
+  }
+  explicit PlayPresetBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<PlayPreset> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<PlayPreset>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<PlayPreset> CreatePlayPreset(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<Pumpkin::Protocol::Light> light = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> sound = 0,
+    Pumpkin::Protocol::EyeEffectId eye = Pumpkin::Protocol::EyeEffectId_NONE) {
+  PlayPresetBuilder builder_(_fbb);
+  builder_.add_sound(sound);
+  builder_.add_light(light);
+  builder_.add_eye(eye);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<PlayPreset> CreatePlayPresetDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<Pumpkin::Protocol::Light> light = 0,
+    const char *sound = nullptr,
+    Pumpkin::Protocol::EyeEffectId eye = Pumpkin::Protocol::EyeEffectId_NONE) {
+  auto sound__ = sound ? _fbb.CreateString(sound) : 0;
+  return Pumpkin::Protocol::CreatePlayPreset(
+      _fbb,
+      light,
+      sound__,
+      eye);
+}
+
+struct MoveEye FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MoveEyeBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_AT = 4
+  };
+  int8_t at() const {
+    return GetField<int8_t>(VT_AT, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int8_t>(verifier, VT_AT, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct MoveEyeBuilder {
+  typedef MoveEye Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_at(int8_t at) {
+    fbb_.AddElement<int8_t>(MoveEye::VT_AT, at, 0);
+  }
+  explicit MoveEyeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MoveEye> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MoveEye>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MoveEye> CreateMoveEye(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    int8_t at = 0) {
+  MoveEyeBuilder builder_(_fbb);
+  builder_.add_at(at);
+  return builder_.Finish();
+}
+
+struct MoveEyeLid FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MoveEyeLidBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OPENNESS = 4
+  };
+  uint8_t openness() const {
+    return GetField<uint8_t>(VT_OPENNESS, 255);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_OPENNESS, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct MoveEyeLidBuilder {
+  typedef MoveEyeLid Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_openness(uint8_t openness) {
+    fbb_.AddElement<uint8_t>(MoveEyeLid::VT_OPENNESS, openness, 255);
+  }
+  explicit MoveEyeLidBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MoveEyeLid> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MoveEyeLid>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MoveEyeLid> CreateMoveEyeLid(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint8_t openness = 255) {
+  MoveEyeLidBuilder builder_(_fbb);
+  builder_.add_openness(openness);
+  return builder_.Finish();
+}
+
 struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ClientMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -922,6 +1265,15 @@ struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   const Pumpkin::Protocol::CancelAudioUpload *payload_as_CancelAudioUpload() const {
     return payload_type() == Pumpkin::Protocol::ClientPayload_CancelAudioUpload ? static_cast<const Pumpkin::Protocol::CancelAudioUpload *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::PlayPreset *payload_as_PlayPreset() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_PlayPreset ? static_cast<const Pumpkin::Protocol::PlayPreset *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::MoveEye *payload_as_MoveEye() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_MoveEye ? static_cast<const Pumpkin::Protocol::MoveEye *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::MoveEyeLid *payload_as_MoveEyeLid() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_MoveEyeLid ? static_cast<const Pumpkin::Protocol::MoveEyeLid *>(payload()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -983,6 +1335,18 @@ template<> inline const Pumpkin::Protocol::FinishAudioUpload *ClientMessage::pay
 
 template<> inline const Pumpkin::Protocol::CancelAudioUpload *ClientMessage::payload_as<Pumpkin::Protocol::CancelAudioUpload>() const {
   return payload_as_CancelAudioUpload();
+}
+
+template<> inline const Pumpkin::Protocol::PlayPreset *ClientMessage::payload_as<Pumpkin::Protocol::PlayPreset>() const {
+  return payload_as_PlayPreset();
+}
+
+template<> inline const Pumpkin::Protocol::MoveEye *ClientMessage::payload_as<Pumpkin::Protocol::MoveEye>() const {
+  return payload_as_MoveEye();
+}
+
+template<> inline const Pumpkin::Protocol::MoveEyeLid *ClientMessage::payload_as<Pumpkin::Protocol::MoveEyeLid>() const {
+  return payload_as_MoveEyeLid();
 }
 
 struct ClientMessageBuilder {
@@ -1488,6 +1852,18 @@ inline bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *o
     }
     case ClientPayload_CancelAudioUpload: {
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::CancelAudioUpload *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_PlayPreset: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::PlayPreset *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_MoveEye: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::MoveEye *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_MoveEyeLid: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::MoveEyeLid *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

@@ -2,10 +2,11 @@ import type {
   AudioSourceActions,
   AudioSourceState,
 } from "../features/audio_source/audio_source_slice.ts";
+import type { EyeActions, EyeState } from "../features/eye/eye_slice.ts";
 import type {
-  PresetShowsActions,
-  PresetShowsState,
-} from "../features/preset_shows/preset_shows_slice.ts";
+  PresetsActions,
+  PresetsState,
+} from "../features/presets/presets_slice.ts";
 import type {
   SdCardActions,
   SdCardState,
@@ -21,7 +22,8 @@ import type { StatusActions, StatusState } from "./status_slice.ts";
 
 export interface AppState {
   audioSource: AudioSourceState;
-  presetShows: PresetShowsState;
+  eye: EyeState;
+  presets: PresetsState;
   sdCard: SdCardState;
   status: StatusState;
   volume: VolumeState;
@@ -29,7 +31,8 @@ export interface AppState {
 
 export interface AppActions {
   audioSource: AudioSourceActions;
-  presetShows: PresetShowsActions;
+  eye: EyeActions;
+  presets: PresetsActions;
   sdCard: SdCardActions;
   status: StatusActions;
   volume: VolumeActions;

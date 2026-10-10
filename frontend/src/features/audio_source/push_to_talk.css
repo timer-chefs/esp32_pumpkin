@@ -1,0 +1,47 @@
+/* Doubled up to outrank .btn, whose stylesheet loads after this one. */
+.btn.push-to-talk {
+  width: 100%;
+  min-height: 5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 6px;
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  /* The button is held down, so the gestures a long touch normally starts
+     -- scrolling, selecting the label, the callout menu -- all get in the
+     way. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.push-to-talk svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.push-to-talk--live {
+  animation: push-to-talk-live 1.2s ease-in-out infinite;
+}
+
+@keyframes push-to-talk-live {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-danger-rgb), 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 0 0.6rem rgba(var(--bs-danger-rgb), 0.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .push-to-talk--live {
+    animation: none;
+    box-shadow: 0 0 0 0.35rem rgba(var(--bs-danger-rgb), 0.25);
+  }
+}

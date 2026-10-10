@@ -127,6 +127,17 @@ export class AudioSession {
     this.processorNode = processorNode;
   }
 
+  /**
+   * Stops taking audio in but leaves the session open, so what the device
+   * already has buffered plays out instead of being cut off by stop().
+   */
+  stopCapture(): void {
+    if (this.processorNode) {
+      this.processorNode.port.onmessage = null;
+    }
+    this.mediaStream?.getTracks().forEach((track) => track.stop());
+  }
+
   wait(milliseconds: number): Promise<boolean> {
     if (this.abortController.signal.aborted) {
       return Promise.resolve(false);

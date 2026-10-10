@@ -91,8 +91,26 @@ h2 {
   text-align: right;
 }
 
+.page-nav {
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.page-nav .nav-link {
+  color: var(--pumpkin-muted);
+}
+
+.page-nav .nav-link.active {
+  color: var(--pumpkin-ink);
+}
+
 .control-section {
   padding: 2rem 0;
+}
+
+.control-section + .control-section {
+  border-top: 1px solid var(--pumpkin-line);
 }
 
 .section-heading {
@@ -220,12 +238,6 @@ h2 {
   color: var(--pumpkin-muted);
 }
 
-.preset-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
 .icon-label-button {
   min-height: 2.75rem;
   display: inline-flex;
@@ -258,6 +270,10 @@ h2 {
   .app-status {
     min-width: 0;
     max-width: none;
+  }
+
+  .control-section {
+    padding: 1.25rem 0;
   }
 
   .source-selector,
