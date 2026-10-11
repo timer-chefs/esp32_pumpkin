@@ -7,6 +7,7 @@ import type {
   CalibrationState,
 } from "../features/calibration/calibration_slice.ts";
 import type { EyeActions, EyeState } from "../features/eye/eye_slice.ts";
+import type { LogActions, LogState } from "../features/log/log_slice.ts";
 import type {
   PresetsActions,
   PresetsState,
@@ -28,6 +29,7 @@ export interface AppState {
   audioSource: AudioSourceState;
   calibration: CalibrationState;
   eye: EyeState;
+  log: LogState;
   presets: PresetsState;
   sdCard: SdCardState;
   status: StatusState;
@@ -38,6 +40,7 @@ export interface AppActions {
   audioSource: AudioSourceActions;
   calibration: CalibrationActions;
   eye: EyeActions;
+  log: LogActions;
   presets: PresetsActions;
   sdCard: SdCardActions;
   status: StatusActions;

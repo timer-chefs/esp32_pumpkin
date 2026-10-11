@@ -3,6 +3,7 @@
 #include "audio.h"
 #include "audio_files.h"
 #include "config.h"
+#include "device_log.h"
 #include "sd_audio_commands.h"
 #include "sd_upload.h"
 #include "wav_reader.h"
@@ -92,7 +93,7 @@ static bool recover_playback()
     }
 
     playback.reader.recovery_attempts++;
-    Serial.printf(
+    device_log.printf(
         "Recovering the SD card (attempt %u)\n",
         playback.reader.recovery_attempts);
 
@@ -142,7 +143,7 @@ static bool refill_block()
     size_t bytes_read = read_file(playback.file, reader.block, to_read);
     if(bytes_read == 0)
     {
-        Serial.printf(
+        device_log.printf(
             "SD read of %u bytes failed at offset %u of %u (free heap %u)\n",
             (unsigned)to_read,
             (unsigned)reader.read_offset,
@@ -299,7 +300,7 @@ bool sd_audio_start(const char* file_name, const char** error_message)
     playback.is_draining = false;
     playback.finished = false;
 
-    Serial.printf(
+    device_log.printf(
         "Playing %s (%u Hz, %u channel(s), %u bytes of audio)\n",
         playback.path,
         (unsigned)playback.info.sample_rate,
@@ -347,7 +348,7 @@ void sd_audio_service()
 
             if(playback.reader.failed)
             {
-                Serial.println("Reading the SD card failed");
+                device_log.println("Reading the SD card failed");
             }
         }
     }
@@ -358,7 +359,7 @@ void sd_audio_service()
         playback.finished = true;
         audio_stoped();
 
-        Serial.println(
+        device_log.println(
             playback.reader.failed
                 ? "SD card playback ended early"
                 : "SD card playback finished");

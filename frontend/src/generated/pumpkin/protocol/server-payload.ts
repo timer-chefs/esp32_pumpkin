@@ -5,6 +5,7 @@
 import { AudioFileList } from '../../pumpkin/protocol/audio-file-list.js';
 import { Error } from '../../pumpkin/protocol/error.js';
 import { EyeCalibration } from '../../pumpkin/protocol/eye-calibration.js';
+import { Log } from '../../pumpkin/protocol/log.js';
 import { Success } from '../../pumpkin/protocol/success.js';
 import { Volume } from '../../pumpkin/protocol/volume.js';
 
@@ -15,13 +16,14 @@ export enum ServerPayload {
   Error = 2,
   Volume = 3,
   AudioFileList = 4,
-  EyeCalibration = 5
+  EyeCalibration = 5,
+  Log = 6
 }
 
 export function unionToServerPayload(
   type: ServerPayload,
-  accessor: (obj:AudioFileList|Error|EyeCalibration|Success|Volume) => AudioFileList|Error|EyeCalibration|Success|Volume|null
-): AudioFileList|Error|EyeCalibration|Success|Volume|null {
+  accessor: (obj:AudioFileList|Error|EyeCalibration|Log|Success|Volume) => AudioFileList|Error|EyeCalibration|Log|Success|Volume|null
+): AudioFileList|Error|EyeCalibration|Log|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(new Success())! as Success;
@@ -29,15 +31,16 @@ export function unionToServerPayload(
     case 'Volume': return accessor(new Volume())! as Volume;
     case 'AudioFileList': return accessor(new AudioFileList())! as AudioFileList;
     case 'EyeCalibration': return accessor(new EyeCalibration())! as EyeCalibration;
+    case 'Log': return accessor(new Log())! as Log;
     default: return null;
   }
 }
 
 export function unionListToServerPayload(
   type: ServerPayload, 
-  accessor: (index: number, obj:AudioFileList|Error|EyeCalibration|Success|Volume) => AudioFileList|Error|EyeCalibration|Success|Volume|null, 
+  accessor: (index: number, obj:AudioFileList|Error|EyeCalibration|Log|Success|Volume) => AudioFileList|Error|EyeCalibration|Log|Success|Volume|null, 
   index: number
-): AudioFileList|Error|EyeCalibration|Success|Volume|null {
+): AudioFileList|Error|EyeCalibration|Log|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(index, new Success())! as Success;
@@ -45,6 +48,7 @@ export function unionListToServerPayload(
     case 'Volume': return accessor(index, new Volume())! as Volume;
     case 'AudioFileList': return accessor(index, new AudioFileList())! as AudioFileList;
     case 'EyeCalibration': return accessor(index, new EyeCalibration())! as EyeCalibration;
+    case 'Log': return accessor(index, new Log())! as Log;
     default: return null;
   }
 }

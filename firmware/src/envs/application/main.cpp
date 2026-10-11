@@ -2,6 +2,7 @@
 #include <ESPmDNS.h>
 
 #include "config.h"
+#include "device_log.h"
 #include "audio.h"
 #include "led_strip.h"
 #include "web_interface.h"
@@ -38,11 +39,11 @@ void setup()
 
     if (!MDNS.begin(mdns_hostname))
     {
-        Serial.println("mDNS failed");
+        device_log.println("mDNS failed");
     }
     else
     {
-        Serial.println(String("mDNS: http://") + mdns_hostname + ".local");
+        device_log.println(String("mDNS: http://") + mdns_hostname + ".local");
         MDNS.addService("http", "tcp", web_server_port);
     }
 
@@ -52,12 +53,12 @@ void setup()
     is_audio_ready = audio_init();
     if(!is_audio_ready)
     {
-        Serial.println("Audio init failed");
+        device_log.println("Audio init failed");
     }
 
     verify_registered_commands();
 
-    Serial.println("System ready");
+    device_log.println("System ready");
 }
 
 void loop()

@@ -23,6 +23,7 @@ export { GetVolume } from './protocol/get-volume.js';
 export { Light } from './protocol/light.js';
 export { LightEffectId } from './protocol/light-effect-id.js';
 export { ListAudioFiles } from './protocol/list-audio-files.js';
+export { Log } from './protocol/log.js';
 export { Message } from './protocol/message.js';
 export { MessageBody } from './protocol/message-body.js';
 export { MoveEye } from './protocol/move-eye.js';

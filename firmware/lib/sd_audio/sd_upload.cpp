@@ -3,6 +3,7 @@
 #include "audio_files.h"
 #include "command_registry.h"
 #include "config.h"
+#include "device_log.h"
 #include "pumpkin_generated.h"
 #include "sd_card.h"
 
@@ -131,7 +132,7 @@ bool sd_upload_begin(
     upload.expected_bytes = size;
     upload.received_bytes = 0;
 
-    Serial.printf("Receiving %s (%u bytes)\n", upload.name, (unsigned)size);
+    device_log.printf("Receiving %s (%u bytes)\n", upload.name, (unsigned)size);
     return true;
 }
 
@@ -236,7 +237,7 @@ static const char* store_verified_file()
         return "Could not store the uploaded file";
     }
 
-    Serial.printf(
+    device_log.printf(
         "Stored %s (%u bytes, verified)\n",
         to,
         (unsigned)upload.received_bytes);
@@ -251,7 +252,7 @@ static void finish_verification(const char* error_message)
     {
         char path[audio_path_length];
         temporary_path(path, sizeof(path));
-        Serial.printf("Discarding upload of %s: %s\n", upload.name, error_message);
+        device_log.printf("Discarding upload of %s: %s\n", upload.name, error_message);
         delete_file(path);
     }
 
@@ -344,7 +345,7 @@ void sd_upload_client_disconnected(uint8_t client_id)
 {
     if(sd_upload_is_busy() && upload.client_id == client_id)
     {
-        Serial.println("Upload abandoned by its client");
+        device_log.println("Upload abandoned by its client");
         sd_upload_cancel();
     }
 }

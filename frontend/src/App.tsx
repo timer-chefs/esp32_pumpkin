@@ -9,6 +9,7 @@ import { AudioSourceControl } from "./features/audio_source/AudioSourceControl.t
 import { PushToTalkButton } from "./features/audio_source/PushToTalkButton.tsx";
 import { EyeCalibration } from "./features/calibration/EyeCalibration.tsx";
 import { EyeControl } from "./features/eye/EyeControl.tsx";
+import { DeviceLog } from "./features/log/DeviceLog.tsx";
 import { PresetGrid } from "./features/presets/PresetGrid.tsx";
 import { VolumeControl } from "./features/volume/VolumeControl.tsx";
 
@@ -41,6 +42,10 @@ export function App() {
 
           <div hidden={page !== "calibration"}>
             <EyeCalibration />
+          </div>
+
+          <div hidden={page !== "log"}>
+            <DeviceLog />
           </div>
         </Container>
       </main>

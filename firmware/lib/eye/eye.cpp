@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include "config.h"
+#include "device_log.h"
 
 // How far look() turns either way. -128 has no counterpart on the right, so
 // it looks as far left as -127 does.
@@ -47,7 +48,7 @@ void Eye::begin()
         servos[i].attach(servo_pins[i], servo_min_pulse_us, servo_max_pulse_us);
         if(!servos[i].attached())
         {
-            Serial.printf(
+            device_log.printf(
                 "Eye: could not attach the %s servo on pin %u\n",
                 servo_names[i],
                 servo_pins[i]);
@@ -100,12 +101,12 @@ bool Eye::calibrate(EyeServo servo, ServoCalibration calibration)
        preferences.putBytes(name, &calibration, sizeof(calibration)) !=
            sizeof(calibration))
     {
-        Serial.printf("Eye: could not store the %s servo's calibration\n", name);
+        device_log.printf("Eye: could not store the %s servo's calibration\n", name);
         return false;
     }
 
     calibrations[index_of(servo)] = calibration;
-    Serial.printf(
+    device_log.printf(
         "Eye: %s servo calibrated to %u-%u degrees\n",
         name,
         calibration.min_angle,

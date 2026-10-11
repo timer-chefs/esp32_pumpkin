@@ -6,6 +6,7 @@ import {
   ClientPayload,
   Error as ProtocolError,
   EyeCalibration,
+  Log,
   Message,
   MessageBody,
   ServerMessage,
@@ -33,6 +34,15 @@ export interface ServoRangeInfo {
 export interface EyeCalibrationInfo {
   ball: ServoRangeInfo;
   lid: ServoRangeInfo;
+}
+
+/** A piece of what the device has logged. See Log in the protocol. */
+export interface DeviceLogChunk {
+  boot: number;
+  /** Where `text` starts in the device's log, in bytes. */
+  position: number;
+  /** UTF-8, left undecoded so that it can be measured against `position`. */
+  text: Uint8Array;
 }
 
 /**
@@ -67,6 +77,8 @@ interface PendingRequest {
 
 type DisconnectReason = "close" | "error";
 type DisconnectListener = (reason: DisconnectReason) => void;
+type ConnectListener = () => void;
+type LogListener = (chunk: DeviceLogChunk) => void;
 
 const REQUEST_TIMEOUT_MS = 5000;
 
@@ -75,6 +87,8 @@ export class PumpkinConnection {
   private socket: WebSocket;
   private readonly pendingRequests = new Map<number, PendingRequest>();
   private readonly disconnectListeners = new Set<DisconnectListener>();
+  private readonly connectListeners = new Set<ConnectListener>();
+  private readonly logListeners = new Set<LogListener>();
   private nextRequestId = 1;
 
   constructor(private readonly hostname: string) {
@@ -152,6 +166,21 @@ export class PumpkinConnection {
     return () => this.disconnectListeners.delete(listener);
   }
 
+  /** Subscribes to the current socket opening, the same way as onDisconnect. */
+  onConnect(listener: ConnectListener): () => void {
+    this.connectListeners.add(listener);
+    return () => this.connectListeners.delete(listener);
+  }
+
+  /**
+   * Subscribes to the device's log, which it sends unasked to every client.
+   * Returns an unsubscribe function.
+   */
+  onLog(listener: LogListener): () => void {
+    this.logListeners.add(listener);
+    return () => this.logListeners.delete(listener);
+  }
+
   sendMessage(payloadType: ClientPayload, createPayload: CreatePayload): void {
     this.socket.send(this.encodeMessage(payloadType, createPayload, 0));
   }
@@ -197,6 +226,11 @@ export class PumpkinConnection {
     socket.binaryType = "arraybuffer";
 
     socket.addEventListener("message", (event) => this.handleMessage(event));
+    socket.addEventListener("open", () => {
+      if (this.socket === socket) {
+        this.connectListeners.forEach((listener) => listener());
+      }
+    });
     socket.addEventListener("close", () =>
       this.handleDisconnect(socket, "close"),
     );
@@ -212,11 +246,18 @@ export class PumpkinConnection {
       return;
     }
 
-    const response = decodeResponse(new Uint8Array(event.data));
-    if (!response) {
+    const message = decodeServerMessage(new Uint8Array(event.data));
+    if (!message) {
       return;
     }
 
+    if (message.payloadType() === ServerPayload.Log) {
+      const chunk = readLog(message.payload(new Log()) as Log);
+      this.logListeners.forEach((listener) => listener(chunk));
+      return;
+    }
+
+    const response = decodeResponse(message);
     const pending = this.pendingRequests.get(response.requestId);
     if (!pending) {
       return;
@@ -311,14 +352,7 @@ export function getPumpkinConnection(hostname: string): PumpkinConnection {
   return sharedConnection;
 }
 
-function decodeResponse(data: Uint8Array):
-  | {
-      requestId: number;
-      payloadType: ServerPayload;
-      value?: ResponseData;
-      error?: Error;
-    }
-  | undefined {
+function decodeServerMessage(data: Uint8Array): ServerMessage | undefined {
   const buffer = new flatbuffers.ByteBuffer(data);
   if (!Message.bufferHasIdentifier(buffer)) {
     return undefined;
@@ -329,13 +363,17 @@ function decodeResponse(data: Uint8Array):
     return undefined;
   }
 
-  const serverMessage = message.body(
-    new ServerMessage(),
-  ) as ServerMessage | null;
-  if (!serverMessage) {
-    return undefined;
-  }
+  return (
+    (message.body(new ServerMessage()) as ServerMessage | null) ?? undefined
+  );
+}
 
+function decodeResponse(serverMessage: ServerMessage): {
+  requestId: number;
+  payloadType: ServerPayload;
+  value?: ResponseData;
+  error?: Error;
+} {
   const payloadType = serverMessage.payloadType();
   if (payloadType === ServerPayload.Error) {
     const payload = serverMessage.payload(new ProtocolError()) as ProtocolError;
@@ -378,4 +416,14 @@ function readEyeCalibration(payload: EyeCalibration): EyeCalibrationInfo {
 
 function readServoRange(range: ServoRange | null): ServoRangeInfo {
   return { min: range?.minAngle() ?? 0, max: range?.maxAngle() ?? 0 };
+}
+
+function readLog(payload: Log): DeviceLogChunk {
+  return {
+    boot: payload.boot(),
+    position: payload.position(),
+    text:
+      (payload.text(flatbuffers.Encoding.UTF8_BYTES) as Uint8Array | null) ??
+      new Uint8Array(),
+  };
 }

@@ -2,6 +2,7 @@
 
 #include "audio.h"
 #include "command_registry.h"
+#include "device_log.h"
 #include "sd_audio.h"
 #include "show_manager.h"
 
@@ -117,7 +118,7 @@ static CommandResult handle_play_preset(
     // Nothing plays eye effects yet.
     if(preset->eye() != EyeEffectId_NONE)
     {
-        Serial.printf(
+        device_log.printf(
             "Eye effect %s is not implemented yet\n",
             EnumNameEyeEffectId(preset->eye()));
     }

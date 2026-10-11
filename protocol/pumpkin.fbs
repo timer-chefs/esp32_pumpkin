@@ -197,14 +197,33 @@ table EyeCalibration {
   lid:ServoRange (required);
 }
 
+// What the device has printed about itself, as its serial monitor shows it.
+// Sent unasked, to every client: one that connects is first sent all the
+// device still remembers, then each new line as it is printed.
+table Log {
+  // Picked afresh each time the device starts, so a client can tell the
+  // device having restarted from it having reconnected.
+  boot:uint;
+  // Where `text` starts in everything logged since the device started, in
+  // bytes. A client that reconnects is sent again what it already has, which
+  // this is how to recognise; a gap after the last one means the client fell
+  // so far behind that some of the log was lost.
+  position:uint;
+  // One or more whole lines, each ending in a newline. A line too long for
+  // one message is split across several.
+  text:string (required);
+}
+
 union ServerPayload {
   Success,
   Error,
   Volume,
   AudioFileList,
-  EyeCalibration
+  EyeCalibration,
+  Log
 }
 
+// A request_id of 0 marks a message that no request asked for.
 table ServerMessage {
   request_id:uint;
   payload:ServerPayload (required);
