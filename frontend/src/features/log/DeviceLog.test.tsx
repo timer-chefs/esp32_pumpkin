@@ -46,7 +46,31 @@ describe("DeviceLog", () => {
     expect(screen.getByText("Live")).toBeVisible();
   });
 
-  it("shows when each line was logged", () => {
+  it("shows the time of day each line was logged", () => {
+    renderWithAppContext(<DeviceLog isVisible />, {
+      state: {
+        log: {
+          entries: [
+            {
+              id: 1,
+              kind: "line",
+              uptime: "0:02:14.37",
+              loggedAt: new Date(2026, 9, 11, 9, 5, 7, 370).getTime(),
+              text: "Show ID: 2",
+            },
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByRole("log")).toHaveTextContent("09:05:07.37 Show ID: 2");
+    expect(screen.getByText("09:05:07.37")).toHaveAttribute(
+      "title",
+      "0:02:14.37 after the pumpkin started",
+    );
+  });
+
+  it("shows how long the pumpkin had run when the time of day isn't known", () => {
     renderWithAppContext(<DeviceLog isVisible />, {
       state: {
         log: {
@@ -58,7 +82,6 @@ describe("DeviceLog", () => {
     });
 
     expect(screen.getByRole("log")).toHaveTextContent("0:02:14.37 Show ID: 2");
-    expect(screen.getByText("0:02:14.37")).toHaveClass("device-log-uptime");
   });
 
   it("says when nothing has been logged yet", () => {

@@ -76,7 +76,18 @@ export function DeviceLog({ isVisible }: DeviceLogProps) {
             >
               {entry.uptime && (
                 <>
-                  <span className="device-log-uptime">{entry.uptime}</span>{" "}
+                  <span
+                    className="device-log-time"
+                    title={
+                      entry.loggedAt === undefined
+                        ? undefined
+                        : `${entry.uptime} after the pumpkin started`
+                    }
+                  >
+                    {entry.loggedAt === undefined
+                      ? entry.uptime
+                      : formatTimeOfDay(entry.loggedAt)}
+                  </span>{" "}
                 </>
               )}
               {entry.text}
@@ -112,5 +123,15 @@ export function DeviceLog({ isVisible }: DeviceLogProps) {
         </Button>
       </div>
     </section>
+  );
+}
+
+/** The local time of day, as HH:MM:SS.hh, like the pumpkin's own times. */
+function formatTimeOfDay(time: number): string {
+  const date = new Date(time);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return (
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:` +
+    `${pad(date.getSeconds())}.${pad(Math.floor(date.getMilliseconds() / 10))}`
   );
 }

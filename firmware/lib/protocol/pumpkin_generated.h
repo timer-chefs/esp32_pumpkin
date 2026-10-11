@@ -1953,7 +1953,8 @@ struct Log FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_BOOT = 4,
     VT_POSITION = 6,
-    VT_TEXT = 8
+    VT_TEXT = 8,
+    VT_UPTIME_US = 10
   };
   uint32_t boot() const {
     return GetField<uint32_t>(VT_BOOT, 0);
@@ -1964,12 +1965,16 @@ struct Log FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *text() const {
     return GetPointer<const ::flatbuffers::String *>(VT_TEXT);
   }
+  uint64_t uptime_us() const {
+    return GetField<uint64_t>(VT_UPTIME_US, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_BOOT, 4) &&
            VerifyField<uint32_t>(verifier, VT_POSITION, 4) &&
            VerifyOffsetRequired(verifier, VT_TEXT) &&
            verifier.VerifyString(text()) &&
+           VerifyField<uint64_t>(verifier, VT_UPTIME_US, 8) &&
            verifier.EndTable();
   }
 };
@@ -1987,6 +1992,9 @@ struct LogBuilder {
   void add_text(::flatbuffers::Offset<::flatbuffers::String> text) {
     fbb_.AddOffset(Log::VT_TEXT, text);
   }
+  void add_uptime_us(uint64_t uptime_us) {
+    fbb_.AddElement<uint64_t>(Log::VT_UPTIME_US, uptime_us, 0);
+  }
   explicit LogBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -2003,8 +2011,10 @@ inline ::flatbuffers::Offset<Log> CreateLog(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t boot = 0,
     uint32_t position = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> text = 0) {
+    ::flatbuffers::Offset<::flatbuffers::String> text = 0,
+    uint64_t uptime_us = 0) {
   LogBuilder builder_(_fbb);
+  builder_.add_uptime_us(uptime_us);
   builder_.add_text(text);
   builder_.add_position(position);
   builder_.add_boot(boot);
@@ -2015,13 +2025,15 @@ inline ::flatbuffers::Offset<Log> CreateLogDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t boot = 0,
     uint32_t position = 0,
-    const char *text = nullptr) {
+    const char *text = nullptr,
+    uint64_t uptime_us = 0) {
   auto text__ = text ? _fbb.CreateString(text) : 0;
   return Pumpkin::Protocol::CreateLog(
       _fbb,
       boot,
       position,
-      text__);
+      text__,
+      uptime_us);
 }
 
 struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

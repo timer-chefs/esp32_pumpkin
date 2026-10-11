@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AppAccess } from "../../app/slice.ts";
 import type {
@@ -32,9 +32,9 @@ function createConnection(isOpen = true) {
 
   return {
     connection,
-    send: (boot: number, position: number, text: string) =>
+    send: (boot: number, position: number, text: string, uptimeUs = 0) =>
       listeners.log.forEach((listener) =>
-        listener({ boot, position, text: encoder.encode(text) }),
+        listener({ boot, position, text: encoder.encode(text), uptimeUs }),
       ),
     open: () => listeners.connect.forEach((listener) => listener()),
     drop: () => listeners.disconnect.forEach((listener) => listener()),
@@ -62,6 +62,20 @@ function createLog(app: Partial<AppAccess> = {}) {
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+/** Sets this browser's clock to a time of day on the day of the tests. */
+function setClock(hours: number, minutes: number, seconds: number) {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(localTime(hours, minutes, seconds));
+}
+
+function localTime(hours: number, minutes: number, seconds: number, ms = 0) {
+  return new Date(2026, 9, 11, hours, minutes, seconds, ms).getTime();
+}
 
 describe("logSlice", () => {
   it("shows each line as it arrives", () => {
@@ -91,6 +105,63 @@ describe("logSlice", () => {
       { kind: "line", uptime: "0:00:01.23", text: "System ready" },
       { kind: "line", uptime: "12:03:04.05", text: "" },
     ]);
+  });
+
+  it("works out the time of day each line was logged", () => {
+    const device = createConnection();
+    const log = createLog();
+    log.actions.listen(device.connection);
+
+    // Sent a minute after the pumpkin started, so it started at 17:59.
+    setClock(18, 0, 0);
+    device.send(7, 0, "0:00:30.50 Show ID: 2\n", 60_000_000);
+
+    expect(log.state().entries[0].loggedAt).toBe(localTime(17, 59, 30, 500));
+  });
+
+  it("goes by the message that took the least time to arrive", () => {
+    const device = createConnection();
+    const log = createLog();
+    log.actions.listen(device.connection);
+    setClock(18, 0, 0);
+    device.send(7, 0, "0:00:30.00 a\n", 60_000_000);
+
+    // Held up for 5 s on the way, which mustn't move when it started...
+    setClock(18, 0, 10);
+    device.send(7, 13, "0:01:00.00 b\n", 65_000_000);
+    // ...but this one, a second quicker than the first, should.
+    setClock(18, 0, 20);
+    device.send(7, 26, "0:01:10.00 c\n", 81_000_000);
+
+    expect(log.state().entries.map((entry) => entry.loggedAt)).toEqual([
+      localTime(17, 59, 30),
+      localTime(18, 0, 0),
+      localTime(18, 0, 9),
+    ]);
+  });
+
+  it("works out anew when a restarted pumpkin started", () => {
+    const device = createConnection();
+    const log = createLog();
+    log.actions.listen(device.connection);
+    setClock(18, 0, 0);
+    device.send(7, 0, "0:00:30.00 before\n", 60_000_000);
+
+    setClock(19, 0, 0);
+    device.send(8, 0, "0:00:01.00 after\n", 2_000_000);
+
+    expect(log.state().entries.at(-1)?.loggedAt).toBe(localTime(18, 59, 59));
+  });
+
+  it("can't tell the time when the pumpkin doesn't say how long it has run", () => {
+    const device = createConnection();
+    const log = createLog();
+    log.actions.listen(device.connection);
+
+    device.send(7, 0, "0:00:30.00 Show ID: 2\n", 0);
+
+    expect(log.state().entries[0]).toMatchObject({ uptime: "0:00:30.00" });
+    expect(log.state().entries[0].loggedAt).toBeUndefined();
   });
 
   it("leaves out what a reconnect sends again", () => {

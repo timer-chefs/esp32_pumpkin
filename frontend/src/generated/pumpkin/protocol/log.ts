@@ -39,8 +39,13 @@ text(optionalEncoding?:any):string|Uint8Array|null {
   return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
 }
 
+uptimeUs():bigint {
+  const offset = this.bb!.__offset(this.bb_pos, 10);
+  return offset ? this.bb!.readUint64(this.bb_pos + offset) : BigInt('0');
+}
+
 static startLog(builder:flatbuffers.Builder) {
-  builder.startObject(3);
+  builder.startObject(4);
 }
 
 static addBoot(builder:flatbuffers.Builder, boot:number) {
@@ -55,17 +60,22 @@ static addText(builder:flatbuffers.Builder, textOffset:flatbuffers.Offset) {
   builder.addFieldOffset(2, textOffset, 0);
 }
 
+static addUptimeUs(builder:flatbuffers.Builder, uptimeUs:bigint) {
+  builder.addFieldInt64(3, uptimeUs, BigInt('0'));
+}
+
 static endLog(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
   builder.requiredField(offset, 8) // text
   return offset;
 }
 
-static createLog(builder:flatbuffers.Builder, boot:number, position:number, textOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createLog(builder:flatbuffers.Builder, boot:number, position:number, textOffset:flatbuffers.Offset, uptimeUs:bigint):flatbuffers.Offset {
   Log.startLog(builder);
   Log.addBoot(builder, boot);
   Log.addPosition(builder, position);
   Log.addText(builder, textOffset);
+  Log.addUptimeUs(builder, uptimeUs);
   return Log.endLog(builder);
 }
 }

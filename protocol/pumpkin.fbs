@@ -214,6 +214,10 @@ table Log {
   // a space. A line too long for one message is split across several, and
   // only the first piece starts with the time.
   text:string (required);
+  // How long the device had been running when it sent this, in microseconds.
+  // The device has no clock of its own, so this is how a client works out
+  // when it started, and from that the time of day each line was printed.
+  uptime_us:ulong;
 }
 
 union ServerPayload {

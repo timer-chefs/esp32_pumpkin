@@ -43,6 +43,8 @@ export interface DeviceLogChunk {
   position: number;
   /** UTF-8, left undecoded so that it can be measured against `position`. */
   text: Uint8Array;
+  /** How long the device had been running when it sent this. */
+  uptimeUs: number;
 }
 
 /**
@@ -425,5 +427,7 @@ function readLog(payload: Log): DeviceLogChunk {
     text:
       (payload.text(flatbuffers.Encoding.UTF8_BYTES) as Uint8Array | null) ??
       new Uint8Array(),
+    // Exact as a number for the first 285 years of running.
+    uptimeUs: Number(payload.uptimeUs()),
   };
 }

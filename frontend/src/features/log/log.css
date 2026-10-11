@@ -20,13 +20,13 @@
 }
 
 /* A line that wraps carries on under its text rather than under its time,
-   which is "0:00:00.00 " wide until the pumpkin has run for ten hours. */
+   which is "HH:MM:SS.hh " wide. */
 .device-log-entry--line {
-  padding-left: 11ch;
-  text-indent: -11ch;
+  padding-left: 12ch;
+  text-indent: -12ch;
 }
 
-.device-log-uptime {
+.device-log-time {
   color: #8f9a8c;
 }
 

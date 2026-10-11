@@ -12,6 +12,7 @@
 #include <WebSocketsServer.h>
 #include <LittleFS.h>
 #include <esp_random.h>
+#include <esp_timer.h>
 #include <lwip/sockets.h>
 #include <flatbuffers/flatbuffers.h>
 #include "pumpkin_generated.h"
@@ -288,7 +289,8 @@ static void send_log(uint8_t client_num, uint32_t position, size_t length)
         response_builder,
         boot_id,
         position,
-        response_builder.CreateString(log_text, length));
+        response_builder.CreateString(log_text, length),
+        esp_timer_get_time());
     send_server_message(client_num, 0, {ServerPayload_Log, log.Union()});
 }
 

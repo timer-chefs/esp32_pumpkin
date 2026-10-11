@@ -19,6 +19,12 @@ export interface LogEntry {
    * arrive in one piece.
    */
   uptime?: string;
+  /**
+   * When the pumpkin logged the line, in milliseconds since the epoch.
+   * Absent along with `uptime`, or when the pumpkin didn't say how long it
+   * had been running.
+   */
+  loggedAt?: number;
   text: string;
 }
 
@@ -41,13 +47,31 @@ export interface LogActions {
 }
 
 // See Log's text in the protocol.
-const UPTIME_PREFIX = /^(\d+:\d{2}:\d{2}\.\d{2}) /;
+const UPTIME_PREFIX = /^((\d+):(\d{2}):(\d{2})\.(\d{2})) /;
 
-function readLine(line: string): Omit<LogEntry, "id"> {
+/** Reads one line, given when the pumpkin started, if that's known. */
+function readLine(
+  line: string,
+  startedAt: number | null,
+): Omit<LogEntry, "id"> {
   const match = UPTIME_PREFIX.exec(line);
-  return match
-    ? { kind: "line", uptime: match[1], text: line.slice(match[0].length) }
-    : { kind: "line", text: line };
+  if (!match) {
+    return { kind: "line", text: line };
+  }
+
+  const [prefix, uptime, hours, minutes, seconds, hundredths] = match;
+  const entry: Omit<LogEntry, "id"> = {
+    kind: "line",
+    uptime,
+    text: line.slice(prefix.length),
+  };
+  if (startedAt !== null) {
+    const uptimeMs =
+      ((Number(hours) * 60 + Number(minutes)) * 60 + Number(seconds)) * 1000 +
+      Number(hundredths) * 10;
+    entry.loggedAt = startedAt + uptimeMs;
+  }
+  return entry;
 }
 
 const notes = {
@@ -72,6 +96,9 @@ export const logSlice: Slice<LogState, LogActions> = {
     // new.
     let boot: number | null = null;
     let end = 0;
+    // When that run started, by this browser's clock. A message only ever
+    // arrives after it was sent, so the earliest guess is the closest.
+    let startedAt: number | null = null;
     let isVisible = false;
 
     const withAdded = (added: Omit<LogEntry, "id">[]): LogEntry[] =>
@@ -88,9 +115,17 @@ export const logSlice: Slice<LogState, LogActions> = {
         }
         boot = chunk.boot;
         end = chunk.position;
+        startedAt = null;
       } else if (chunk.position > end) {
         added.push({ kind: "gap", text: notes.gap });
         end = chunk.position;
+      }
+
+      // Firmware from before the device said how long it had been running
+      // sends 0.
+      if (chunk.uptimeUs > 0) {
+        const guess = Date.now() - chunk.uptimeUs / 1000;
+        startedAt = startedAt === null ? guess : Math.min(startedAt, guess);
       }
 
       const unseen = chunk.text.subarray(end - chunk.position);
@@ -100,7 +135,7 @@ export const logSlice: Slice<LogState, LogActions> = {
       if (lines.at(-1) === "") {
         lines.pop();
       }
-      added.push(...lines.map(readLine));
+      added.push(...lines.map((line) => readLine(line, startedAt)));
 
       if (added.length > 0) {
         update({

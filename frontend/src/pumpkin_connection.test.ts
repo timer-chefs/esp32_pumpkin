@@ -38,13 +38,19 @@ class FakeWebSocket extends EventTarget {
 }
 
 /** What the device sends to stream its log. */
-function encodeLog(boot: number, position: number, text: string): ArrayBuffer {
+function encodeLog(
+  boot: number,
+  position: number,
+  text: string,
+  uptimeUs = 0n,
+): ArrayBuffer {
   const builder = new flatbuffers.Builder();
   const log = Log.createLog(
     builder,
     boot,
     position,
     builder.createString(text),
+    uptimeUs,
   );
   const serverMessage = ServerMessage.createServerMessage(
     builder,
@@ -73,12 +79,15 @@ describe("PumpkinConnection", () => {
     const listener = vi.fn();
     connection.onLog(listener);
 
-    FakeWebSocket.latest.receive(encodeLog(0xdeadbeef, 42, "System ready\n"));
+    FakeWebSocket.latest.receive(
+      encodeLog(0xdeadbeef, 42, "System ready\n", 98_765_432_101n),
+    );
 
     expect(listener).toHaveBeenCalledOnce();
     const [chunk] = listener.mock.calls[0];
     expect(chunk.boot).toBe(0xdeadbeef);
     expect(chunk.position).toBe(42);
+    expect(chunk.uptimeUs).toBe(98_765_432_101);
     expect(new TextDecoder().decode(chunk.text)).toBe("System ready\n");
   });
 
