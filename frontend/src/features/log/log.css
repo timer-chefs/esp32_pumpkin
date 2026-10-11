@@ -19,6 +19,17 @@
   overflow-wrap: anywhere;
 }
 
+/* A line that wraps carries on under its text rather than under its time,
+   which is "0:00:00.00 " wide until the pumpkin has run for ten hours. */
+.device-log-entry--line {
+  padding-left: 11ch;
+  text-indent: -11ch;
+}
+
+.device-log-uptime {
+  color: #8f9a8c;
+}
+
 /* Notes about the log itself, rather than lines the pumpkin logged. */
 .device-log-entry--restart,
 .device-log-entry--gap,

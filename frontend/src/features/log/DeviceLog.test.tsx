@@ -50,6 +50,21 @@ describe("DeviceLog", () => {
     expect(screen.getByText("Live")).toBeVisible();
   });
 
+  it("shows when each line was logged", () => {
+    renderWithAppContext(<DeviceLog />, {
+      state: {
+        log: {
+          entries: [
+            { id: 1, kind: "line", uptime: "0:02:14.37", text: "Show ID: 2" },
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByRole("log")).toHaveTextContent("0:02:14.37 Show ID: 2");
+    expect(screen.getByText("0:02:14.37")).toHaveClass("device-log-uptime");
+  });
+
   it("says when nothing has been logged yet", () => {
     renderWithAppContext(<DeviceLog />, {
       state: { log: { isConnected: true } },

@@ -80,6 +80,19 @@ describe("logSlice", () => {
     ]);
   });
 
+  it("splits off how long the pumpkin had been running", () => {
+    const device = createConnection();
+    const log = createLog();
+    log.actions.listen(device.connection);
+
+    device.send(7, 0, "0:00:01.23 System ready\n12:03:04.05 \n");
+
+    expect(log.state().entries).toMatchObject([
+      { kind: "line", uptime: "0:00:01.23", text: "System ready" },
+      { kind: "line", uptime: "12:03:04.05", text: "" },
+    ]);
+  });
+
   it("leaves out what a reconnect sends again", () => {
     const device = createConnection();
     const log = createLog();

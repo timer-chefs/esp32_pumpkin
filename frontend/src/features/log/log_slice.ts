@@ -13,6 +13,12 @@ export interface LogEntry {
   id: number;
   /** A line the pumpkin logged, or a note about the log itself. */
   kind: "line" | "restart" | "gap" | "disconnect";
+  /**
+   * How long the pumpkin had been running when it logged the line, as
+   * H:MM:SS.hh. Absent for a note, and for the rest of a line too long to
+   * arrive in one piece.
+   */
+  uptime?: string;
   text: string;
 }
 
@@ -32,6 +38,16 @@ export interface LogActions {
   setVisible: (isVisible: boolean) => void;
   reconnect: () => void;
   clear: () => void;
+}
+
+// See Log's text in the protocol.
+const UPTIME_PREFIX = /^(\d+:\d{2}:\d{2}\.\d{2}) /;
+
+function readLine(line: string): Omit<LogEntry, "id"> {
+  const match = UPTIME_PREFIX.exec(line);
+  return match
+    ? { kind: "line", uptime: match[1], text: line.slice(match[0].length) }
+    : { kind: "line", text: line };
 }
 
 const notes = {
@@ -84,7 +100,7 @@ export const logSlice: Slice<LogState, LogActions> = {
       if (lines.at(-1) === "") {
         lines.pop();
       }
-      added.push(...lines.map((text) => ({ kind: "line" as const, text })));
+      added.push(...lines.map(readLine));
 
       if (added.length > 0) {
         update({

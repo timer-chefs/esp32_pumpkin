@@ -9,7 +9,9 @@
 // page alike. Printing to it writes to the serial port as before, and keeps
 // a copy in memory that the web interface streams to its clients from
 // loop() -- so a print never waits on the network, and a client that
-// connects later still sees what came before it.
+// connects later still sees what came before it. The copy starts each line
+// with how long the device had been running, as H:MM:SS.hh and a space, so
+// a client can tell when it was printed.
 //
 // Like the rest of the firmware, it is only used from loop()'s task.
 class DeviceLog : public Print
@@ -31,11 +33,14 @@ public:
     size_t read_lines(uint32_t& cursor, char* text, size_t capacity) const;
 
 private:
+    void append(char c);
+    void append_uptime();
     char at(uint32_t position) const;
 
     // The last device_log_history_size bytes logged, round and round.
     char history[device_log_history_size];
     uint32_t written = 0;
+    bool is_line_start = true;
 };
 
 extern DeviceLog device_log;

@@ -60,6 +60,11 @@ export function DeviceLog() {
               key={entry.id}
               className={`device-log-entry device-log-entry--${entry.kind}`}
             >
+              {entry.uptime && (
+                <>
+                  <span className="device-log-uptime">{entry.uptime}</span>{" "}
+                </>
+              )}
               {entry.text}
             </div>
           ))

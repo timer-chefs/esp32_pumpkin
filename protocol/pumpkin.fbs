@@ -209,8 +209,10 @@ table Log {
   // this is how to recognise; a gap after the last one means the client fell
   // so far behind that some of the log was lost.
   position:uint;
-  // One or more whole lines, each ending in a newline. A line too long for
-  // one message is split across several.
+  // One or more whole lines, each ending in a newline. Each starts with how
+  // long the device had been running when it was printed, as H:MM:SS.hh and
+  // a space. A line too long for one message is split across several, and
+  // only the first piece starts with the time.
   text:string (required);
 }
 

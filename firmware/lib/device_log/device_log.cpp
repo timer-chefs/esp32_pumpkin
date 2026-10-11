@@ -1,5 +1,7 @@
 #include "device_log.h"
 
+#include <esp_timer.h>
+
 #include <algorithm>
 
 DeviceLog device_log;
@@ -15,10 +17,39 @@ size_t DeviceLog::write(const uint8_t* buffer, size_t size)
 
     for(size_t i = 0; i < size; ++i)
     {
-        history[(written + i) % device_log_history_size] = buffer[i];
+        if(is_line_start)
+        {
+            append_uptime();
+        }
+        append(buffer[i]);
+        is_line_start = buffer[i] == '\n';
     }
-    written += size;
     return size;
+}
+
+void DeviceLog::append(char c)
+{
+    history[written % device_log_history_size] = c;
+    ++written;
+}
+
+void DeviceLog::append_uptime()
+{
+    // Not millis(), which wraps after 49 days.
+    const uint64_t hundredths = esp_timer_get_time() / 10000;
+    char uptime[24];
+    const int length = snprintf(
+        uptime,
+        sizeof(uptime),
+        "%u:%02u:%02u.%02u ",
+        static_cast<unsigned>(hundredths / 360000),
+        static_cast<unsigned>(hundredths / 6000 % 60),
+        static_cast<unsigned>(hundredths / 100 % 60),
+        static_cast<unsigned>(hundredths % 100));
+    for(int i = 0; i < length; ++i)
+    {
+        append(uptime[i]);
+    }
 }
 
 uint32_t DeviceLog::end() const
