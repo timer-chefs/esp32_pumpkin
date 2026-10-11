@@ -45,7 +45,7 @@ export function App() {
           </div>
 
           <div hidden={page !== "log"}>
-            <DeviceLog />
+            <DeviceLog isVisible={page === "log"} />
           </div>
         </Container>
       </main>

@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
 import { DeviceLog } from "./DeviceLog.tsx";
@@ -12,14 +12,9 @@ const entries: LogEntry[] = [
   { id: 3, kind: "line", text: "Show ID: 2" },
 ];
 
-afterEach(() => {
-  location.hash = "";
-});
-
 describe("DeviceLog", () => {
   it("tells the log when its page is open", () => {
-    location.hash = "#log";
-    const { controller } = renderWithAppContext(<DeviceLog />);
+    const { controller } = renderWithAppContext(<DeviceLog isVisible />);
 
     expect(controller.actions.log.setVisible).toHaveBeenCalledExactlyOnceWith(
       true,
@@ -27,8 +22,9 @@ describe("DeviceLog", () => {
   });
 
   it("tells the log when another page is open", () => {
-    location.hash = "#presets";
-    const { controller } = renderWithAppContext(<DeviceLog />);
+    const { controller } = renderWithAppContext(
+      <DeviceLog isVisible={false} />,
+    );
 
     expect(controller.actions.log.setVisible).toHaveBeenCalledExactlyOnceWith(
       false,
@@ -36,7 +32,7 @@ describe("DeviceLog", () => {
   });
 
   it("shows what the pumpkin has logged, in order", () => {
-    renderWithAppContext(<DeviceLog />, {
+    renderWithAppContext(<DeviceLog isVisible />, {
       state: { log: { entries, isConnected: true } },
     });
 
@@ -51,7 +47,7 @@ describe("DeviceLog", () => {
   });
 
   it("shows when each line was logged", () => {
-    renderWithAppContext(<DeviceLog />, {
+    renderWithAppContext(<DeviceLog isVisible />, {
       state: {
         log: {
           entries: [
@@ -66,7 +62,7 @@ describe("DeviceLog", () => {
   });
 
   it("says when nothing has been logged yet", () => {
-    renderWithAppContext(<DeviceLog />, {
+    renderWithAppContext(<DeviceLog isVisible />, {
       state: { log: { isConnected: true } },
     });
 
@@ -76,7 +72,7 @@ describe("DeviceLog", () => {
 
   it("clears the log", async () => {
     const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<DeviceLog />, {
+    const { controller } = renderWithAppContext(<DeviceLog isVisible />, {
       state: { log: { entries, isConnected: true } },
     });
 
@@ -87,7 +83,7 @@ describe("DeviceLog", () => {
 
   it("offers to reconnect while not connected", async () => {
     const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<DeviceLog />, {
+    const { controller } = renderWithAppContext(<DeviceLog isVisible />, {
       state: { log: { entries, isConnected: false } },
     });
 
@@ -98,7 +94,7 @@ describe("DeviceLog", () => {
   });
 
   it("has no need to reconnect while connected", () => {
-    renderWithAppContext(<DeviceLog />, {
+    renderWithAppContext(<DeviceLog isVisible />, {
       state: { log: { entries, isConnected: true } },
     });
 
@@ -108,7 +104,7 @@ describe("DeviceLog", () => {
   });
 
   it("holds off reconnecting while it already is", () => {
-    renderWithAppContext(<DeviceLog />, {
+    renderWithAppContext(<DeviceLog isVisible />, {
       state: { log: { isConnected: false, isConnecting: true } },
     });
 

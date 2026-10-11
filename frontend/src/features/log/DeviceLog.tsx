@@ -2,7 +2,6 @@ import { RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { Button, Spinner } from "react-bootstrap";
 
-import { usePage } from "../../app/page.ts";
 import { useLog } from "./log_slice.ts";
 import "./log.css";
 
@@ -10,10 +9,18 @@ import "./log.css";
 // when new lines scroll into view.
 const FOLLOW_THRESHOLD_PX = 24;
 
-export function DeviceLog() {
+export interface DeviceLogProps {
+  /**
+   * Whether the page the log is on is shown. It has to come from whatever
+   * hides the page, in the same render: the log has no size to scroll while
+   * it is hidden.
+   */
+  isVisible: boolean;
+}
+
+export function DeviceLog({ isVisible }: DeviceLogProps) {
   const { entries, isConnected, isConnecting, setVisible, reconnect, clear } =
     useLog();
-  const isVisible = usePage() === "log";
   const logRef = useRef<HTMLDivElement>(null);
   const isFollowing = useRef(true);
 
@@ -21,8 +28,15 @@ export function DeviceLog() {
     setVisible(isVisible);
   }, [isVisible]);
 
-  // Keeps the newest line in view while following, including once the page
-  // is shown again: the log has no size to scroll while it is hidden.
+  // Opening the page shows the newest line, wherever the log was scrolled
+  // to before...
+  useLayoutEffect(() => {
+    if (isVisible) {
+      isFollowing.current = true;
+    }
+  }, [isVisible]);
+
+  // ...and new lines scroll into view for as long as it stays there.
   useLayoutEffect(() => {
     const log = logRef.current;
     if (log && isFollowing.current) {
