@@ -71,6 +71,18 @@ private:
         bool position_known = false;    //If the current_angle has been recorded at least a first time.
     };
 
+    enum class LidPhase : uint8_t
+    {
+        Idle,
+        Closing,
+        Opening,
+    };
+
+    // Openness to restore after a look, initially fully open.
+    uint8_t resting_lid_amount = 255;
+
+    LidPhase lid_phase = LidPhase::Idle;
+
     // Starts a timed movement from the latest commanded position.
     // target_angle must be within the servo's valid angle range.
     void start_motion(EyeServo servo, float target_angle, uint32_t duration_ms);
@@ -81,6 +93,8 @@ private:
 
     Servo servos[servo_count];
     ServoCalibration calibrations[servo_count];
+    
+    bool is_calibrated[servo_count]{};
 
     Motion motions[servo_count]{};
 };

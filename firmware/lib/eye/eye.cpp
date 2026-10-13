@@ -14,6 +14,7 @@ static constexpr uint8_t lid_wide_open = 255;
 
 static constexpr uint32_t blink_duration_ms = 400;
 static constexpr uint32_t look_duration_ms = 400;
+static constexpr uint32_t look_lid_duration_ms = look_duration_ms / 2;
 
 static constexpr ServoCalibration uncalibrated = {0, servo_max_angle};
 
@@ -44,7 +45,6 @@ void Eye::begin()
     const bool has_calibration =
         preferences.begin(eye_calibration_namespace, true);
 
-    bool is_calibrated[servo_count];
     for(size_t i = 0; i < servo_count; ++i)
     {
         ServoCalibration stored;
@@ -113,6 +113,26 @@ void Eye::update()
         servos[i].write(
             static_cast<uint8_t>(lroundf(motion.current_angle)));
     }
+
+    const Motion& lid = motions[index_of(EyeServo::Lid)];
+
+    //Transition between LidPhase::Closing and LidPhase::Opening
+    if(!lid.moving)
+    {
+        if(lid_phase == LidPhase::Closing)
+        {
+            move_within_calibration(
+                EyeServo::Lid,
+                resting_lid_amount / static_cast<float>(lid_wide_open),
+                look_lid_duration_ms);
+
+            lid_phase = LidPhase::Opening;
+        }
+        else if(lid_phase == LidPhase::Opening)
+        {
+            lid_phase = LidPhase::Idle;
+        }
+    }
 }
 
 void Eye::look(int8_t at)
@@ -122,10 +142,27 @@ void Eye::look(int8_t at)
     move_within_calibration(
         EyeServo::Ball,
         (clamped + look_reach) / (2.0f * look_reach), look_duration_ms);
+
+    const size_t lid = index_of(EyeServo::Lid);
+
+    //Do not move the lid automaticaly if the lid´s servo is not calibrated.
+    if(!is_calibrated[lid] || !motions[lid].position_known)
+    {
+        return;
+    }
+
+    move_within_calibration(EyeServo::Lid, 0.0f, look_lid_duration_ms);     //0.0f selects the calibrated "closed" endpoint, even when the servo is mounted in reverse.
+
+    lid_phase = LidPhase::Closing;
 }
 
 void Eye::blink(uint8_t amount)
 {
+    resting_lid_amount = amount;    
+
+    // Override the automatic blinking in the look sequence.
+    lid_phase = LidPhase::Idle;
+
     move_within_calibration(
         EyeServo::Lid,
         amount / static_cast<float>(lid_wide_open), blink_duration_ms);
@@ -141,6 +178,11 @@ void Eye::move_servo(EyeServo servo, uint8_t angle)
     motion.current_angle = static_cast<float>(angle);
     motion.position_known = true;
     motion.moving = false;
+
+    if(servo == EyeServo::Lid)          //to prevent the automatic lid movement to interfering with the calibration preview.
+    {
+        lid_phase = LidPhase::Idle;
+    }
 }
 
 ServoCalibration Eye::calibration(EyeServo servo) const
@@ -162,6 +204,7 @@ bool Eye::calibrate(EyeServo servo, ServoCalibration calibration)
     }
 
     calibrations[index_of(servo)] = calibration;
+    is_calibrated[index_of(servo)] = true;
     Serial.printf(
         "Eye: %s servo calibrated to %u-%u degrees\n",
         name,
