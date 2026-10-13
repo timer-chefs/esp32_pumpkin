@@ -13,6 +13,7 @@ static constexpr int look_reach = 127;
 static constexpr uint8_t lid_wide_open = 255;
 
 static constexpr uint32_t blink_duration_ms = 400;
+static constexpr uint32_t look_duration_ms = 400;
 
 static constexpr ServoCalibration uncalibrated = {0, servo_max_angle};
 
@@ -117,9 +118,10 @@ void Eye::update()
 void Eye::look(int8_t at)
 {
     const int clamped = std::max<int>(at, -look_reach);
+
     move_within_calibration(
         EyeServo::Ball,
-        (clamped + look_reach) / (2.0f * look_reach));
+        (clamped + look_reach) / (2.0f * look_reach), look_duration_ms);
 }
 
 void Eye::blink(uint8_t amount)
