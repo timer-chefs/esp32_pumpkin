@@ -69,11 +69,12 @@ void Eye::begin()
     // can reach, so such a servo stays limp until a client moves it.
     if(is_calibrated[index_of(EyeServo::Ball)])
     {
-        look(0);
+        move_within_calibration(EyeServo::Ball, 0.5f, 0);
     }
+
     if(is_calibrated[index_of(EyeServo::Lid)])
     {
-        blink(lid_wide_open);
+        move_within_calibration(EyeServo::Lid, 1.0f, 0);
     }
 }
 
