@@ -1,6 +1,7 @@
 #include "command_handler.h"
 #include "command_registry.h"
 #include "config.h"
+#include "device_log.h"
 #include "session_commands.h"
 
 using namespace Pumpkin::Protocol;
@@ -17,7 +18,7 @@ void register_commands(const CommandBinding* new_bindings, size_t count)
     {
         if(binding_count == max_registered_commands)
         {
-            Serial.println("Command registry is full; raise max_registered_commands");
+            device_log.println("Command registry is full; raise max_registered_commands");
             return;
         }
 
@@ -29,7 +30,7 @@ void register_completion(CompletionFn completion)
 {
     if(completion_count == max_registered_completions)
     {
-        Serial.println("Completion registry is full; raise max_registered_completions");
+        device_log.println("Completion registry is full; raise max_registered_completions");
         return;
     }
 
@@ -75,7 +76,7 @@ void verify_registered_commands()
     {
         if(payload_type != ClientPayload_NONE && !find_binding(payload_type))
         {
-            Serial.printf(
+            device_log.printf(
                 "No handler registered for %s\n",
                 EnumNameClientPayload(payload_type));
         }

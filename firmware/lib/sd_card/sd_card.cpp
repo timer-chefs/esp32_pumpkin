@@ -1,16 +1,17 @@
 #include "sd_card.h"
 #include "config.h"
+#include "device_log.h"
 
 static bool mount()
 {
     constexpr bool four_bit_mode = false;
     if(SD_MMC.begin("/sdcard", four_bit_mode, false, sd_card_frequency_khz))
     {
-        Serial.println("SD card mounted successfully in 4-bit mode");
+        device_log.println("SD card mounted successfully in 4-bit mode");
         return true;
     }
 
-    Serial.println("Mounting failed");
+    device_log.println("Mounting failed");
     SD_MMC.end();
 
 
@@ -40,7 +41,7 @@ void sd_card_init()
 
 bool sd_card_remount()
 {
-    Serial.println("Remounting the SD card");
+    device_log.println("Remounting the SD card");
 
     SD_MMC.end();
     return mount();
@@ -62,7 +63,7 @@ File* open_file(const char* path, const char* mode)
     File* file = new File();
     *file = SD_MMC.open(path, mode);
     if (!(*file)) {
-        Serial.printf("Failed to open file: %s (mode: %s)\n", path, mode);
+        device_log.printf("Failed to open file: %s (mode: %s)\n", path, mode);
         delete file;
         return nullptr;
     }
@@ -130,7 +131,7 @@ size_t list_files(
     File directory = SD_MMC.open(directory_path);
     if(!directory || !directory.isDirectory())
     {
-        Serial.printf("Failed to open directory: %s\n", directory_path);
+        device_log.printf("Failed to open directory: %s\n", directory_path);
         if(directory)
         {
             directory.close();
@@ -183,11 +184,11 @@ bool create_directory(const char* path)
 
     if(SD_MMC.mkdir(path))
     {
-        Serial.printf("Directory created: %s\n", path);
+        device_log.printf("Directory created: %s\n", path);
         return true;
     }
 
-    Serial.printf("Failed to create directory: %s\n", path);
+    device_log.printf("Failed to create directory: %s\n", path);
     return false;
 }
 
@@ -205,10 +206,10 @@ bool file_exists(const char* path)
 bool delete_file(const char* path)
 {
     if (SD_MMC.remove(path)) {
-        Serial.printf("File deleted: %s\n", path);
+        device_log.printf("File deleted: %s\n", path);
         return true;
     } else {
-        Serial.printf("Failed to delete file: %s\n", path);
+        device_log.printf("Failed to delete file: %s\n", path);
         return false;
     }
 }
@@ -217,7 +218,7 @@ uint32_t get_file_size(const char* path)
 {
     File file = SD_MMC.open(path);
     if (!file) {
-        Serial.printf("Failed to open file for size check: %s\n", path);
+        device_log.printf("Failed to open file for size check: %s\n", path);
         return 0;
     }
     
@@ -229,10 +230,10 @@ uint32_t get_file_size(const char* path)
 bool rename_file(const char* old_path, const char* new_path)
 {
     if (SD_MMC.rename(old_path, new_path)) {
-        Serial.printf("File renamed: %s -> %s\n", old_path, new_path);
+        device_log.printf("File renamed: %s -> %s\n", old_path, new_path);
         return true;
     } else {
-        Serial.printf("Failed to rename file: %s -> %s\n", old_path, new_path);
+        device_log.printf("Failed to rename file: %s -> %s\n", old_path, new_path);
         return false;
     }
 }

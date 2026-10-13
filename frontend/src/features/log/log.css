@@ -1,0 +1,59 @@
+.device-log {
+  height: min(60vh, 32rem);
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+  color: #e8ece6;
+  background: var(--pumpkin-ink);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  /* Otherwise scrolling past either end of the log scrolls the page. */
+  overscroll-behavior: contain;
+}
+
+.device-log-entry {
+  /* So a blank line the pumpkin logged still takes up a line. */
+  min-height: 1lh;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A line that wraps carries on under its text rather than under its time,
+   which is "HH:MM:SS.hh " wide. */
+.device-log-entry--line {
+  padding-left: 12ch;
+  text-indent: -12ch;
+}
+
+.device-log-time {
+  color: #8f9a8c;
+}
+
+/* Notes about the log itself, rather than lines the pumpkin logged. */
+.device-log-entry--restart,
+.device-log-entry--gap,
+.device-log-entry--disconnect {
+  margin: 0.25rem 0;
+  color: #adb7ac;
+  font-style: italic;
+}
+
+.device-log-entry--restart {
+  color: #e07b24;
+}
+
+.device-log-empty {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #adb7ac;
+}
+
+.device-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}

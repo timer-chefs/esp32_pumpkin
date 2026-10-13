@@ -2,6 +2,7 @@
 #include <WiFiManager.h>
 #include <DNSServer.h>
 #include "config.h"
+#include "device_log.h"
 #include "web_interface.h"
 
 enum class WiFiState
@@ -76,7 +77,7 @@ static void wifi_redirect_start()
     redirect_active = true;
     redirect_start_time = millis();
 
-    Serial.println("Redirect portal started on SoftAP");
+    device_log.println("Redirect portal started on SoftAP");
 }
 
 static void wifi_redirect_service()
@@ -106,7 +107,7 @@ static void wifi_redirect_stop()
     WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_STA);
 
-    Serial.println("Redirect portal closed");
+    device_log.println("Redirect portal closed");
 }
 
 void wifi_manager_init() {
@@ -125,11 +126,11 @@ void wifi_manager_init() {
 
     bool is_wifi_connected = wm.autoConnect(wifi_provisioning_ssid);
     if(!is_wifi_connected){
-        Serial.println("WiFi failed to connect");
+        device_log.println("WiFi failed to connect");
     }
     else{
-        Serial.println("WiFi is connected");
-        Serial.println(String("IP: ") + WiFi.localIP().toString());
+        device_log.println("WiFi is connected");
+        device_log.println(String("IP: ") + WiFi.localIP().toString());
     }
 
     redirect_start_pending = true;
@@ -145,7 +146,7 @@ static void wifi_provisioning_service(){
             break;
 
         case WiFiState::PROVISIONING:
-            Serial.println("WiFi provisioning requested");
+            device_log.println("WiFi provisioning requested");
 
             web_interface_stop();
 
@@ -154,12 +155,12 @@ static void wifi_provisioning_service(){
             bool is_wifi_connected = wm.startConfigPortal(wifi_provisioning_ssid);
 
             if(!is_wifi_connected){
-                Serial.println("WiFi failed to connect and hit timout");
+                device_log.println("WiFi failed to connect and hit timout");
                 ESP.restart();
             }
             else{
-                Serial.println("WiFi connected");
-                Serial.println(String("IP: ") + WiFi.localIP().toString());
+                device_log.println("WiFi connected");
+                device_log.println(String("IP: ") + WiFi.localIP().toString());
             }
 
             web_interface_start();

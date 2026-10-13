@@ -1,6 +1,7 @@
 #include "audio.h"
 #include "AudioTools.h"
 #include "config.h"
+#include "device_log.h"
 #include "fft.h"
 
 #include <string.h>
@@ -61,7 +62,7 @@ static size_t catch_up_bytes_needed(size_t buffered)
         is_catching_up = true;
         if(enable_audio_stats_logging)
         {
-            Serial.printf(
+            device_log.printf(
                 "Audio catch-up: %u ms buffered, trimming toward %u ms\n",
                 (unsigned)(buffered / bytes_per_ms),
                 (unsigned)audio_catch_up_low_water_ms);
@@ -143,7 +144,7 @@ bool audio_init()
     i2s_config.buffer_count = 4;        // Number of DMA buffers
 
     if(!i2s.begin(i2s_config)) {
-        Serial.println("I2S begin failed");
+        device_log.println("I2S begin failed");
         return false;
     }
 
@@ -152,7 +153,7 @@ bool audio_init()
 
     if(!volume.begin(volume_config))
     {
-        Serial.println("Volume begin failed");
+        device_log.println("Volume begin failed");
         return false;
     }
     volume.setVolume(0.2f);
