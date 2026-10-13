@@ -65,6 +65,8 @@ void loop()
     wifi_manager_service();
 
     web_interface_service();
+
+    eye.update();
     
     sd_upload_service();
 

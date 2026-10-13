@@ -33,6 +33,9 @@ public:
     // stays where it is until it is moved.
     void begin();
 
+    // Advances active servo movements. Call regularly from loop().
+    void update();
+
     // Turns the eye: negative is left, 0 straight ahead, positive right.
     void look(int8_t at);
 
@@ -55,12 +58,31 @@ public:
 private:
     static constexpr size_t servo_count = 2;
 
-    // Moves a servo `fraction` of the way from its calibrated minimum to its
-    // maximum.
-    void move_within_calibration(EyeServo servo, float fraction);
+    struct Motion
+    {
+        float current_angle = 0.0f;
+        float start_angle = 0.0f;
+        float target_angle = 0.0f;
+
+        uint32_t started_at_ms = 0;
+        uint32_t duration_ms = 0;
+
+        bool moving = false;            //If there is an ongoing motion.
+        bool position_known = false;    //If the current_angle has been recorded at least a first time.
+    };
+
+    // Starts a timed movement from the latest commanded position.
+    // target_angle must be within the servo's valid angle range.
+    void start_motion(EyeServo servo, float target_angle, uint32_t duration_ms);
+
+    // Moves within the calibrated range.
+    // A zero duration moves immediately; otherwise the movement is animated.
+    void move_within_calibration(EyeServo servo, float fraction, uint32_t duration_ms = 0);
 
     Servo servos[servo_count];
     ServoCalibration calibrations[servo_count];
+
+    Motion motions[servo_count]{};
 };
 
 #endif //EYE_H
