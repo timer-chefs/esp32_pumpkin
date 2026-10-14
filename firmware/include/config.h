@@ -126,6 +126,17 @@ constexpr uint8_t pin_sd_d3 = GPIO_NUM_10;
 constexpr uint32_t baud_rate = 115200;
 constexpr bool enable_audio_stats_logging = false;
 
+// Device log
+// How much of what the device has logged it keeps for the web page, so a
+// client that connects later still sees what came before it.
+constexpr uint16_t device_log_history_size = 8192;
+// Most of the log sent to a client in one message. A message only goes out
+// once the client's socket has room for it, and lwIP only says a socket has
+// room while more than about half of its 5.7 kB send buffer is free, so
+// this keeps well under that. Whatever it leaves free is there for the
+// responses that share the connection.
+constexpr uint16_t max_log_message_size = 1024;
+
 //Servo Pins
 constexpr uint8_t pin_servo_eye_lid = GPIO_NUM_41;
 constexpr uint8_t pin_servo_eye_ball = GPIO_NUM_38;

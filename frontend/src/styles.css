@@ -113,6 +113,12 @@ h2 {
   color: var(--pumpkin-ink);
 }
 
+.page-nav-count {
+  margin-left: 0.15rem;
+  font-size: 0.7rem;
+  vertical-align: 0.1rem;
+}
+
 .control-section {
   padding: 2rem 0;
 }

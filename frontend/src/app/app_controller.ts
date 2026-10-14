@@ -3,6 +3,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { audioSourceSlice } from "../features/audio_source/audio_source_slice.ts";
 import { calibrationSlice } from "../features/calibration/calibration_slice.ts";
 import { eyeSlice } from "../features/eye/eye_slice.ts";
+import { logSlice } from "../features/log/log_slice.ts";
 import { presetsSlice } from "../features/presets/presets_slice.ts";
 import { sdCardSlice } from "../features/sd_card/sd_card_slice.ts";
 import { volumeSlice } from "../features/volume/volume_slice.ts";
@@ -22,6 +23,7 @@ const slices: {
   audioSource: audioSourceSlice,
   calibration: calibrationSlice,
   eye: eyeSlice,
+  log: logSlice,
   presets: presetsSlice,
   sdCard: sdCardSlice,
   status: statusSlice,
@@ -82,8 +84,9 @@ export function useAppController(): AppController {
   const currentState = useSyncExternalStore(subscribe, getState, getState);
 
   useEffect(() => {
-    getPumpkinConnection(location.hostname);
+    const connection = getPumpkinConnection(location.hostname);
     actions.volume.load();
+    return actions.log.listen(connection);
   }, []);
 
   return { state: currentState, actions };

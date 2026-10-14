@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 /** The pages there are, the first being where the app opens. */
-export const pages = ["presets", "audio", "calibration"] as const;
+export const pages = ["presets", "audio", "calibration", "log"] as const;
 
 export type Page = (typeof pages)[number];
 

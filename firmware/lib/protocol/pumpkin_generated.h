@@ -101,6 +101,9 @@ struct AudioFileListBuilder;
 struct EyeCalibration;
 struct EyeCalibrationBuilder;
 
+struct Log;
+struct LogBuilder;
+
 struct ServerMessage;
 struct ServerMessageBuilder;
 
@@ -416,37 +419,40 @@ enum ServerPayload : uint8_t {
   ServerPayload_Volume = 3,
   ServerPayload_AudioFileList = 4,
   ServerPayload_EyeCalibration = 5,
+  ServerPayload_Log = 6,
   ServerPayload_MIN = ServerPayload_NONE,
-  ServerPayload_MAX = ServerPayload_EyeCalibration
+  ServerPayload_MAX = ServerPayload_Log
 };
 
-inline const ServerPayload (&EnumValuesServerPayload())[6] {
+inline const ServerPayload (&EnumValuesServerPayload())[7] {
   static const ServerPayload values[] = {
     ServerPayload_NONE,
     ServerPayload_Success,
     ServerPayload_Error,
     ServerPayload_Volume,
     ServerPayload_AudioFileList,
-    ServerPayload_EyeCalibration
+    ServerPayload_EyeCalibration,
+    ServerPayload_Log
   };
   return values;
 }
 
 inline const char * const *EnumNamesServerPayload() {
-  static const char * const names[7] = {
+  static const char * const names[8] = {
     "NONE",
     "Success",
     "Error",
     "Volume",
     "AudioFileList",
     "EyeCalibration",
+    "Log",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameServerPayload(ServerPayload e) {
-  if (::flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_EyeCalibration)) return "";
+  if (::flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_Log)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesServerPayload()[index];
 }
@@ -473,6 +479,10 @@ template<> struct ServerPayloadTraits<Pumpkin::Protocol::AudioFileList> {
 
 template<> struct ServerPayloadTraits<Pumpkin::Protocol::EyeCalibration> {
   static const ServerPayload enum_value = ServerPayload_EyeCalibration;
+};
+
+template<> struct ServerPayloadTraits<Pumpkin::Protocol::Log> {
+  static const ServerPayload enum_value = ServerPayload_Log;
 };
 
 bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *obj, ServerPayload type);
@@ -1938,6 +1948,94 @@ inline ::flatbuffers::Offset<EyeCalibration> CreateEyeCalibration(
   return builder_.Finish();
 }
 
+struct Log FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LogBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_BOOT = 4,
+    VT_POSITION = 6,
+    VT_TEXT = 8,
+    VT_UPTIME_US = 10
+  };
+  uint32_t boot() const {
+    return GetField<uint32_t>(VT_BOOT, 0);
+  }
+  uint32_t position() const {
+    return GetField<uint32_t>(VT_POSITION, 0);
+  }
+  const ::flatbuffers::String *text() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_TEXT);
+  }
+  uint64_t uptime_us() const {
+    return GetField<uint64_t>(VT_UPTIME_US, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_BOOT, 4) &&
+           VerifyField<uint32_t>(verifier, VT_POSITION, 4) &&
+           VerifyOffsetRequired(verifier, VT_TEXT) &&
+           verifier.VerifyString(text()) &&
+           VerifyField<uint64_t>(verifier, VT_UPTIME_US, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct LogBuilder {
+  typedef Log Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_boot(uint32_t boot) {
+    fbb_.AddElement<uint32_t>(Log::VT_BOOT, boot, 0);
+  }
+  void add_position(uint32_t position) {
+    fbb_.AddElement<uint32_t>(Log::VT_POSITION, position, 0);
+  }
+  void add_text(::flatbuffers::Offset<::flatbuffers::String> text) {
+    fbb_.AddOffset(Log::VT_TEXT, text);
+  }
+  void add_uptime_us(uint64_t uptime_us) {
+    fbb_.AddElement<uint64_t>(Log::VT_UPTIME_US, uptime_us, 0);
+  }
+  explicit LogBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<Log> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<Log>(end);
+    fbb_.Required(o, Log::VT_TEXT);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<Log> CreateLog(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t boot = 0,
+    uint32_t position = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> text = 0,
+    uint64_t uptime_us = 0) {
+  LogBuilder builder_(_fbb);
+  builder_.add_uptime_us(uptime_us);
+  builder_.add_text(text);
+  builder_.add_position(position);
+  builder_.add_boot(boot);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<Log> CreateLogDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t boot = 0,
+    uint32_t position = 0,
+    const char *text = nullptr,
+    uint64_t uptime_us = 0) {
+  auto text__ = text ? _fbb.CreateString(text) : 0;
+  return Pumpkin::Protocol::CreateLog(
+      _fbb,
+      boot,
+      position,
+      text__,
+      uptime_us);
+}
+
 struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ServerMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1970,6 +2068,9 @@ struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const Pumpkin::Protocol::EyeCalibration *payload_as_EyeCalibration() const {
     return payload_type() == Pumpkin::Protocol::ServerPayload_EyeCalibration ? static_cast<const Pumpkin::Protocol::EyeCalibration *>(payload()) : nullptr;
   }
+  const Pumpkin::Protocol::Log *payload_as_Log() const {
+    return payload_type() == Pumpkin::Protocol::ServerPayload_Log ? static_cast<const Pumpkin::Protocol::Log *>(payload()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_REQUEST_ID, 4) &&
@@ -1998,6 +2099,10 @@ template<> inline const Pumpkin::Protocol::AudioFileList *ServerMessage::payload
 
 template<> inline const Pumpkin::Protocol::EyeCalibration *ServerMessage::payload_as<Pumpkin::Protocol::EyeCalibration>() const {
   return payload_as_EyeCalibration();
+}
+
+template<> inline const Pumpkin::Protocol::Log *ServerMessage::payload_as<Pumpkin::Protocol::Log>() const {
+  return payload_as_Log();
 }
 
 struct ServerMessageBuilder {
@@ -2225,6 +2330,10 @@ inline bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *o
     }
     case ServerPayload_EyeCalibration: {
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::EyeCalibration *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ServerPayload_Log: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::Log *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;
