@@ -76,14 +76,16 @@
   height: var(--eye-thumb-size);
 }
 
-/* An eyeball, its pupil turned towards --look and its lid drawn down by
-   --shut, both set from the slider's state. */
+/* An eyeball, its pupil turned towards --look and its upper and lower lids
+   drawn together by --shut until they meet in the middle, both set from the
+   slider's state. */
 .eye-look-slider::-webkit-slider-thumb {
   background:
     linear-gradient(
       to bottom,
-      #e07b24 calc(var(--shut) * 100%),
-      transparent calc(var(--shut) * 100%)
+      #e07b24 calc(var(--shut) * 50%),
+      transparent calc(var(--shut) * 50%) calc(100% - var(--shut) * 50%),
+      #e07b24 calc(100% - var(--shut) * 50%)
     ),
     radial-gradient(
       circle at calc(50% + var(--look) * 20%) 50%,
@@ -97,13 +99,14 @@
   background:
     linear-gradient(
       to bottom,
-      #e07b24 calc(var(--shut) * 100%),
-      transparent calc(var(--shut) * 100%)
+      #e07b24 calc(var(--shut) * 50%),
+      transparent calc(var(--shut) * 50%) calc(100% - var(--shut) * 50%),
+      #e07b24 calc(100% - var(--shut) * 50%)
     ),
     radial-gradient(
       circle at calc(50% + var(--look) * 20%) 50%,
       var(--pumpkin-ink) 0 20%,
-      #e07b24 21% 38%,
+      #ac0702 21% 38%,
       #ffffff 39%
     );
 }
