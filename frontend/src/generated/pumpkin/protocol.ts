@@ -37,6 +37,7 @@ export { SaveServoCalibration } from './protocol/save-servo-calibration.js';
 export { ServerMessage } from './protocol/server-message.js';
 export { ServerPayload } from './protocol/server-payload.js';
 export { ServoRange } from './protocol/servo-range.js';
+export { SetLight } from './protocol/set-light.js';
 export { StartAudioStream } from './protocol/start-audio-stream.js';
 export { StopAudioStream } from './protocol/stop-audio-stream.js';
 export { Success } from './protocol/success.js';

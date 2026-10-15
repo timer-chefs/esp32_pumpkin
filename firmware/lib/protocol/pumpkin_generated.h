@@ -60,6 +60,9 @@ struct Color;
 struct Light;
 struct LightBuilder;
 
+struct SetLight;
+struct SetLightBuilder;
+
 struct PlayPreset;
 struct PlayPresetBuilder;
 
@@ -230,11 +233,12 @@ enum ClientPayload : uint8_t {
   ClientPayload_PreviewServoAngle = 17,
   ClientPayload_GetEyeCalibration = 18,
   ClientPayload_SaveServoCalibration = 19,
+  ClientPayload_SetLight = 20,
   ClientPayload_MIN = ClientPayload_NONE,
-  ClientPayload_MAX = ClientPayload_SaveServoCalibration
+  ClientPayload_MAX = ClientPayload_SetLight
 };
 
-inline const ClientPayload (&EnumValuesClientPayload())[20] {
+inline const ClientPayload (&EnumValuesClientPayload())[21] {
   static const ClientPayload values[] = {
     ClientPayload_NONE,
     ClientPayload_StartAudioStream,
@@ -255,13 +259,14 @@ inline const ClientPayload (&EnumValuesClientPayload())[20] {
     ClientPayload_MoveEyeLid,
     ClientPayload_PreviewServoAngle,
     ClientPayload_GetEyeCalibration,
-    ClientPayload_SaveServoCalibration
+    ClientPayload_SaveServoCalibration,
+    ClientPayload_SetLight
   };
   return values;
 }
 
 inline const char * const *EnumNamesClientPayload() {
-  static const char * const names[21] = {
+  static const char * const names[22] = {
     "NONE",
     "StartAudioStream",
     "StopAudioStream",
@@ -282,13 +287,14 @@ inline const char * const *EnumNamesClientPayload() {
     "PreviewServoAngle",
     "GetEyeCalibration",
     "SaveServoCalibration",
+    "SetLight",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameClientPayload(ClientPayload e) {
-  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_SaveServoCalibration)) return "";
+  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_SetLight)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesClientPayload()[index];
 }
@@ -371,6 +377,10 @@ template<> struct ClientPayloadTraits<Pumpkin::Protocol::GetEyeCalibration> {
 
 template<> struct ClientPayloadTraits<Pumpkin::Protocol::SaveServoCalibration> {
   static const ClientPayload enum_value = ClientPayload_SaveServoCalibration;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::SetLight> {
+  static const ClientPayload enum_value = ClientPayload_SetLight;
 };
 
 bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *obj, ClientPayload type);
@@ -1157,6 +1167,49 @@ inline ::flatbuffers::Offset<Light> CreateLight(
   return builder_.Finish();
 }
 
+struct SetLight FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SetLightBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_LIGHT = 4
+  };
+  const Pumpkin::Protocol::Light *light() const {
+    return GetPointer<const Pumpkin::Protocol::Light *>(VT_LIGHT);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffsetRequired(verifier, VT_LIGHT) &&
+           verifier.VerifyTable(light()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SetLightBuilder {
+  typedef SetLight Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_light(::flatbuffers::Offset<Pumpkin::Protocol::Light> light) {
+    fbb_.AddOffset(SetLight::VT_LIGHT, light);
+  }
+  explicit SetLightBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SetLight> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SetLight>(end);
+    fbb_.Required(o, SetLight::VT_LIGHT);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SetLight> CreateSetLight(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<Pumpkin::Protocol::Light> light = 0) {
+  SetLightBuilder builder_(_fbb);
+  builder_.add_light(light);
+  return builder_.Finish();
+}
+
 struct PlayPreset FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef PlayPresetBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1521,6 +1574,9 @@ struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const Pumpkin::Protocol::SaveServoCalibration *payload_as_SaveServoCalibration() const {
     return payload_type() == Pumpkin::Protocol::ClientPayload_SaveServoCalibration ? static_cast<const Pumpkin::Protocol::SaveServoCalibration *>(payload()) : nullptr;
   }
+  const Pumpkin::Protocol::SetLight *payload_as_SetLight() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_SetLight ? static_cast<const Pumpkin::Protocol::SetLight *>(payload()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_REQUEST_ID, 4) &&
@@ -1605,6 +1661,10 @@ template<> inline const Pumpkin::Protocol::GetEyeCalibration *ClientMessage::pay
 
 template<> inline const Pumpkin::Protocol::SaveServoCalibration *ClientMessage::payload_as<Pumpkin::Protocol::SaveServoCalibration>() const {
   return payload_as_SaveServoCalibration();
+}
+
+template<> inline const Pumpkin::Protocol::SetLight *ClientMessage::payload_as<Pumpkin::Protocol::SetLight>() const {
+  return payload_as_SetLight();
 }
 
 struct ClientMessageBuilder {
@@ -2289,6 +2349,10 @@ inline bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *o
     }
     case ClientPayload_SaveServoCalibration: {
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::SaveServoCalibration *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_SetLight: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::SetLight *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

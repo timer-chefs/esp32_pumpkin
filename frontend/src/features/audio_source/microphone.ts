@@ -1,16 +1,19 @@
 import { audioSessionManager, type AudioSession } from "../../audio_session.ts";
+import type { LightScene } from "../../pumpkin_client.ts";
 import workletUrl from "../../worklet_processor.ts?worker&url";
 
 /**
  * Starts a session that streams the microphone to the device, through the
- * voice effect if one's given. Resolves to null if the session was stopped
+ * voice effect if one's given, and lit with `light` if that is. Resolves to null if the session was stopped
  * or replaced before the microphone was ready, in which case nothing is
  * left running.
  */
 export async function streamMicrophone(
   effectId?: string,
+  light?: LightScene,
 ): Promise<AudioSession | null> {
   const session = await audioSessionManager.start({
+    light,
     onError: (error) => console.error("Microphone session error:", error),
   });
 

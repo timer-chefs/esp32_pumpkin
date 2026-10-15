@@ -1,3 +1,5 @@
+import type * as flatbuffers from "flatbuffers";
+
 import {
   AdjustVolume,
   AudioChunk,
@@ -24,6 +26,7 @@ import {
   SaveServoCalibration,
   ServerPayload,
   ServoRange,
+  SetLight,
   StartAudioStream,
   StopAudioStream,
 } from "./generated/pumpkin/protocol.ts";
@@ -44,10 +47,17 @@ const servoIds: Record<EyeServo, EyeServoId> = {
   lid: EyeServoId.LID,
 };
 
+/** How to light the pumpkin. See Light in the protocol. */
+export interface LightScene {
+  effect: LightEffectId;
+  /** As "#rrggbb". */
+  color: string;
+}
+
 /** What a preset asks of the device. See PlayPreset in the protocol. */
 export interface PresetScene {
   /** Null leaves the lights as they are. */
-  light: { effect: LightEffectId; color: string } | null;
+  light: LightScene | null;
   /** A file in the SD card's audio directory, or null to play nothing. */
   sound: string | null;
   eye: EyeEffectId;
@@ -209,14 +219,7 @@ export default class PumpkinClient {
         const sound =
           scene.sound === null ? null : builder.createString(scene.sound);
 
-        let light: number | null = null;
-        if (scene.light) {
-          const [r, g, b] = parseHexColor(scene.light.color);
-          Light.startLight(builder);
-          Light.addEffect(builder, scene.light.effect);
-          Light.addColor(builder, Color.createColor(builder, r, g, b));
-          light = Light.endLight(builder);
-        }
+        const light = scene.light ? createLight(builder, scene.light) : null;
 
         PlayPreset.startPlayPreset(builder);
         if (light !== null) {
@@ -229,6 +232,16 @@ export default class PumpkinClient {
         return PlayPreset.endPlayPreset(builder);
       },
       ServerPayload.Success,
+    );
+  }
+
+  /**
+   * Lights the pumpkin, changing nothing else, until something else does.
+   * Throws, sending nothing, if the color isn't "#rrggbb".
+   */
+  static setLight(connection: PumpkinConnection, light: LightScene): void {
+    connection.sendMessage(ClientPayload.SetLight, (builder) =>
+      SetLight.createSetLight(builder, createLight(builder, light)),
     );
   }
 
@@ -297,6 +310,17 @@ export default class PumpkinClient {
       ServerPayload.Success,
     );
   }
+}
+
+function createLight(
+  builder: flatbuffers.Builder,
+  light: LightScene,
+): flatbuffers.Offset {
+  const [r, g, b] = parseHexColor(light.color);
+  Light.startLight(builder);
+  Light.addEffect(builder, light.effect);
+  Light.addColor(builder, Color.createColor(builder, r, g, b));
+  return Light.endLight(builder);
 }
 
 /** Splits a "#rrggbb" color, the format a color input produces, into bytes. */

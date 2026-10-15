@@ -6,6 +6,7 @@ import {
   audioSourceSlice,
   type AudioSourceState,
 } from "./audio_source_slice.ts";
+import { voiceLight } from "../voice_effect/voice_light.ts";
 import { streamMicrophone } from "./microphone.ts";
 
 vi.mock("./microphone.ts", () => ({ streamMicrophone: vi.fn() }));
@@ -37,13 +38,16 @@ beforeEach(() => {
 });
 
 describe("audioSourceSlice", () => {
-  it("talks with the voice effect that's picked", async () => {
+  it("talks with the voice effect that's picked, lit by the voice", async () => {
     const { actions, state } = createAudioSource("witch");
 
     actions.pressToTalk();
 
     await vi.waitFor(() => expect(state().pushToTalk).toBe("talking"));
-    expect(streamMicrophone).toHaveBeenCalledExactlyOnceWith("witch");
+    expect(streamMicrophone).toHaveBeenCalledExactlyOnceWith(
+      "witch",
+      voiceLight,
+    );
   });
 
   it("streams the microphone source as it is", async () => {

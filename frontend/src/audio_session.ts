@@ -3,7 +3,7 @@ import {
   type PumpkinConnection,
 } from "./pumpkin_connection.ts";
 
-import api from "./pumpkin_client.ts";
+import api, { type LightScene } from "./pumpkin_client.ts";
 import { toError } from "./to_error.ts";
 
 export const AudioSessionState = {
@@ -18,6 +18,8 @@ export type AudioSessionState =
 
 export interface AudioSessionDependencies {
   hostname?: string;
+  /** How to light the pumpkin while streaming. Leaves the lights as they are if not given. */
+  light?: LightScene;
   connectionFactory?: (hostname: string) => PumpkinConnection;
   resetAudioBuffer?: (connection: PumpkinConnection) => Promise<unknown>;
   onStateChange?: (state: AudioSessionState) => void;
@@ -32,6 +34,7 @@ export interface StopAudioSessionOptions {
 export class AudioSession {
   readonly hostname: string;
 
+  private readonly light: LightScene | null;
   private readonly connectionFactory: (hostname: string) => PumpkinConnection;
   private readonly resetAudioBuffer: (
     connection: PumpkinConnection,
@@ -51,12 +54,14 @@ export class AudioSession {
 
   constructor({
     hostname = location.hostname,
+    light,
     connectionFactory = getPumpkinConnection,
     resetAudioBuffer = api.resetAudio,
     onStateChange = () => {},
     onError = () => {},
   }: AudioSessionDependencies = {}) {
     this.hostname = hostname;
+    this.light = light ?? null;
     this.connectionFactory = connectionFactory;
     this.resetAudioBuffer = resetAudioBuffer;
     this.onStateChange = onStateChange;
@@ -92,6 +97,11 @@ export class AudioSession {
         void this.stop({ notifyServer: false });
       });
 
+      // Lit first, so a light that can't be sent fails before the device
+      // has started streaming.
+      if (this.light) {
+        api.setLight(connection, this.light);
+      }
       api.startAudioStream(connection);
       this.setState(AudioSessionState.STREAMING);
     } catch (error) {

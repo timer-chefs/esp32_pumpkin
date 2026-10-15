@@ -4,6 +4,7 @@ import { streamPcm, toDevicePcm } from "../../audio_file.ts";
 import { toError } from "../../to_error.ts";
 import type { DownloadProgress } from "./download_cache.ts";
 import { effects } from "../voice_effect/effects.ts";
+import { voiceLight } from "../voice_effect/voice_light.ts";
 import { loadVoice } from "./piper.ts";
 import { voices } from "./voices.ts";
 
@@ -99,6 +100,7 @@ export const speechSlice: Slice<SpeechState, SpeechActions> = {
 
         const finished = await streamPcm(
           toDevicePcm(samples, speech.sampleRate),
+          { light: voiceLight },
         );
         // Whatever cut it short has set the status to what it's doing.
         if (finished && isCurrent()) {

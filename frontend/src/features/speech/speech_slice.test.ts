@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppAccess } from "../../app/slice.ts";
 import { streamPcm, toDevicePcm } from "../../audio_file.ts";
 import { effects } from "../voice_effect/effects.ts";
+import { voiceLight } from "../voice_effect/voice_light.ts";
 import { loadVoice, type PiperVoice, type Speech } from "./piper.ts";
 import { speechSlice, type SpeechState } from "./speech_slice.ts";
 
@@ -97,7 +98,9 @@ describe("speechSlice", () => {
     expect(growl.apply).toHaveBeenCalledExactlyOnceWith(speech.samples, 22_050);
     expect(appActions.audioSource.stopStreaming).toHaveBeenCalledOnce();
     expect(toDevicePcm).toHaveBeenCalledWith(growled, 22_050);
-    expect(streamPcm).toHaveBeenCalledExactlyOnceWith(pcm);
+    expect(streamPcm).toHaveBeenCalledExactlyOnceWith(pcm, {
+      light: voiceLight,
+    });
     expect(phases).toEqual(["loading", "synthesizing", "speaking", null]);
     expect(appActions.status.set).toHaveBeenNthCalledWith(1, {
       mode: "Speech",

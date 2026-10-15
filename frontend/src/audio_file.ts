@@ -1,4 +1,5 @@
 import { audioSessionManager } from "./audio_session.ts";
+import type { LightScene } from "./pumpkin_client.ts";
 
 export const TARGET_SAMPLE_RATE = 16_000;
 const CHUNK_SIZE = 512;
@@ -9,11 +10,17 @@ export type AudioFileStatus = (
   tone?: "neutral" | "success",
 ) => void;
 
+export interface StreamPcmOptions {
+  setStatus?: AudioFileStatus;
+  /** How to light the pumpkin while it plays. Leaves the lights as they are if not given. */
+  light?: LightScene;
+}
+
 export async function streamAudioFile(
   file: File,
   setStatus: AudioFileStatus = () => {},
 ): Promise<void> {
-  await streamPcm(await decodeAudioFile(file), setStatus);
+  await streamPcm(await decodeAudioFile(file), { setStatus });
 }
 
 /**
@@ -23,9 +30,10 @@ export async function streamAudioFile(
  */
 export async function streamPcm(
   pcm: Int16Array<ArrayBuffer>,
-  setStatus: AudioFileStatus = () => {},
+  { setStatus = () => {}, light }: StreamPcmOptions = {},
 ): Promise<boolean> {
   const session = await audioSessionManager.start({
+    light,
     onError: (error) => console.error("Audio session error:", error),
   });
   const data = new Uint8Array(pcm.buffer);

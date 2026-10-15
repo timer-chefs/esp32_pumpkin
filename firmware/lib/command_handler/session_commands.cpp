@@ -126,6 +126,27 @@ static CommandResult handle_play_preset(
     return success(builder);
 }
 
+static CommandResult handle_set_light(
+    const CommandContext&,
+    const ClientMessage& message,
+    flatbuffers::FlatBufferBuilder& builder)
+{
+    const auto* light = message.payload_as_SetLight()->light();
+
+    EffectId effect;
+    if(!find_effect(light->effect(), effect))
+    {
+        return error(
+            builder,
+            ErrorCode_INVALID_ARGUMENT,
+            "Unknown light effect");
+    }
+
+    const Color* color = light->color();
+    show_manager.set_light(effect, CRGB(color->r(), color->g(), color->b()));
+    return success(builder);
+}
+
 static CommandResult handle_audio_chunk(
     const CommandContext&,
     const ClientMessage& message,
@@ -179,6 +200,7 @@ static const CommandBinding bindings[] = {
     {ClientPayload_ResetAudio, handle_reset_audio},
     {ClientPayload_PlayShow, handle_play_show},
     {ClientPayload_PlayPreset, handle_play_preset},
+    {ClientPayload_SetLight, handle_set_light},
     {ClientPayload_AudioChunk, handle_audio_chunk},
     {ClientPayload_GetVolume, handle_get_volume},
     {ClientPayload_AdjustVolume, handle_adjust_volume},

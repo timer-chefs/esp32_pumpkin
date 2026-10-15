@@ -3,6 +3,7 @@ import { runAction, type Slice } from "../../app/slice.ts";
 import { streamAudioFile } from "../../audio_file.ts";
 import { audioSessionManager, type AudioSession } from "../../audio_session.ts";
 import api from "../../pumpkin_client.ts";
+import { voiceLight } from "../voice_effect/voice_light.ts";
 import { streamMicrophone } from "./microphone.ts";
 
 export type AudioSource = "microphone" | "file" | "sdCard";
@@ -134,6 +135,7 @@ export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
 
         const session = await streamMicrophone(
           app.getState().voiceEffect.effectId,
+          voiceLight,
         );
         if (!isHeld()) {
           if (session) {
