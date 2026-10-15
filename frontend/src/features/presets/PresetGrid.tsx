@@ -2,9 +2,9 @@ import { useEffect, type CSSProperties } from "react";
 import { Alert, Button } from "react-bootstrap";
 
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
+import "./presets.css";
 import { presetIcons, type Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
-import "./presets.css";
 
 export function PresetGrid() {
   const { presets, error, play } = usePresets();
@@ -75,15 +75,10 @@ function PresetButton({ preset, isSoundMissing, onPlay }: PresetButtonProps) {
       <span className="preset-icon">
         <Icon aria-hidden="true" />
       </span>
-      <span className="preset-name">{preset.name}</span>
       <span
-        className={`preset-sound text-truncate ${isSoundMissing ? "text-danger" : "text-body-secondary"}`}
+        className={`preset-name ${isSoundMissing ? "text-danger" : "text-body-secondary"}`}
       >
-        {preset.sound === null
-          ? "No sound"
-          : isSoundMissing
-            ? `${preset.sound} missing`
-            : preset.sound}
+        {preset.name}
       </span>
     </Button>
   );
