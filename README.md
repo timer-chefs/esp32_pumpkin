@@ -24,13 +24,13 @@ The presets page plays its sounds from the same directory: `ghost.wav`, `witch.w
 
 You can also upload songs through the web UI that get saved to the ESP32. It will transcode the songs to the correct format for you, on the fly.
 
+## Usage
+
 ## Calibrate the eye
 
-The Calibration page sets the angles the eye's servos move between. Drag each end of a servo's range until the eye stops where it should (far left and far right for the eye, shut and wide open for the lid), then save it. The servo moves to whichever end is being set, so you can see the angle before saving it.
+The Calibration page sets the angles the eye's servos move between. Drag each end of a servo's range until the eye stops where it should (far left and far right for the eye, shut and wide open for the lid), then save it.
 
-The device stores the calibration in its own flash (NVS), so it survives restarts and doesn't depend on the SD card. A servo that hasn't been calibrated moves through all of 0-180°, and stays put at boot until something moves it.
-
-## Usage
+A servo that hasn't been calibrated moves through all of 0-180°.
 
 ### Text to speech
 
