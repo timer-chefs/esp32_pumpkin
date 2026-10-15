@@ -37,11 +37,10 @@ export function App() {
           </div>
 
           <div hidden={page !== "audio"}>
-            <AudioSourceControl />
-
             <div className="utility-grid">
               <VolumeControl />
             </div>
+            <AudioSourceControl />
           </div>
 
           <div hidden={page !== "calibration"}>
