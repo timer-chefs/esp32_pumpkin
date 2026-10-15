@@ -262,6 +262,20 @@ h2 {
   border-radius: 6px;
 }
 
+/* Doubled up to outrank .modal-content, whose stylesheet loads after this one. */
+.modal-content.app-modal {
+  background-color: var(--pumpkin-paper);
+}
+
+.app-modal .modal-header {
+  border-bottom: 2px solid var(--pumpkin-ink);
+}
+
+.app-modal .modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
 .compact-alert {
   width: fit-content;
   margin: 0.75rem 0 0;

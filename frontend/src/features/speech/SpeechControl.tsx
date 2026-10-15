@@ -1,5 +1,5 @@
 import { Square, Volume2 } from "lucide-react";
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import {
   Alert,
   Button,
@@ -24,10 +24,15 @@ const phaseLabels: Record<SpeechPhase, string> = {
   speaking: "Speaking",
 };
 
-export function SpeechControl() {
+interface SpeechControlProps {
+  /** Kept by the caller, so it's still there after the form is closed. */
+  text: string;
+  onTextChange: (text: string) => void;
+}
+
+export function SpeechControl({ text, onTextChange }: SpeechControlProps) {
   const { voiceId, phase, download, error, selectVoice, say, stop } =
     useSpeech();
-  const [text, setText] = useState("");
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -47,14 +52,7 @@ export function SpeechControl() {
   };
 
   return (
-    <section className="control-section" aria-labelledby="speech-heading">
-      <div className="section-heading">
-        <h2 id="speech-heading">Say</h2>
-        <span className="text-body-secondary">
-          Type it, the pumpkin says it
-        </span>
-      </div>
-
+    <>
       <Form onSubmit={submit}>
         <Form.Group controlId="speech-text">
           <Form.Label visuallyHidden>What to say</Form.Label>
@@ -63,8 +61,9 @@ export function SpeechControl() {
             rows={2}
             maxLength={MAX_LENGTH}
             placeholder="I can see you..."
+            autoFocus
             value={text}
-            onChange={(event) => setText(event.currentTarget.value)}
+            onChange={(event) => onTextChange(event.currentTarget.value)}
             onKeyDown={submitOnEnter}
           />
         </Form.Group>
@@ -116,7 +115,7 @@ export function SpeechControl() {
           {error}
         </Alert>
       )}
-    </section>
+    </>
   );
 }
 

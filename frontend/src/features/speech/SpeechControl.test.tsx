@@ -15,7 +15,7 @@ const MEGABYTE = 1024 * 1024;
 describe("SpeechControl", () => {
   it("says what's typed", async () => {
     const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<SpeechControl />);
+    const { controller } = renderWithAppContext(<DraftedSpeechControl />);
 
     await user.type(screen.getByLabelText("What to say"), "I can see you");
     await user.click(screen.getByRole("button", { name: "Say" }));
@@ -27,7 +27,7 @@ describe("SpeechControl", () => {
 
   it("says it on Enter, but starts a new line on Shift+Enter", async () => {
     const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<SpeechControl />);
+    const { controller } = renderWithAppContext(<DraftedSpeechControl />);
 
     await user.type(
       screen.getByLabelText("What to say"),
@@ -41,7 +41,7 @@ describe("SpeechControl", () => {
 
   it("has nothing to say until something is typed", async () => {
     const user = userEvent.setup();
-    renderWithAppContext(<SpeechControl />);
+    renderWithAppContext(<DraftedSpeechControl />);
 
     await user.type(screen.getByLabelText("What to say"), "   ");
 
@@ -50,7 +50,7 @@ describe("SpeechControl", () => {
 
   it("speaks with the voice that's picked", async () => {
     const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<SpeechControl />);
+    const { controller } = renderWithAppContext(<DraftedSpeechControl />);
 
     await user.selectOptions(screen.getByLabelText("Voice"), "Alan (British)");
 
@@ -60,7 +60,7 @@ describe("SpeechControl", () => {
   });
 
   it("shows how far the voice has downloaded", () => {
-    renderWithAppContext(<SpeechControl />, {
+    renderWithAppContext(<DraftedSpeechControl />, {
       state: {
         speech: {
           phase: "loading",
@@ -90,7 +90,7 @@ describe("SpeechControl", () => {
   });
 
   it("shows what went wrong", () => {
-    renderWithAppContext(<SpeechControl />, {
+    renderWithAppContext(<DraftedSpeechControl />, {
       state: { speech: { error: "Could not say it: network error" } },
     });
 
@@ -118,7 +118,13 @@ function SpeakingSpeechControl({ say }: { say: (text: string) => void }) {
 
   return (
     <AppContextProvider value={controller}>
-      <SpeechControl />
+      <DraftedSpeechControl />
     </AppContextProvider>
   );
+}
+
+/** Holding what's typed, as the form's opener does. */
+function DraftedSpeechControl() {
+  const [text, setText] = useState("");
+  return <SpeechControl text={text} onTextChange={setText} />;
 }

@@ -1,11 +1,12 @@
 import {
+  ChevronDown,
   Ghost,
   type LucideIcon,
   Skull,
   Speech,
   WandSparkles,
 } from "lucide-react";
-import { ToggleButton, ToggleButtonGroup } from "react-bootstrap";
+import { ButtonGroup, Dropdown } from "react-bootstrap";
 
 import { effects } from "./effects.ts";
 import { useVoiceEffect } from "./voice_effect_slice.ts";
@@ -19,32 +20,40 @@ const effectIcons: Record<string, LucideIcon> = {
 
 export function VoiceEffectPicker() {
   const { effectId, select } = useVoiceEffect();
+  const picked = effects.find((effect) => effect.id === effectId) ?? effects[0];
+  const PickedIcon = effectIcons[picked.id] ?? Speech;
 
   return (
-    <section className="control-section" aria-labelledby="voice-effect-heading">
-      <ToggleButtonGroup
-        type="radio"
-        name="voice-effect"
-        aria-labelledby="voice-effect-heading"
-        className="voice-effects"
-        value={effectId}
-        onChange={select}
+    <Dropdown as={ButtonGroup} onSelect={(id) => id !== null && select(id)}>
+      <Dropdown.Toggle
+        id="voice-effect-toggle"
+        variant="dark"
+        className="voice-side-button voice-effect-toggle"
+        aria-label={`Voice effect: ${picked.name}`}
       >
+        <PickedIcon aria-hidden="true" />
+        <span className="voice-effect-name">
+          {picked.name}
+          <ChevronDown aria-hidden="true" />
+        </span>
+      </Dropdown.Toggle>
+      <Dropdown.Menu className="voice-effect-menu">
         {effects.map((effect) => {
           const Icon = effectIcons[effect.id] ?? Speech;
           return (
-            <ToggleButton
+            <Dropdown.Item
               key={effect.id}
-              id={`voice-effect-${effect.id}`}
-              value={effect.id}
-              variant="outline-dark"
+              as="button"
+              eventKey={effect.id}
+              active={effect.id === effectId}
+              className="voice-effect-item"
             >
               <Icon aria-hidden="true" />
               {effect.name}
-            </ToggleButton>
+            </Dropdown.Item>
           );
         })}
-      </ToggleButtonGroup>
-    </section>
+      </Dropdown.Menu>
+    </Dropdown>
   );
 }

@@ -70,7 +70,7 @@ export function PresetGrid() {
         onHide={() => setIsShowingAll(false)}
         animation={false}
         fullscreen
-        contentClassName="all-presets"
+        contentClassName="app-modal all-presets"
         aria-labelledby="all-presets-heading"
       >
         <Modal.Header closeButton>
@@ -82,7 +82,9 @@ export function PresetGrid() {
           <div className="preset-grid">{presets.map(presetButton)}</div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="dark" onClick={() => setIsShowingAll(false)}>Close</Button>
+          <Button variant="dark" onClick={() => setIsShowingAll(false)}>
+            Close
+          </Button>
         </Modal.Footer>
       </Modal>
     </section>

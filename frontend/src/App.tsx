@@ -5,14 +5,12 @@ import { useAppController } from "./app/app_controller.ts";
 import { usePage } from "./app/page.ts";
 import { AppHeader } from "./components/AppHeader.tsx";
 import { PageNav } from "./components/PageNav.tsx";
+import { VoiceControls } from "./components/VoiceControls.tsx";
 import { AudioSourceControl } from "./features/audio_source/AudioSourceControl.tsx";
-import { PushToTalkButton } from "./features/audio_source/PushToTalkButton.tsx";
 import { EyeCalibration } from "./features/calibration/EyeCalibration.tsx";
 import { EyeControl } from "./features/eye/EyeControl.tsx";
 import { DeviceLog } from "./features/log/DeviceLog.tsx";
 import { PresetGrid } from "./features/presets/PresetGrid.tsx";
-import { SpeechControl } from "./features/speech/SpeechControl.tsx";
-import { VoiceEffectPicker } from "./features/voice_effect/VoiceEffectPicker.tsx";
 import { VolumeControl } from "./features/volume/VolumeControl.tsx";
 
 export function App() {
@@ -31,9 +29,7 @@ export function App() {
           <div hidden={page !== "presets"}>
             <PresetGrid />
             <EyeControl />
-            <VoiceEffectPicker />
-            <PushToTalkButton />
-            <SpeechControl />
+            <VoiceControls />
           </div>
 
           <div hidden={page !== "audio"}>
