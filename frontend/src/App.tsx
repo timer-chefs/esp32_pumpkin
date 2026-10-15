@@ -5,8 +5,8 @@ import { useAppController } from "./app/app_controller.ts";
 import { usePage } from "./app/page.ts";
 import { AppHeader } from "./components/AppHeader.tsx";
 import { PageNav } from "./components/PageNav.tsx";
+import { VoiceControls } from "./components/VoiceControls.tsx";
 import { AudioSourceControl } from "./features/audio_source/AudioSourceControl.tsx";
-import { PushToTalkButton } from "./features/audio_source/PushToTalkButton.tsx";
 import { EyeCalibration } from "./features/calibration/EyeCalibration.tsx";
 import { EyeControl } from "./features/eye/EyeControl.tsx";
 import { DeviceLog } from "./features/log/DeviceLog.tsx";
@@ -29,15 +29,14 @@ export function App() {
           <div hidden={page !== "presets"}>
             <PresetGrid />
             <EyeControl />
-            <PushToTalkButton />
+            <VoiceControls />
           </div>
 
           <div hidden={page !== "audio"}>
-            <AudioSourceControl />
-
             <div className="utility-grid">
               <VolumeControl />
             </div>
+            <AudioSourceControl />
           </div>
 
           <div hidden={page !== "calibration"}>

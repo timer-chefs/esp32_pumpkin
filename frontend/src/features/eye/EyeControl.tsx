@@ -1,11 +1,13 @@
 import { Eye, EyeClosed } from "lucide-react";
 import type { CSSProperties } from "react";
+import { Button } from "react-bootstrap";
 
-import { EYE_REACH, LID_OPEN, useEye } from "./eye_slice.ts";
 import "./eye.css";
+import { EYE_REACH, LID_OPEN, useEye } from "./eye_slice.ts";
 
 export function EyeControl() {
   const { position, lid, look, moveLid } = useEye();
+  const isOpen = lid > 0;
 
   // The direction thumb draws the eye as the device should be holding it.
   const eyeStyle = {
@@ -15,11 +17,6 @@ export function EyeControl() {
 
   return (
     <section className="control-section" aria-labelledby="eye-heading">
-      <div className="section-heading">
-        <h2 id="eye-heading">Eye</h2>
-        <span className="text-body-secondary">Drag to look around</span>
-      </div>
-
       <div className="eye-panel">
         <div className="eye-look">
           <input
@@ -34,31 +31,21 @@ export function EyeControl() {
             value={position}
             onChange={(event) => look(event.currentTarget.valueAsNumber)}
           />
-          <div className="eye-look-scale" aria-hidden="true">
-            <span>Left</span>
-            <span>Ahead</span>
-            <span>Right</span>
-          </div>
         </div>
 
-        <div className="eye-lid">
-          <Eye aria-hidden="true" />
-          <div className="eye-lid-track">
-            <input
-              type="range"
-              className="eye-slider eye-lid-slider"
-              aria-label="Eye lid"
-              aria-orientation="vertical"
-              aria-valuetext={`${Math.round((lid / LID_OPEN) * 100)}% open`}
-              min={0}
-              max={LID_OPEN}
-              step={1}
-              value={lid}
-              onChange={(event) => moveLid(event.currentTarget.valueAsNumber)}
-            />
-          </div>
-          <EyeClosed aria-hidden="true" />
-        </div>
+        <Button
+          variant="outline-dark"
+          className="icon-label-button eye-lid-button p-0"
+          aria-label={isOpen ? "Close eye" : "Open eye"}
+          title={isOpen ? "Close eye" : "Open eye"}
+          onClick={() => moveLid(isOpen ? 0 : LID_OPEN)}
+        >
+          {isOpen ? (
+            <EyeClosed aria-hidden="true" />
+          ) : (
+            <Eye aria-hidden="true" />
+          )}
+        </Button>
       </div>
     </section>
   );

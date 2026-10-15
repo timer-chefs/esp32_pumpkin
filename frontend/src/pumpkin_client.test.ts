@@ -9,6 +9,7 @@ import {
   PlayPreset,
   PreviewServoAngle,
   SaveServoCalibration,
+  SetLight,
 } from "./generated/pumpkin/protocol.ts";
 import api, { type PresetScene } from "./pumpkin_client.ts";
 import type { PumpkinConnection } from "./pumpkin_connection.ts";
@@ -74,6 +75,32 @@ describe("PumpkinClient.playPreset", () => {
     expect(() => createPayload(new flatbuffers.Builder())).toThrow(
       'Expected a color like #ff8800, got "orange"',
     );
+  });
+});
+
+describe("PumpkinClient.setLight", () => {
+  it("encodes the light", () => {
+    const sendMessage = vi.fn();
+    api.setLight({ sendMessage } as unknown as PumpkinConnection, {
+      effect: LightEffectId.AUDIO_REACTIVE,
+      color: "#ffa500",
+    });
+
+    const [payloadType, createPayload] = sendMessage.mock.calls[0] as [
+      ClientPayload,
+      CreatePayload,
+    ];
+    expect(payloadType).toBe(ClientPayload.SetLight);
+
+    const builder = new flatbuffers.Builder();
+    builder.finish(createPayload(builder));
+    const light = SetLight.getRootAsSetLight(
+      new flatbuffers.ByteBuffer(builder.asUint8Array()),
+    ).light();
+    expect(light?.effect()).toBe(LightEffectId.AUDIO_REACTIVE);
+    expect(light?.color()?.r()).toBe(0xff);
+    expect(light?.color()?.g()).toBe(0xa5);
+    expect(light?.color()?.b()).toBe(0x00);
   });
 });
 

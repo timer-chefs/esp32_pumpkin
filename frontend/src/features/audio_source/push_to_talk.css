@@ -1,6 +1,5 @@
 /* Doubled up to outrank .btn, whose stylesheet loads after this one. */
 .btn.push-to-talk {
-  width: 100%;
   min-height: 5rem;
   display: inline-flex;
   align-items: center;

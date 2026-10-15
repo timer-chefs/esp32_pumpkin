@@ -24,6 +24,18 @@ The presets page plays its sounds from the same directory: `ghost.wav`, `witch.w
 
 You can also upload songs through the web UI that get saved to the ESP32. It will transcode the songs to the correct format for you, on the fly.
 
+## Text to speech
+
+The Say box on the presets page speaks whatever you type through the pumpkin. The speech is made in the browser with [Piper](https://github.com/rhasspy/piper) and streamed to the pumpkin like the microphone is.
+
+The speech engine and voice are about 100 MB, far more than the ESP32's flash holds, so the browser downloads them from jsDelivr and Hugging Face the first time a voice is used. The phone needs internet access for that. They're kept in the browser (in IndexedDB) after that, so later visits work without downloading them again. The browser keeps them per address, though, so if the pumpkin's IP address changes they're downloaded again.
+
+The voices to choose from are listed in `frontend/src/features/speech/voices.ts`, and any of [Piper's voices](https://github.com/rhasspy/piper/blob/master/VOICES.md) can be added there.
+
+### Voice effects
+
+The voice effect picked on the presets page (Demon, Ghost or Witch) is used both for the Say box and for "Hold to talk". It changes the voice's pitch and adds echo, growl or a waver to it before it's sent. The Say box also changes the pace, which a live voice can't have. The effects are defined, and can be tuned, in `frontend/src/features/voice_effect/effects.ts`.
+
 ## Calibrate the eye
 
 The Calibration page sets the angles the eye's servos move between. Drag each end of a servo's range until the eye stops where it should (far left and far right for the eye, shut and wide open for the lid), then save it. The servo moves to whichever end is being set, so you can see the angle before saving it.

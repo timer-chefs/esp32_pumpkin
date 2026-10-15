@@ -53,37 +53,29 @@ export function PushToTalkButton() {
   };
 
   return (
-    <section className="control-section" aria-labelledby="talk-heading">
-      <div className="section-heading">
-        <h2 id="talk-heading">Talk</h2>
-        <span className="text-body-secondary">
-          Streams only while held down
-        </span>
-      </div>
-      <Button
-        variant={isPressed ? "danger" : "dark"}
-        className={`push-to-talk ${pushToTalk === "talking" ? "push-to-talk--live" : ""}`}
-        aria-pressed={isPressed}
-        onPointerDown={press}
-        onPointerUp={releaseToTalk}
-        onPointerCancel={releaseToTalk}
-        onLostPointerCapture={releaseToTalk}
-        onKeyDown={pressKey}
-        onKeyUp={releaseKey}
-        onBlur={releaseToTalk}
-        onContextMenu={(event) => event.preventDefault()}
-      >
-        {pushToTalk === "starting" ? (
-          <Spinner animation="border" size="sm" aria-hidden="true" />
-        ) : (
-          <Mic aria-hidden="true" />
-        )}
-        {pushToTalk === "talking"
-          ? "Talking"
-          : pushToTalk === "starting"
-            ? "Starting microphone"
-            : "Hold to talk"}
-      </Button>
-    </section>
+    <Button
+      variant={isPressed ? "danger" : "dark"}
+      className={`push-to-talk ${pushToTalk === "talking" ? "push-to-talk--live" : ""}`}
+      aria-pressed={isPressed}
+      onPointerDown={press}
+      onPointerUp={releaseToTalk}
+      onPointerCancel={releaseToTalk}
+      onLostPointerCapture={releaseToTalk}
+      onKeyDown={pressKey}
+      onKeyUp={releaseKey}
+      onBlur={releaseToTalk}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {pushToTalk === "starting" ? (
+        <Spinner animation="border" size="sm" aria-hidden="true" />
+      ) : (
+        <Mic aria-hidden="true" />
+      )}
+      {pushToTalk === "talking"
+        ? "Talking"
+        : pushToTalk === "starting"
+          ? "Starting microphone"
+          : "Hold to talk"}
+    </Button>
   );
 }

@@ -1,4 +1,4 @@
-import { FileAudio, Mic, Music, Square, Volume2 } from "lucide-react";
+import { FileAudio, Music, Square, Volume2 } from "lucide-react";
 import { Alert, Button, Form, Spinner, Stack } from "react-bootstrap";
 
 import { SdCardFileList } from "../sd_card/SdCardFileList.tsx";
@@ -13,7 +13,6 @@ export function AudioSourceControl() {
     selectFile,
     startFile,
     startFileMode,
-    startMicrophone,
     startSdCardMode,
     stopAudio,
     stopMicrophone,
@@ -27,15 +26,6 @@ export function AudioSourceControl() {
       </div>
 
       <div className="source-selector" role="group" aria-label="Audio source">
-        <Button
-          variant={active === "microphone" ? "dark" : "outline-dark"}
-          className="source-button"
-          disabled={active === "microphone"}
-          onClick={startMicrophone}
-        >
-          <Mic aria-hidden="true" />
-          Microphone
-        </Button>
         <Button
           variant={active === "file" ? "dark" : "outline-dark"}
           className="source-button"

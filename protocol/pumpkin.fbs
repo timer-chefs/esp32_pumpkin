@@ -2,6 +2,7 @@ namespace Pumpkin.Protocol;
 
 table StartAudioStream {}
 
+// Lights the candles again.
 table StopAudioStream {}
 
 table PlayShow {
@@ -61,6 +62,14 @@ struct Color {
 table Light {
   effect:LightEffectId = CANDLE;
   color:Color (required);
+}
+
+// Lights the pumpkin until something else does: another SetLight, a preset,
+// or the end of what was playing, which lights the candles again. Changes
+// nothing else, so it can go along with whatever needs it, like a voice
+// streamed with lights that flare with it.
+table SetLight {
+  light:Light (required);
 }
 
 // Things the eye can do on its own. Nothing on the device plays these yet;
@@ -155,7 +164,8 @@ union ClientPayload {
   MoveEyeLid,
   PreviewServoAngle,
   GetEyeCalibration,
-  SaveServoCalibration
+  SaveServoCalibration,
+  SetLight
 }
 
 table ClientMessage {

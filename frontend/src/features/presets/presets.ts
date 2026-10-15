@@ -46,14 +46,6 @@ export const defaultPresets: Preset[] = [
     eye: EyeEffectId.WANDER,
   },
   {
-    id: "witch",
-    name: "Witch",
-    icon: "wand",
-    light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#33ff33" },
-    sound: "witch.wav",
-    eye: EyeEffectId.SHIFTY,
-  },
-  {
     id: "scream",
     name: "Scream",
     icon: "skull",
@@ -78,11 +70,19 @@ export const defaultPresets: Preset[] = [
     eye: EyeEffectId.NONE,
   },
   {
-    id: "calm",
-    name: "Calm",
+    id: "candles",
+    name: "Candles",
     icon: "flame",
     light: { effect: LightEffectId.CANDLE, color: "#ffa500" },
     sound: null,
     eye: EyeEffectId.SLEEP,
+  },
+  {
+    id: "witch",
+    name: "Witch",
+    icon: "wand",
+    light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#33ff33" },
+    sound: "witch.wav",
+    eye: EyeEffectId.SHIFTY,
   },
 ];
