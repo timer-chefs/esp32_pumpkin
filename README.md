@@ -32,7 +32,9 @@ The speech engine and voice are about 100 MB, far more than the ESP32's flash ho
 
 The voices to choose from are listed in `frontend/src/features/speech/voices.ts`, and any of [Piper's voices](https://github.com/rhasspy/piper/blob/master/VOICES.md) can be added there.
 
-The Demon, Ghost and Witch effects change the voice's pitch and pace and add echo, growl or a waver to it before it's sent. They're defined, and can be tuned, in `frontend/src/features/speech/effects.ts`.
+### Voice effects
+
+The voice effect picked on the presets page (Demon, Ghost or Witch) is used both for the Say box and for "Hold to talk". It changes the voice's pitch and adds echo, growl or a waver to it before it's sent. The Say box also changes the pace, which a live voice can't have. The effects are defined, and can be tuned, in `frontend/src/features/voice_effect/effects.ts`.
 
 ## Calibrate the eye
 

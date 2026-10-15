@@ -12,6 +12,7 @@ import { EyeControl } from "./features/eye/EyeControl.tsx";
 import { DeviceLog } from "./features/log/DeviceLog.tsx";
 import { PresetGrid } from "./features/presets/PresetGrid.tsx";
 import { SpeechControl } from "./features/speech/SpeechControl.tsx";
+import { VoiceEffectPicker } from "./features/voice_effect/VoiceEffectPicker.tsx";
 import { VolumeControl } from "./features/volume/VolumeControl.tsx";
 
 export function App() {
@@ -30,6 +31,7 @@ export function App() {
           <div hidden={page !== "presets"}>
             <PresetGrid />
             <EyeControl />
+            <VoiceEffectPicker />
             <PushToTalkButton />
             <SpeechControl />
           </div>

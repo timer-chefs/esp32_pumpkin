@@ -59,18 +59,6 @@ describe("SpeechControl", () => {
     ).toHaveBeenCalledExactlyOnceWith("en_GB-alan-low");
   });
 
-  it("says it with the effect that's picked", async () => {
-    const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<SpeechControl />);
-
-    expect(screen.getByRole("radio", { name: "Demon" })).toBeChecked();
-    await user.click(screen.getByRole("radio", { name: "Ghost" }));
-
-    expect(
-      controller.actions.speech.selectEffect,
-    ).toHaveBeenCalledExactlyOnceWith("ghost", expect.anything());
-  });
-
   it("shows how far the voice has downloaded", () => {
     renderWithAppContext(<SpeechControl />, {
       state: {
@@ -87,7 +75,6 @@ describe("SpeechControl", () => {
       "50",
     );
     expect(screen.getByLabelText("Voice")).toBeDisabled();
-    expect(screen.getByRole("radio", { name: "Witch" })).toBeDisabled();
   });
 
   it("stops without the click going on to say it again", async () => {
@@ -125,7 +112,7 @@ function SpeakingSpeechControl({ say }: { say: (text: string) => void }) {
     state: { ...initialState, speech: { ...initialState.speech, phase } },
     actions: {
       ...actions,
-      speech: { selectVoice: vi.fn(), selectEffect: vi.fn(), say, stop },
+      speech: { selectVoice: vi.fn(), say, stop },
     },
   };
 

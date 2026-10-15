@@ -132,7 +132,9 @@ export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
         }
         app.actions().status.set({ mode: "Push to talk" });
 
-        const session = await streamMicrophone();
+        const session = await streamMicrophone(
+          app.getState().voiceEffect.effectId,
+        );
         if (!isHeld()) {
           if (session) {
             await audioSessionManager.stop(session);

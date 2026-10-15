@@ -1,12 +1,4 @@
-import {
-  Ghost,
-  type LucideIcon,
-  Skull,
-  Speech,
-  Square,
-  Volume2,
-  WandSparkles,
-} from "lucide-react";
+import { Square, Volume2 } from "lucide-react";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import {
   Alert,
@@ -15,12 +7,9 @@ import {
   ProgressBar,
   Spinner,
   Stack,
-  ToggleButton,
-  ToggleButtonGroup,
 } from "react-bootstrap";
 
 import type { DownloadProgress } from "./download_cache.ts";
-import { effects } from "./effects.ts";
 import { useSpeech, type SpeechPhase } from "./speech_slice.ts";
 import { voices } from "./voices.ts";
 import "./speech.css";
@@ -29,12 +18,6 @@ import "./speech.css";
 // long wait.
 const MAX_LENGTH = 500;
 
-const effectIcons: Record<string, LucideIcon> = {
-  demon: Skull,
-  ghost: Ghost,
-  witch: WandSparkles,
-};
-
 const phaseLabels: Record<SpeechPhase, string> = {
   loading: "Getting the voice ready",
   synthesizing: "Working out how to say it",
@@ -42,17 +25,8 @@ const phaseLabels: Record<SpeechPhase, string> = {
 };
 
 export function SpeechControl() {
-  const {
-    voiceId,
-    effectId,
-    phase,
-    download,
-    error,
-    selectVoice,
-    selectEffect,
-    say,
-    stop,
-  } = useSpeech();
+  const { voiceId, phase, download, error, selectVoice, say, stop } =
+    useSpeech();
   const [text, setText] = useState("");
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -94,30 +68,6 @@ export function SpeechControl() {
             onKeyDown={submitOnEnter}
           />
         </Form.Group>
-        <ToggleButtonGroup
-          type="radio"
-          name="speech-effect"
-          aria-label="Effect"
-          className="speech-effects mt-2"
-          value={effectId}
-          onChange={selectEffect}
-        >
-          {effects.map((effect) => {
-            const Icon = effectIcons[effect.id] ?? Speech;
-            return (
-              <ToggleButton
-                key={effect.id}
-                id={`speech-effect-${effect.id}`}
-                value={effect.id}
-                variant="outline-dark"
-                disabled={phase !== null}
-              >
-                <Icon aria-hidden="true" />
-                {effect.name}
-              </ToggleButton>
-            );
-          })}
-        </ToggleButtonGroup>
         <Stack direction="horizontal" gap={2} className="mt-2">
           <Form.Select
             aria-label="Voice"

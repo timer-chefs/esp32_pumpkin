@@ -3,7 +3,7 @@ import { runAction, type Slice } from "../../app/slice.ts";
 import { streamPcm, toDevicePcm } from "../../audio_file.ts";
 import { toError } from "../../to_error.ts";
 import type { DownloadProgress } from "./download_cache.ts";
-import { effects } from "./effects.ts";
+import { effects } from "../voice_effect/effects.ts";
 import { loadVoice } from "./piper.ts";
 import { voices } from "./voices.ts";
 
@@ -19,7 +19,6 @@ export type SpeechPhase = "loading" | "synthesizing" | "speaking";
 
 export interface SpeechState {
   voiceId: string;
-  effectId: string;
   /** Null unless something is being said. */
   phase: SpeechPhase | null;
   /** Null unless the voice is downloading, which it only does the first time. */
@@ -29,7 +28,6 @@ export interface SpeechState {
 
 export interface SpeechActions {
   selectVoice: (id: string) => void;
-  selectEffect: (id: string) => void;
   /** Says the text through the pumpkin. */
   say: (text: string) => void;
   stop: () => void;
@@ -38,7 +36,6 @@ export interface SpeechActions {
 export const speechSlice: Slice<SpeechState, SpeechActions> = {
   initialState: {
     voiceId: voices[0].id,
-    effectId: effects[0].id,
     phase: null,
     download: null,
     error: null,
@@ -56,7 +53,8 @@ export const speechSlice: Slice<SpeechState, SpeechActions> = {
 
       const request = ++lastRequest;
       const isCurrent = () => request === lastRequest;
-      const { voiceId, effectId } = getState();
+      const { voiceId } = getState();
+      const { effectId } = app.getState().voiceEffect;
       const effect =
         effects.find((effect) => effect.id === effectId) ?? effects[0];
       update({ phase: "loading", download: null, error: null });
@@ -132,7 +130,6 @@ export const speechSlice: Slice<SpeechState, SpeechActions> = {
 
     return {
       selectVoice: (id) => update({ voiceId: id }),
-      selectEffect: (id) => update({ effectId: id }),
       say: (text) => runAction(() => say(text)),
       stop: () => runAction(stop),
     };

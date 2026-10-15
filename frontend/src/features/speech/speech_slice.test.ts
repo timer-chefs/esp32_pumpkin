@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AppAccess } from "../../app/slice.ts";
 import { streamPcm, toDevicePcm } from "../../audio_file.ts";
-import { effects } from "./effects.ts";
+import { effects } from "../voice_effect/effects.ts";
 import { loadVoice, type PiperVoice, type Speech } from "./piper.ts";
 import { speechSlice, type SpeechState } from "./speech_slice.ts";
 
@@ -11,7 +11,7 @@ vi.mock("../../audio_file.ts", () => ({
   streamPcm: vi.fn(),
   toDevicePcm: vi.fn(),
 }));
-vi.mock("./effects.ts", () => ({
+vi.mock("../voice_effect/effects.ts", () => ({
   effects: [
     { id: "growl", name: "Growl", lengthScale: 1.5, apply: vi.fn() },
     { id: "hiss", name: "Hiss", lengthScale: 0.8, apply: vi.fn() },
@@ -25,7 +25,7 @@ const hissed = new Float32Array(120);
 const pcm = new Int16Array(116);
 
 /** The slice's actions over a state of its own, as the controller would set it up. */
-function createSpeech(initial: Partial<SpeechState> = {}) {
+function createSpeech(initial: Partial<SpeechState> = {}, effectId = "growl") {
   let state: SpeechState = { ...speechSlice.initialState, ...initial };
   const phases: SpeechState["phase"][] = [];
   const appActions = {
@@ -40,7 +40,10 @@ function createSpeech(initial: Partial<SpeechState> = {}) {
         phases.push(state.phase);
       }
     },
-    app: { actions: () => appActions } as unknown as AppAccess,
+    app: {
+      actions: () => appActions,
+      getState: () => ({ voiceEffect: { effectId } }),
+    } as unknown as AppAccess,
   });
 
   return { actions, appActions, phases, state: () => state };
@@ -110,9 +113,8 @@ describe("speechSlice", () => {
   it("says it with the effect that's picked", async () => {
     const voice = voiceSaying();
     vi.mocked(loadVoice).mockResolvedValue(voice);
-    const { actions, state } = createSpeech();
+    const { actions, state } = createSpeech({}, "hiss");
 
-    actions.selectEffect("hiss");
     actions.say("Boo");
 
     await vi.waitFor(() => expect(state().phase).toBeNull());

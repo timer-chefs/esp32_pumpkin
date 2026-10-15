@@ -21,6 +21,10 @@ import type {
   SpeechState,
 } from "../features/speech/speech_slice.ts";
 import type {
+  VoiceEffectActions,
+  VoiceEffectState,
+} from "../features/voice_effect/voice_effect_slice.ts";
+import type {
   VolumeActions,
   VolumeState,
 } from "../features/volume/volume_slice.ts";
@@ -38,6 +42,7 @@ export interface AppState {
   sdCard: SdCardState;
   speech: SpeechState;
   status: StatusState;
+  voiceEffect: VoiceEffectState;
   volume: VolumeState;
 }
 
@@ -50,5 +55,6 @@ export interface AppActions {
   sdCard: SdCardActions;
   speech: SpeechActions;
   status: StatusActions;
+  voiceEffect: VoiceEffectActions;
   volume: VolumeActions;
 }
