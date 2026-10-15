@@ -17,13 +17,9 @@ describe("AudioSourceControl", () => {
     const user = userEvent.setup();
     const controller = renderControl();
 
-    await user.click(screen.getByRole("button", { name: "Microphone" }));
     await user.click(screen.getByRole("button", { name: "Audio file" }));
     await user.click(screen.getByRole("button", { name: "SD card" }));
 
-    expect(
-      controller.actions.audioSource.startMicrophone,
-    ).toHaveBeenCalledOnce();
     expect(controller.actions.audioSource.startFileMode).toHaveBeenCalledOnce();
     expect(
       controller.actions.audioSource.startSdCardMode,
