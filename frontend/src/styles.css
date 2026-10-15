@@ -272,14 +272,35 @@ h2 {
 
 @media (max-width: 640px) {
   .app-header {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 1.25rem;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
   }
 
   .app-status {
+    flex: 0 1 auto;
     min-width: 0;
-    max-width: none;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .app-status-mode {
+    min-width: 0;
+  }
+
+  .app-status-mode strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Truncate what's streaming before the mode. */
+  .streaming-label {
+    flex: 1 1 0;
   }
 
   .control-section {

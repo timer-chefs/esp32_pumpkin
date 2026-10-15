@@ -22,11 +22,6 @@ export function VoiceEffectPicker() {
 
   return (
     <section className="control-section" aria-labelledby="voice-effect-heading">
-      <div className="section-heading">
-        <h2 id="voice-effect-heading">Voice effect</h2>
-        <span className="text-body-secondary">For talking and saying</span>
-      </div>
-
       <ToggleButtonGroup
         type="radio"
         name="voice-effect"

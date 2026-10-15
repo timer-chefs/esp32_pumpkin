@@ -111,17 +111,6 @@
     );
 }
 
-.eye-look-scale {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.25rem;
-  color: var(--pumpkin-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04rem;
-  text-transform: uppercase;
-}
-
 /* Wide enough for either label, so the slider doesn't jump as it flips. */
 .eye-lid-button {
   min-width: 3rem;

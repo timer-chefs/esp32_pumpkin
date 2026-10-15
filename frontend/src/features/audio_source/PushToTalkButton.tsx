@@ -54,12 +54,6 @@ export function PushToTalkButton() {
 
   return (
     <section className="control-section" aria-labelledby="talk-heading">
-      <div className="section-heading">
-        <h2 id="talk-heading">Talk</h2>
-        <span className="text-body-secondary">
-          Streams only while held down
-        </span>
-      </div>
       <Button
         variant={isPressed ? "danger" : "dark"}
         className={`push-to-talk ${pushToTalk === "talking" ? "push-to-talk--live" : ""}`}

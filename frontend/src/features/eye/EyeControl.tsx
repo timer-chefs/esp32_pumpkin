@@ -17,11 +17,6 @@ export function EyeControl() {
 
   return (
     <section className="control-section" aria-labelledby="eye-heading">
-      <div className="section-heading">
-        <h2 id="eye-heading">Eye</h2>
-        <span className="text-body-secondary">Drag to look around</span>
-      </div>
-
       <div className="eye-panel">
         <div className="eye-look">
           <input
@@ -36,11 +31,6 @@ export function EyeControl() {
             value={position}
             onChange={(event) => look(event.currentTarget.valueAsNumber)}
           />
-          <div className="eye-look-scale" aria-hidden="true">
-            <span>Left</span>
-            <span>Ahead</span>
-            <span>Right</span>
-          </div>
         </div>
 
         <Button

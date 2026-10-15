@@ -45,11 +45,6 @@ export function PresetGrid() {
 
   return (
     <section className="control-section" aria-labelledby="presets-heading">
-      <div className="section-heading">
-        <h2 id="presets-heading">Presets</h2>
-        <span className="text-body-secondary">Lights, sound and eye</span>
-      </div>
-
       <div className="preset-grid">
         {presets.slice(0, shownPresetCount).map(presetButton)}
         <Button
