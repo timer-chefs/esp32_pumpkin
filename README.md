@@ -26,7 +26,7 @@ You can also upload songs through the web UI that get saved to the ESP32. It wil
 
 ## Usage
 
-## Calibrate the eye
+### Calibrate the eye
 
 The Calibration page sets the angles the eye's servos move between. Drag each end of a servo's range until the eye stops where it should (far left and far right for the eye, shut and wide open for the lid), then save it.
 
