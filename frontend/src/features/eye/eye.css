@@ -1,10 +1,10 @@
 .eye-panel {
   --eye-thumb-size: 2.75rem;
   --eye-track-size: 0.5rem;
-  --eye-lid-length: 8.5rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  /* Level with the slider rather than its scale underneath. */
+  align-items: start;
   gap: 1.5rem;
   padding: 1rem 1.5rem;
   background: var(--pumpkin-surface);
@@ -122,41 +122,7 @@
   text-transform: uppercase;
 }
 
-.eye-lid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--pumpkin-muted);
-}
-
-.eye-lid svg {
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
-/* A horizontal slider turned on its side: unlike a vertical writing mode,
-   custom styling survives it in every browser. Turning it anticlockwise
-   puts the minimum, shut, at the bottom. */
-.eye-lid-track {
-  position: relative;
-  width: var(--eye-thumb-size);
-  height: var(--eye-lid-length);
-}
-
-.eye-lid-slider {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--eye-lid-length);
-  height: var(--eye-thumb-size);
-  transform: translate(-50%, -50%) rotate(-90deg);
-}
-
-.eye-lid-slider::-webkit-slider-thumb {
-  background: #e07b24;
-}
-
-.eye-lid-slider::-moz-range-thumb {
-  background: #e07b24;
+/* Wide enough for either label, so the slider doesn't jump as it flips. */
+.eye-lid-button {
+  min-width: 3rem;
 }
