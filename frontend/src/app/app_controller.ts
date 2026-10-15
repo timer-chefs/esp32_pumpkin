@@ -6,6 +6,7 @@ import { eyeSlice } from "../features/eye/eye_slice.ts";
 import { logSlice } from "../features/log/log_slice.ts";
 import { presetsSlice } from "../features/presets/presets_slice.ts";
 import { sdCardSlice } from "../features/sd_card/sd_card_slice.ts";
+import { speechSlice } from "../features/speech/speech_slice.ts";
 import { volumeSlice } from "../features/volume/volume_slice.ts";
 import {
   getPumpkinConnection,
@@ -26,6 +27,7 @@ const slices: {
   log: logSlice,
   presets: presetsSlice,
   sdCard: sdCardSlice,
+  speech: speechSlice,
   status: statusSlice,
   volume: volumeSlice,
 };

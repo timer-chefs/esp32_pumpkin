@@ -11,6 +11,7 @@ import { EyeCalibration } from "./features/calibration/EyeCalibration.tsx";
 import { EyeControl } from "./features/eye/EyeControl.tsx";
 import { DeviceLog } from "./features/log/DeviceLog.tsx";
 import { PresetGrid } from "./features/presets/PresetGrid.tsx";
+import { SpeechControl } from "./features/speech/SpeechControl.tsx";
 import { VolumeControl } from "./features/volume/VolumeControl.tsx";
 
 export function App() {
@@ -30,6 +31,7 @@ export function App() {
             <PresetGrid />
             <EyeControl />
             <PushToTalkButton />
+            <SpeechControl />
           </div>
 
           <div hidden={page !== "audio"}>

@@ -17,6 +17,10 @@ import type {
   SdCardState,
 } from "../features/sd_card/sd_card_slice.ts";
 import type {
+  SpeechActions,
+  SpeechState,
+} from "../features/speech/speech_slice.ts";
+import type {
   VolumeActions,
   VolumeState,
 } from "../features/volume/volume_slice.ts";
@@ -32,6 +36,7 @@ export interface AppState {
   log: LogState;
   presets: PresetsState;
   sdCard: SdCardState;
+  speech: SpeechState;
   status: StatusState;
   volume: VolumeState;
 }
@@ -43,6 +48,7 @@ export interface AppActions {
   log: LogActions;
   presets: PresetsActions;
   sdCard: SdCardActions;
+  speech: SpeechActions;
   status: StatusActions;
   volume: VolumeActions;
 }

@@ -13,7 +13,18 @@ export async function streamAudioFile(
   file: File,
   setStatus: AudioFileStatus = () => {},
 ): Promise<void> {
-  const pcm = await decodeAudioFile(file);
+  await streamPcm(await decodeAudioFile(file), setStatus);
+}
+
+/**
+ * Streams the device's mono 16 kHz PCM to it as fast as it plays. Resolves
+ * to whether all of it went out, rather than something else taking the
+ * device over part way through.
+ */
+export async function streamPcm(
+  pcm: Int16Array<ArrayBuffer>,
+  setStatus: AudioFileStatus = () => {},
+): Promise<boolean> {
   const session = await audioSessionManager.start({
     onError: (error) => console.error("Audio session error:", error),
   });
@@ -27,7 +38,7 @@ export async function streamAudioFile(
   try {
     for (let offset = 0; offset < data.length;) {
       if (!audioSessionManager.isActive(session)) {
-        return;
+        return false;
       }
 
       const chunk = data.slice(
@@ -55,7 +66,7 @@ export async function streamAudioFile(
       );
 
       if (!(await session.wait(delayMilliseconds))) {
-        return;
+        return false;
       }
     }
 
@@ -65,6 +76,7 @@ export async function streamAudioFile(
     if (await session.wait(500)) {
       await audioSessionManager.stop(session);
     }
+    return true;
   } catch (error) {
     await audioSessionManager.stop(session, { notifyServer: false });
     throw error;
@@ -81,22 +93,26 @@ export async function decodeAudioFile(
     const audioBuffer = await audioContext.decodeAudioData(
       await file.arrayBuffer(),
     );
-    const monoData = mixToMono(audioBuffer);
-    const resampledData = resampleAudio(
-      monoData,
-      audioBuffer.sampleRate,
-      TARGET_SAMPLE_RATE,
-    );
-    const { data, peak } = convertToInt16(resampledData);
-
-    if (peak < 0.1) {
-      console.warn("Audio level is very quiet (peak below 10%).");
-    }
-
-    return data;
+    return toDevicePcm(mixToMono(audioBuffer), audioBuffer.sampleRate);
   } finally {
     await audioContext.close();
   }
+}
+
+/** Converts mono samples at any sample rate into the device's 16 kHz PCM. */
+export function toDevicePcm(
+  samples: Float32Array<ArrayBuffer>,
+  sampleRate: number,
+): Int16Array<ArrayBuffer> {
+  const { data, peak } = convertToInt16(
+    resampleAudio(samples, sampleRate, TARGET_SAMPLE_RATE),
+  );
+
+  if (peak < 0.1) {
+    console.warn("Audio level is very quiet (peak below 10%).");
+  }
+
+  return data;
 }
 
 function mixToMono(audioBuffer: AudioBuffer): Float32Array<ArrayBuffer> {
