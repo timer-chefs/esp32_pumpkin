@@ -1,14 +1,19 @@
-import { useEffect, type CSSProperties } from "react";
-import { Alert, Button } from "react-bootstrap";
+import { Plus } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { Alert, Button, Modal } from "react-bootstrap";
 
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
 import "./presets.css";
 import { presetIcons, type Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
 
+/** How many presets fit on the page; the rest are a press of "More" away. */
+const shownPresetCount = 5;
+
 export function PresetGrid() {
   const { presets, error, play } = usePresets();
   const { files, isLoading, refresh } = useSdCard();
+  const [isShowingAll, setIsShowingAll] = useState(false);
 
   // Knowing what's on the card is what lets a preset say its sound is missing.
   useEffect(() => {
@@ -22,6 +27,22 @@ export function PresetGrid() {
   const filesOnCard =
     files && new Set(files.map((file) => file.name.toLowerCase()));
 
+  const presetButton = (preset: Preset) => (
+    <PresetButton
+      key={preset.id}
+      preset={preset}
+      isSoundMissing={
+        preset.sound !== null &&
+        filesOnCard !== null &&
+        !filesOnCard.has(preset.sound.toLowerCase())
+      }
+      onPlay={() => {
+        setIsShowingAll(false);
+        play(preset.id);
+      }}
+    />
+  );
+
   return (
     <section className="control-section" aria-labelledby="presets-heading">
       <div className="section-heading">
@@ -30,18 +51,17 @@ export function PresetGrid() {
       </div>
 
       <div className="preset-grid">
-        {presets.map((preset) => (
-          <PresetButton
-            key={preset.id}
-            preset={preset}
-            isSoundMissing={
-              preset.sound !== null &&
-              filesOnCard !== null &&
-              !filesOnCard.has(preset.sound.toLowerCase())
-            }
-            onPlay={() => play(preset.id)}
-          />
-        ))}
+        {presets.slice(0, shownPresetCount).map(presetButton)}
+        <Button
+          variant="light"
+          className="preset-button"
+          onClick={() => setIsShowingAll(true)}
+        >
+          <span className="preset-icon">
+            <Plus aria-hidden="true" />
+          </span>
+          <span className="preset-name text-body-secondary">More</span>
+        </Button>
       </div>
 
       {error && (
@@ -49,6 +69,27 @@ export function PresetGrid() {
           {error}
         </Alert>
       )}
+
+      <Modal
+        show={isShowingAll}
+        onHide={() => setIsShowingAll(false)}
+        animation={false}
+        fullscreen
+        contentClassName="all-presets"
+        aria-labelledby="all-presets-heading"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title as="h2" id="all-presets-heading">
+            All presets
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="preset-grid">{presets.map(presetButton)}</div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="dark" onClick={() => setIsShowingAll(false)}>Close</Button>
+        </Modal.Footer>
+      </Modal>
     </section>
   );
 }
@@ -62,7 +103,7 @@ interface PresetButtonProps {
 function PresetButton({ preset, isSoundMissing, onPlay }: PresetButtonProps) {
   const Icon = presetIcons[preset.icon];
   const style = {
-    "--preset-color": preset.light?.color ?? "var(--pumpkin-line)",
+    "--preset-color": preset.light?.color,
   } as CSSProperties;
 
   return (

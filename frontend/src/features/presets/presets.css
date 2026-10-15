@@ -7,6 +7,8 @@
 
 /* Doubled up to outrank .btn, whose stylesheet loads after this one. */
 .btn.preset-button {
+  /* A preset's light colour, set inline; grey for one without (and "More"). */
+  --preset-color: var(--pumpkin-line);
   --bs-btn-bg: var(--pumpkin-surface);
   --bs-btn-color: var(--pumpkin-ink);
   --bs-btn-border-color: var(--pumpkin-line);
@@ -49,4 +51,26 @@
   font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
   font-weight: 700;
   line-height: 1.1;
+}
+
+/* Doubled up to outrank .modal-content, whose stylesheet loads after this one. */
+.modal-content.all-presets {
+  background-color: var(--pumpkin-paper);
+}
+
+.all-presets .modal-header {
+  border-bottom: 2px solid var(--pumpkin-ink);
+}
+
+.all-presets .modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Kept to the page's width so a desktop doesn't get one long row. */
+.all-presets .modal-header,
+.all-presets .modal-body {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
 }

@@ -6,6 +6,7 @@
   --pumpkin-line: #cbd1c8;
   --pumpkin-surface: #ffffff;
   --pumpkin-muted: #667066;
+  --pumpkin-paper: #f1f3ef;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -26,7 +27,7 @@ h2 {
 
 .app-shell {
   color: var(--pumpkin-ink);
-  background-color: #f1f3ef;
+  background-color: var(--pumpkin-paper);
   background-image: linear-gradient(
     rgba(32, 35, 31, 0.035) 1px,
     transparent 1px
