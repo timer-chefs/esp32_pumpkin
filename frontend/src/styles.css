@@ -147,6 +147,32 @@ h2 {
   line-height: 1;
 }
 
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+  white-space: nowrap;
+}
+
+.app-brand-emblem {
+  width: 0.85em;
+  height: 1em;
+  flex: 0 0 auto;
+  color: var(--pumpkin-accent);
+  filter: drop-shadow(0 0 0.2em rgba(255, 117, 24, 0.65));
+}
+
+.app-brand-label {
+  /* Make room for the emblem within the old title's footprint. Both scale
+     with the existing mobile heading size, without adding another row. */
+  font-size: 0.75em;
+  letter-spacing: -0.035em;
+  color: var(--pumpkin-accent);
+  text-shadow:
+    0 0 0.2em rgba(255, 117, 24, 0.65),
+    0 0 0.7em rgba(255, 117, 24, 0.4);
+}
+
 .app-kicker {
   color: var(--pumpkin-muted);
   font-size: 0.75rem;
@@ -200,11 +226,14 @@ h2 {
 }
 
 .page-nav .nav-link {
-  color: var(--pumpkin-muted);
+  color: var(--pumpkin-accent);
 }
 
+.page-nav .nav-link:hover,
+.page-nav .nav-link:focus,
 .page-nav .nav-link.active {
-  color: var(--pumpkin-text);
+  color: var(--pumpkin-accent);
+  text-shadow: 0 0 0.6em rgba(255, 117, 24, 0.5);
 }
 
 .page-nav-count {
