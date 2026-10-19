@@ -1,5 +1,28 @@
 /* Doubled up to outrank .btn, whose stylesheet loads after this one. */
 .btn.push-to-talk {
+  --talk-color: var(--pumpkin-accent);
+  --talk-shadow: 0 0 0.75rem
+    color-mix(in srgb, var(--talk-color) 15%, transparent);
+  --bs-btn-color: var(--talk-color);
+  --bs-btn-bg: color-mix(
+    in srgb,
+    var(--talk-color) 10%,
+    var(--pumpkin-surface)
+  );
+  --bs-btn-border-color: var(--talk-color);
+  --bs-btn-hover-color: var(--talk-color);
+  --bs-btn-hover-bg: color-mix(
+    in srgb,
+    var(--talk-color) 18%,
+    var(--pumpkin-surface)
+  );
+  --bs-btn-hover-border-color: var(--talk-color);
+  --bs-btn-active-color: var(--talk-color);
+  --bs-btn-active-bg: var(--bs-btn-hover-bg);
+  --bs-btn-active-border-color: var(--talk-color);
+  --bs-btn-focus-box-shadow: var(--talk-shadow);
+  box-shadow: var(--talk-shadow);
+  transition: none;
   min-height: 5rem;
   display: inline-flex;
   align-items: center;
@@ -23,24 +46,15 @@
   height: 1.5rem;
 }
 
-.push-to-talk--live {
-  animation: push-to-talk-live 1.2s ease-in-out infinite;
+.btn.push-to-talk[aria-pressed="true"] {
+  --talk-color: var(--pumpkin-danger);
+  --talk-shadow:
+    0 0 0 1px var(--talk-color),
+    0 0 1.2rem color-mix(in srgb, var(--talk-color) 45%, transparent);
 }
 
-@keyframes push-to-talk-live {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-danger-rgb), 0.3);
-  }
-
-  50% {
-    box-shadow: 0 0 0 0.6rem rgba(var(--bs-danger-rgb), 0.1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .push-to-talk--live {
-    animation: none;
-    box-shadow: 0 0 0 0.35rem rgba(var(--bs-danger-rgb), 0.25);
-  }
+.btn.push-to-talk.push-to-talk--live {
+  --talk-shadow:
+    0 0 0 1px var(--talk-color),
+    0 0 1.5rem color-mix(in srgb, var(--talk-color) 60%, transparent);
 }

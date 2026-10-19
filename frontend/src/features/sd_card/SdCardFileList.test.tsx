@@ -37,6 +37,9 @@ describe("SdCardFileList", () => {
     });
 
     expect(screen.getByLabelText("Playing")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Stop" })).toHaveClass(
+      "btn-danger",
+    );
 
     await user.click(screen.getByRole("button", { name: "Stop" }));
 

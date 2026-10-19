@@ -97,7 +97,7 @@ export function SpeechControl({ text, onTextChange }: SpeechControlProps) {
           ) : (
             <Button
               key="stop"
-              variant="outline-danger"
+              variant="danger"
               className="icon-label-button"
               onClick={stop}
             >

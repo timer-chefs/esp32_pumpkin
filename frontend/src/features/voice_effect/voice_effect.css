@@ -18,7 +18,15 @@
 }
 
 .dropdown-menu.voice-effect-menu {
-  --bs-dropdown-link-active-bg: var(--pumpkin-ink);
+  --bs-dropdown-bg: var(--pumpkin-surface);
+  --bs-dropdown-color: var(--pumpkin-text);
+  --bs-dropdown-link-color: var(--pumpkin-text);
+  --bs-dropdown-link-hover-color: var(--pumpkin-text);
+  --bs-dropdown-link-hover-bg: var(--bs-tertiary-bg);
+  --bs-dropdown-link-active-color: var(--pumpkin-ink);
+  --bs-dropdown-link-active-bg: var(--pumpkin-accent);
+  --bs-dropdown-border-color: var(--pumpkin-line);
+  box-shadow: 0 0 1.5rem rgba(168, 121, 255, 0.12);
 }
 
 .dropdown-item.voice-effect-item {
@@ -31,4 +39,13 @@
 .voice-effect-item svg {
   width: 1.25rem;
   height: 1.25rem;
+}
+
+.dropdown-item.voice-effect-item:focus-visible {
+  outline: 2px solid var(--pumpkin-text);
+  outline-offset: -2px;
+}
+
+.dropdown-item.voice-effect-item.active:focus-visible {
+  outline-color: var(--pumpkin-ink);
 }
