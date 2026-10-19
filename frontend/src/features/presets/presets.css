@@ -10,14 +10,21 @@
   /* A preset's light colour, set inline; grey for one without (and "More"). */
   --preset-color: var(--pumpkin-line);
   --bs-btn-bg: var(--pumpkin-surface);
-  --bs-btn-color: var(--pumpkin-ink);
+  --bs-btn-color: var(--pumpkin-text);
   --bs-btn-border-color: var(--pumpkin-line);
   --bs-btn-hover-bg: var(--pumpkin-surface);
-  --bs-btn-hover-color: var(--pumpkin-ink);
-  --bs-btn-hover-border-color: var(--pumpkin-ink);
-  --bs-btn-active-bg: color-mix(in srgb, var(--preset-color) 12%, white);
-  --bs-btn-active-color: var(--pumpkin-ink);
-  --bs-btn-active-border-color: var(--pumpkin-ink);
+  --bs-btn-hover-color: var(--pumpkin-text);
+  --bs-btn-hover-border-color: var(--pumpkin-muted);
+  --bs-btn-active-bg: color-mix(
+    in srgb,
+    var(--preset-color) 12%,
+    var(--pumpkin-surface)
+  );
+  --bs-btn-active-color: var(--pumpkin-text);
+  --bs-btn-active-border-color: var(--pumpkin-muted);
+  --bs-btn-disabled-color: var(--pumpkin-muted);
+  --bs-btn-disabled-bg: var(--pumpkin-surface);
+  --bs-btn-disabled-border-color: var(--pumpkin-line);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,8 +42,12 @@
   height: 3.25rem;
   display: grid;
   place-items: center;
-  color: color-mix(in srgb, var(--preset-color) 55%, var(--pumpkin-ink));
-  background: color-mix(in srgb, var(--preset-color) 28%, white);
+  color: color-mix(in srgb, var(--preset-color) 55%, var(--pumpkin-text));
+  background: color-mix(
+    in srgb,
+    var(--preset-color) 28%,
+    var(--pumpkin-surface)
+  );
   border-radius: 50%;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--preset-color) 50%, var(--pumpkin-line));
