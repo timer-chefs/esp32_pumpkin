@@ -3,6 +3,7 @@ import { runAction, type Slice } from "../../app/slice.ts";
 import { audioSessionManager } from "../../audio_session.ts";
 import api, { type AudioFileInfo } from "../../pumpkin_client.ts";
 import { toError } from "../../to_error.ts";
+import { voiceLight } from "../voice_effect/voice_light.ts";
 import {
   toStoredName,
   uploadAudioFile,
@@ -89,7 +90,9 @@ export const sdCardSlice: Slice<SdCardState, SdCardActions> = {
           await audioSessionManager.stop();
 
           try {
-            await api.playAudioFile(await app.connection(), name);
+            const connection = await app.connection();
+            api.setLight(connection, voiceLight);
+            await api.playAudioFile(connection, name);
             update({ playingFile: name, error: null });
             app.actions().status.set({ mode: "SD card", streaming: name });
           } catch (error) {

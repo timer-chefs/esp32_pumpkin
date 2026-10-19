@@ -8,5 +8,5 @@ import type { LightScene } from "../../pumpkin_client.ts";
  */
 export const voiceLight: LightScene = {
   effect: LightEffectId.AUDIO_REACTIVE,
-  color: "#ffa500",
+  color: "#ff0000",
 };
