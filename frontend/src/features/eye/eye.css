@@ -1,6 +1,12 @@
 .eye-panel {
   --eye-thumb-size: 2.75rem;
   --eye-track-size: 0.5rem;
+  --eye-track-color: color-mix(
+    in srgb,
+    var(--pumpkin-accent) 35%,
+    var(--pumpkin-line)
+  );
+  --eye-thumb-shadow: 0 0 0.65rem rgba(255, 117, 24, 0.2);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   /* Level with the slider rather than its scale underneath. */
@@ -26,19 +32,33 @@
   cursor: grabbing;
 }
 
+@media (hover: hover) {
+  .eye-slider:hover {
+    --eye-thumb-shadow: 0 0 0.85rem rgba(255, 117, 24, 0.4);
+  }
+}
+
+.eye-slider:active {
+  --eye-thumb-shadow: 0 0 1rem rgba(255, 117, 24, 0.5);
+}
+
 .eye-slider:focus-visible {
-  outline: none;
+  --eye-thumb-shadow:
+    0 0 0 2px var(--pumpkin-text), 0 0 0 5px var(--pumpkin-accent);
+  outline: 2px solid var(--pumpkin-text);
+  outline-offset: 5px;
+  border-radius: 999px;
 }
 
 .eye-slider::-webkit-slider-runnable-track {
   height: var(--eye-track-size);
-  background: var(--pumpkin-line);
+  background: var(--eye-track-color);
   border-radius: 999px;
 }
 
 .eye-slider::-moz-range-track {
   height: var(--eye-track-size);
-  background: var(--pumpkin-line);
+  background: var(--eye-track-color);
   border-radius: 999px;
 }
 
@@ -50,6 +70,7 @@
   margin-top: calc((var(--eye-track-size) - var(--eye-thumb-size)) / 2);
   border: 3px solid var(--pumpkin-ink);
   border-radius: 50%;
+  box-shadow: var(--eye-thumb-shadow);
 }
 
 .eye-slider::-moz-range-thumb {
@@ -57,14 +78,7 @@
   height: var(--eye-thumb-size);
   border: 3px solid var(--pumpkin-ink);
   border-radius: 50%;
-}
-
-.eye-slider:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 0.25rem rgba(var(--bs-warning-rgb), 0.5);
-}
-
-.eye-slider:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 0.25rem rgba(var(--bs-warning-rgb), 0.5);
+  box-shadow: var(--eye-thumb-shadow);
 }
 
 .eye-look {
@@ -83,14 +97,14 @@
   background:
     linear-gradient(
       to bottom,
-      #e07b24 calc(var(--shut) * 50%),
+      var(--pumpkin-accent) calc(var(--shut) * 50%),
       transparent calc(var(--shut) * 50%) calc(100% - var(--shut) * 50%),
-      #e07b24 calc(100% - var(--shut) * 50%)
+      var(--pumpkin-accent) calc(100% - var(--shut) * 50%)
     ),
     radial-gradient(
       circle at calc(50% + var(--look) * 20%) 50%,
       var(--pumpkin-ink) 0 20%,
-      #e07b24 21% 38%,
+      var(--pumpkin-accent) 21% 38%,
       #ffffff 39%
     );
 }
@@ -99,14 +113,14 @@
   background:
     linear-gradient(
       to bottom,
-      #e07b24 calc(var(--shut) * 50%),
+      var(--pumpkin-accent) calc(var(--shut) * 50%),
       transparent calc(var(--shut) * 50%) calc(100% - var(--shut) * 50%),
-      #e07b24 calc(100% - var(--shut) * 50%)
+      var(--pumpkin-accent) calc(100% - var(--shut) * 50%)
     ),
     radial-gradient(
       circle at calc(50% + var(--look) * 20%) 50%,
       var(--pumpkin-ink) 0 20%,
-      #ac0702 21% 38%,
+      var(--pumpkin-accent) 21% 38%,
       #ffffff 39%
     );
 }

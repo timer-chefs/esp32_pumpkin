@@ -106,7 +106,7 @@ function PresetButton({ preset, isSoundMissing, onPlay }: PresetButtonProps) {
   return (
     <Button
       variant="light"
-      className="preset-button"
+      className={`preset-button${preset.light ? " preset-button--lit" : ""}`}
       style={style}
       onClick={onPlay}
     >

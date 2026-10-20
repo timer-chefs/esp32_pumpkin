@@ -9,15 +9,32 @@
 .btn.preset-button {
   /* A preset's light colour, set inline; grey for one without (and "More"). */
   --preset-color: var(--pumpkin-line);
+  --preset-shadow: none;
   --bs-btn-bg: var(--pumpkin-surface);
-  --bs-btn-color: var(--pumpkin-ink);
-  --bs-btn-border-color: var(--pumpkin-line);
+  --bs-btn-color: var(--pumpkin-text);
+  --bs-btn-border-color: color-mix(
+    in srgb,
+    var(--preset-color) 30%,
+    var(--pumpkin-line)
+  );
   --bs-btn-hover-bg: var(--pumpkin-surface);
-  --bs-btn-hover-color: var(--pumpkin-ink);
-  --bs-btn-hover-border-color: var(--pumpkin-ink);
-  --bs-btn-active-bg: color-mix(in srgb, var(--preset-color) 12%, white);
-  --bs-btn-active-color: var(--pumpkin-ink);
-  --bs-btn-active-border-color: var(--pumpkin-ink);
+  --bs-btn-hover-color: var(--pumpkin-text);
+  --bs-btn-hover-border-color: var(--pumpkin-muted);
+  --bs-btn-active-bg: color-mix(
+    in srgb,
+    var(--preset-color) 12%,
+    var(--pumpkin-surface)
+  );
+  --bs-btn-active-color: var(--pumpkin-text);
+  --bs-btn-active-border-color: var(--pumpkin-muted);
+  --bs-btn-disabled-color: var(--pumpkin-muted);
+  --bs-btn-disabled-bg: var(--pumpkin-surface);
+  --bs-btn-disabled-border-color: var(--pumpkin-line);
+  /* Keep Bootstrap's generic focus/active shadow from replacing the glow. */
+  --bs-btn-focus-box-shadow: var(--preset-shadow);
+  box-shadow: var(--preset-shadow);
+  /* Override Bootstrap's fade so the strong glow ends with the press. */
+  transition: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,16 +47,60 @@
   -webkit-user-select: none;
 }
 
+.btn.preset-button--lit {
+  --preset-shadow: 0 0 0.65rem
+    color-mix(in srgb, var(--preset-color) 12%, transparent);
+  --preset-icon-glow: 0 0 0.75rem
+    color-mix(in srgb, var(--preset-color) 25%, transparent);
+  --bs-btn-hover-border-color: var(--preset-color);
+  --bs-btn-active-border-color: var(--preset-color);
+}
+
+@media (hover: hover) {
+  .btn.preset-button--lit:hover:not(:disabled) {
+    --preset-shadow: 0 0 0.85rem
+      color-mix(in srgb, var(--preset-color) 22%, transparent);
+  }
+}
+
+/* Only a held press gets the strong glow; it is not playback status. */
+.btn.preset-button--lit:active:not(:disabled) {
+  --preset-shadow:
+    0 0 0 1px var(--preset-color),
+    0 0 0.85rem color-mix(in srgb, var(--preset-color) 65%, transparent),
+    0 0 1.5rem color-mix(in srgb, var(--preset-color) 30%, transparent);
+  --preset-icon-glow: 0 0 1rem
+    color-mix(in srgb, var(--preset-color) 65%, transparent);
+}
+
+.btn.preset-button:focus-visible {
+  /* A high-contrast outline stays visible even for dark preset colors. */
+  outline: 2px solid var(--pumpkin-text);
+  outline-offset: 3px;
+  box-shadow: var(--preset-shadow);
+}
+
+.btn.preset-button:disabled {
+  --preset-shadow: none;
+  --preset-icon-glow: 0 0 0 transparent;
+}
+
 .preset-icon {
   width: 3.25rem;
   height: 3.25rem;
   display: grid;
   place-items: center;
-  color: color-mix(in srgb, var(--preset-color) 55%, var(--pumpkin-ink));
-  background: color-mix(in srgb, var(--preset-color) 28%, white);
+  color: color-mix(in srgb, var(--preset-color) 55%, var(--pumpkin-text));
+  background: color-mix(
+    in srgb,
+    var(--preset-color) 28%,
+    var(--pumpkin-surface)
+  );
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--preset-color) 50%, var(--pumpkin-line));
+  box-shadow:
+    inset 0 0 0 1px
+      color-mix(in srgb, var(--preset-color) 50%, var(--pumpkin-line)),
+    var(--preset-icon-glow, 0 0 0 transparent);
 }
 
 .preset-icon svg {

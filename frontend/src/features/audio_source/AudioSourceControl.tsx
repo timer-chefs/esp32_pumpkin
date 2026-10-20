@@ -66,7 +66,7 @@ export function AudioSourceControl() {
               </strong>
             </Stack>
             <Button
-              variant="outline-danger"
+              variant="danger"
               className="icon-label-button"
               onClick={stopMicrophone}
             >
@@ -111,7 +111,7 @@ export function AudioSourceControl() {
                 Stream
               </Button>
               <Button
-                variant="outline-danger"
+                variant="danger"
                 className="icon-label-button"
                 onClick={stopAudio}
               >

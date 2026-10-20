@@ -53,7 +53,7 @@ constexpr uint16_t audio_catch_up_crossfade_ms = 3;
 
 // LED strip
 constexpr uint8_t pin_led_strip = GPIO_NUM_1;
-constexpr uint8_t num_leds = 2;
+constexpr uint8_t num_leds = 20;
 constexpr uint8_t max_brightness = 255;
 constexpr uint16_t brightness_scaling_factor = 50;
 

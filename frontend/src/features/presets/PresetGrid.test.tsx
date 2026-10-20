@@ -29,6 +29,33 @@ describe("PresetGrid", () => {
     ]);
   });
 
+  it("uses each preset's exact light color for its glow", () => {
+    renderWithAppContext(<PresetGrid />);
+
+    for (const preset of defaultPresets.slice(0, 5)) {
+      const button = screen.getByRole("button", { name: preset.name });
+      expect(button).toHaveClass("preset-button--lit");
+      expect(button.style.getPropertyValue("--preset-color")).toBe(
+        preset.light!.color,
+      );
+    }
+
+    expect(screen.getByRole("button", { name: "More" })).not.toHaveClass(
+      "preset-button--lit",
+    );
+  });
+
+  it("keeps presets without a light neutral", () => {
+    const preset = { ...defaultPresets[0], light: null };
+    renderWithAppContext(<PresetGrid />, {
+      state: { presets: { presets: [preset] } },
+    });
+
+    const button = screen.getByRole("button", { name: preset.name });
+    expect(button).not.toHaveClass("preset-button--lit");
+    expect(button.style.getPropertyValue("--preset-color")).toBe("");
+  });
+
   it("shows every preset when More is pressed", async () => {
     const user = userEvent.setup();
     renderWithAppContext(<PresetGrid />);
@@ -37,9 +64,14 @@ describe("PresetGrid", () => {
 
     const dialog = screen.getByRole("dialog", { name: "All presets" });
     for (const preset of defaultPresets) {
-      expect(
-        within(dialog).getByRole("button", { name: preset.name }),
-      ).toBeVisible();
+      const button = within(dialog).getByRole("button", { name: preset.name });
+      expect(button).toBeVisible();
+      if (preset.light) {
+        expect(button).toHaveClass("preset-button--lit");
+        expect(button.style.getPropertyValue("--preset-color")).toBe(
+          preset.light.color,
+        );
+      }
     }
   });
 
