@@ -184,8 +184,8 @@ function optionsOf<Value extends number>(
     .map(([name, value]) => [value, labelOf(name)] as const);
 }
 
-/** AUDIO_REACTIVE as "Audio reactive", and moon as "Moon". */
+/** AUDIO_REACTIVE as "Audio reactive", and cloud-lightning as "Cloud lightning". */
 function labelOf(name: string): string {
-  const words = name.toLowerCase().replaceAll("_", " ");
+  const words = name.toLowerCase().replaceAll(/[_-]/g, " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 }

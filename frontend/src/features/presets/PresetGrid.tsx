@@ -5,7 +5,8 @@ import { Alert, Button, Modal, Spinner } from "react-bootstrap";
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
 import { PresetEditor } from "./PresetEditor.tsx";
 import "./presets.css";
-import { presetIcons, type Preset } from "./presets.ts";
+import { PresetIconImage } from "./PresetIconImage.tsx";
+import type { Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
 import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 
@@ -162,7 +163,6 @@ interface PresetButtonProps {
 }
 
 function PresetButton({ preset, isSoundMissing, onPlay }: PresetButtonProps) {
-  const Icon = presetIcons[preset.icon];
   const style = {
     "--preset-color": preset.light?.color,
   } as CSSProperties;
@@ -175,7 +175,7 @@ function PresetButton({ preset, isSoundMissing, onPlay }: PresetButtonProps) {
       onClick={onPlay}
     >
       <span className="preset-icon">
-        <Icon aria-hidden="true" />
+        <PresetIconImage name={preset.icon} />
       </span>
       <span
         className={`preset-name ${isSoundMissing ? "text-danger" : "text-body-secondary"}`}

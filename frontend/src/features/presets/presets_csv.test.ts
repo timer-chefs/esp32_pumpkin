@@ -99,7 +99,7 @@ describe("parsePresetsCsv", () => {
     expect(problems).toEqual([]);
     expect(preset).toMatchObject({
       name: "Häxa, the witch",
-      icon: "wand",
+      icon: "wand-sparkles",
       light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#33ff33" },
       sound: "witch.wav",
       eye: EyeEffectId.SHIFTY,
@@ -120,6 +120,20 @@ describe("parsePresetsCsv", () => {
     ]);
   });
 
+  it("reads icons by Lucide's names, and by the names they had before", () => {
+    const { presets, problems } = parsePresetsCsv(
+      "name,icon\nA,Cloud Lightning\nB,wand\nC,lightning\nD,cat\n",
+    );
+
+    expect(problems).toEqual([]);
+    expect(presets.map((preset) => preset.icon)).toEqual([
+      "cloud-lightning",
+      "wand-sparkles",
+      "cloud-lightning",
+      "cat",
+    ]);
+  });
+
   it("takes a quote inside a name as part of it", () => {
     const { preset } = onlyPreset('name\n12" ghost\n');
 
@@ -130,7 +144,7 @@ describe("parsePresetsCsv", () => {
     const { presets, problems } = parsePresetsCsv(
       [
         "name,icon,light,color,sound,eye,notes",
-        "Ghost,bat,audio_reactive,purple,ghost.wav,wnder,spooky",
+        "Ghost,🦇,audio_reactive,purple,ghost.wav,wnder,spooky",
         ",ghost,strobe,,,",
         "Wolf,moon,candle,,wolf.wav,",
       ].join("\n"),
@@ -138,7 +152,7 @@ describe("parsePresetsCsv", () => {
 
     expect(problems).toEqual([
       `There's no "notes" column, so it's left out when the presets are saved`,
-      'Line 2: "bat" isn\'t an icon (flame, ghost, lightning, moon, skull, wand)',
+      `Line 2: "🦇" isn't an icon's name, like cloud-lightning`,
       `Line 2: "purple" isn't a color like #ff8800`,
       `Line 2: "wnder" isn't an eye effect (none, wander, shifty, stare, sleep)`,
       "Line 3: there's no name",

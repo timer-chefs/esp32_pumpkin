@@ -12,8 +12,9 @@ import { Fragment, useState, type CSSProperties } from "react";
 import { Alert, Button, ListGroup, Modal, Spinner } from "react-bootstrap";
 
 import { PresetForm } from "./PresetForm.tsx";
+import { PresetIconImage } from "./PresetIconImage.tsx";
 import "./presets.css";
-import { newPreset, presetIcons, type Preset } from "./presets.ts";
+import { newPreset, type Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
 import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 
@@ -194,7 +195,6 @@ function PresetRow({
   onMove,
   onRemove,
 }: PresetRowProps) {
-  const Icon = presetIcons[preset.icon];
   const style = { "--preset-color": preset.light?.color } as CSSProperties;
   const name = preset.name.trim() || "Unnamed";
 
@@ -208,7 +208,7 @@ function PresetRow({
         onClick={onOpen}
       >
         <span className="preset-icon preset-icon-small" style={style}>
-          <Icon aria-hidden="true" />
+          <PresetIconImage name={preset.icon} />
         </span>
         <span className="preset-edit-text">
           <span className="preset-name">{name}</span>

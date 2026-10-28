@@ -22,14 +22,14 @@ The presets are kept in `presets.csv` at the root of the SD card, so a card carr
 
 The first line names the columns, which can come in any order:
 
-| Column  | What it holds                                                          |
-| ------- | ---------------------------------------------------------------------- |
-| `name`  | The name on the preset's button.                                       |
-| `icon`  | `flame`, `ghost`, `lightning`, `moon`, `skull` or `wand`.              |
-| `light` | `candle`, `audio_reactive`, or `none` to leave the lights as they are. |
-| `color` | The light's color, as `#rrggbb`.                                       |
-| `sound` | A `.wav` file in `/audio`, or empty to play nothing.                   |
-| `eye`   | `none`, `wander`, `shifty`, `stare` or `sleep`.                        |
+| Column  | What it holds                                                                          |
+| ------- | -------------------------------------------------------------------------------------- |
+| `name`  | The name on the preset's button.                                                       |
+| `icon`  | The name of one of [Lucide's icons](https://lucide.dev/icons), like `cloud-lightning`. |
+| `light` | `candle`, `audio_reactive`, or `none` to leave the lights as they are.                 |
+| `color` | The light's color, as `#rrggbb`.                                                       |
+| `sound` | A `.wav` file in `/audio`, or empty to play nothing.                                   |
+| `eye`   | `none`, `wander`, `shifty`, `stare` or `sleep`.                                        |
 
 ```csv
 name,icon,light,color,sound,eye

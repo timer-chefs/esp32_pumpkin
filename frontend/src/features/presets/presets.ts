@@ -1,32 +1,33 @@
 import {
-  CloudLightning,
-  Flame,
-  Ghost,
-  EyeDashed,
-  Music,
-  FlaskConical,
-  FaceGrinning,
-  FaceSlightlySmilingPlus,
-  type LucideIcon,
-  Moon,
-  Skull,
-  WandSparkles,
-  Wand,
-  Square,
+    CloudLightning,
+    EyeDashed,
+    FaceGrinning,
+    FaceSlightlySmilingPlus,
+    Flame,
+    FlaskConical,
+    Ghost,
+    type LucideIcon,
+    Moon,
+    Music,
+    Skull,
+    Square,
+    Wand,
+    WandSparkles,
 } from "lucide-react";
 
 import {
-  EyeEffectId,
-  LightEffectId,
+    EyeEffectId,
+    LightEffectId,
 } from "../../generated/pumpkin/protocol.ts";
 import type { PresetScene } from "../../pumpkin_client.ts";
 
 /**
- * The icons a preset can show. A preset names its icon rather than holding
- * the component, so it stays plain data that can be stored once presets are
- * editable.
+ * The icons the page carries itself, so the presets can show these without
+ * the rest. A preset names its icon as Lucide does, which is how these are
+ * keyed.
  */
 export const presetIcons = {
+  "cloud-lightning": CloudLightning,
   flame: Flame,
   ghost: Ghost,
   eyedashed: EyeDashed,
@@ -40,14 +41,20 @@ export const presetIcons = {
   wand_sparkles: WandSparkles,
   wand: Wand,
   square: Square,
+  "wand-sparkles": WandSparkles,
 } satisfies Record<string, LucideIcon>;
 
 export type PresetIcon = keyof typeof presetIcons;
 
+export function isBuiltInIcon(name: string): name is PresetIcon {
+  return Object.hasOwn(presetIcons, name);
+}
+
 export interface Preset extends PresetScene {
   id: string;
   name: string;
-  icon: PresetIcon;
+  /** The name of one of Lucide's icons. */
+  icon: string;
 }
 
 let lastPresetId = 0;
@@ -126,7 +133,7 @@ export const defaultPresets: Preset[] = [
   {
     id: "thunder",
     name: "Thunder",
-    icon: "lightning",
+    icon: "cloud-lightning",
     light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#ffffff" },
     sound: "thunder.wav",
     eye: EyeEffectId.NONE,
@@ -134,7 +141,7 @@ export const defaultPresets: Preset[] = [
   {
     id: "witch",
     name: "Witch",
-    icon: "wand_sparkles",
+    icon: "wand-sparkles",
     light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#00FF33" },
     sound: "witch.wav",
     eye: EyeEffectId.SHIFTY,

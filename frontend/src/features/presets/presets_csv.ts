@@ -2,12 +2,7 @@ import {
   EyeEffectId,
   LightEffectId,
 } from "../../generated/pumpkin/protocol.ts";
-import {
-  newPresetId,
-  presetIcons,
-  type Preset,
-  type PresetIcon,
-} from "./presets.ts";
+import { newPresetId, type Preset, type PresetIcon } from "./presets.ts";
 
 // The presets as the device stores them: a CSV file on the SD card, which
 // is also how they're backed up and edited on a computer. The device never
@@ -22,8 +17,14 @@ const columns = ["name", "icon", "light", "color", "sound", "eye"] as const;
 
 type Column = (typeof columns)[number];
 
-/** For a preset whose icon is missing or one this page doesn't have. */
+/** For a preset without an icon, or with one that isn't an icon's name. */
 export const fallbackIcon: PresetIcon = "ghost";
+
+/** Icons by what presets called them before they took Lucide's names. */
+const renamedIcons = new Map([
+  ["lightning", "cloud-lightning"],
+  ["wand", "wand-sparkles"],
+]);
 
 /** For a preset that lights the pumpkin without saying in what color. */
 const fallbackColor = "#ffa500";
@@ -105,7 +106,6 @@ export function parsePresetsCsv(text: string): ParsedPresets {
   return { presets, problems };
 }
 
-const icons = Object.keys(presetIcons);
 const lightEffects = namesOf(LightEffectId);
 const eyeEffects = namesOf(EyeEffectId);
 
@@ -119,13 +119,15 @@ function readPreset(
     name = "Unnamed";
   }
 
-  let icon = fallbackIcon;
+  // Any name Lucide could have, since the icons the page can show depend on
+  // what's on the card. "Cloud Lightning" is cloud-lightning.
+  let icon: string = fallbackIcon;
   const iconName = cell("icon");
-  const iconKey = iconName.toLowerCase();
-  if (isIcon(iconKey)) {
-    icon = iconKey;
+  const iconKey = iconName.toLowerCase().replaceAll(/[\s_]+/g, "-");
+  if (/^[a-z0-9]+(-[a-z0-9]+)*$/.test(iconKey)) {
+    icon = renamedIcons.get(iconKey) ?? iconKey;
   } else if (iconName !== "") {
-    report(`"${iconName}" isn't an icon (${icons.join(", ")})`);
+    report(`"${iconName}" isn't an icon's name, like cloud-lightning`);
   }
 
   let light: Preset["light"] = null;
@@ -279,8 +281,4 @@ function namesOf<Value extends number>(
 
 function isColumn(name: string): name is Column {
   return (columns as readonly string[]).includes(name);
-}
-
-function isIcon(name: string): name is PresetIcon {
-  return Object.hasOwn(presetIcons, name);
 }
