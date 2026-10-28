@@ -2,9 +2,10 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
+import { AppContextProvider } from "../../app/app_context.tsx";
 import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
 import { PresetGrid } from "./PresetGrid.tsx";
-import { defaultPresets } from "./presets.ts";
+import { defaultPresets, type Preset } from "./presets.ts";
 import type { PresetsState } from "./presets_slice.ts";
 
 /** Renders the grid once the device has said what presets it has. */
@@ -116,7 +117,34 @@ describe("PresetGrid", () => {
     await user.click(screen.getByRole("button", { name: "Edit" }));
 
     expect(controller.actions.presets.edit).toHaveBeenCalledOnce();
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("goes back to the list of all presets once they've been edited", async () => {
+    const user = userEvent.setup();
+    const { controller, rerender } = renderLoaded();
+    const withDraft = (draft: Preset[] | null) => (
+      <AppContextProvider
+        value={{
+          ...controller,
+          state: {
+            ...controller.state,
+            presets: { ...controller.state.presets, draft },
+          },
+        }}
+      >
+        <PresetGrid />
+      </AppContextProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "More" }));
+    rerender(withDraft(defaultPresets));
+
+    expect(screen.queryByRole("dialog", { name: "All presets" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
+
+    rerender(withDraft(null));
+
+    expect(screen.getByRole("dialog", { name: "All presets" })).toBeVisible();
   });
 
   it("reads the presets when it hasn't yet", () => {

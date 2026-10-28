@@ -13,7 +13,7 @@ import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 const shownPresetCount = 5;
 
 export function PresetGrid() {
-  const { presets, problems, isLoading, error, load, play, edit } =
+  const { presets, draft, problems, isLoading, error, load, play, edit } =
     usePresets();
   const { files, isLoading: isListingCard, refresh } = useSdCard();
   const isSoundMissing = useIsSoundMissing();
@@ -114,7 +114,9 @@ export function PresetGrid() {
       )}
 
       <Modal
-        show={isShowingAll}
+        // Out of the way while the presets are edited, and back once that's
+        // over, saved or not.
+        show={isShowingAll && draft === null}
         onHide={() => setIsShowingAll(false)}
         animation={false}
         fullscreen
@@ -133,10 +135,7 @@ export function PresetGrid() {
           <Button
             variant="outline-dark"
             className="icon-label-button me-auto"
-            onClick={() => {
-              setIsShowingAll(false);
-              edit();
-            }}
+            onClick={edit}
           >
             <Pencil aria-hidden="true" />
             Edit
