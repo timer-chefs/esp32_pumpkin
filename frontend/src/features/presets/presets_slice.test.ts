@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppAccess } from "../../app/slice.ts";
 import { EyeEffectId } from "../../generated/pumpkin/protocol.ts";
 import api from "../../pumpkin_client.ts";
-import { defaultPresets } from "./presets.ts";
+import type { PumpkinConnection } from "../../pumpkin_connection.ts";
+import { defaultPresets, newPreset } from "./presets.ts";
 import { presetsToCsv } from "./presets_csv.ts";
 import { presetsSlice, type PresetsState } from "./presets_slice.ts";
 
@@ -11,6 +12,7 @@ vi.mock("../../pumpkin_client.ts", () => ({
   default: {
     getPresetsFile: vi.fn(),
     savePresetsFile: vi.fn(),
+    playPreset: vi.fn(),
   },
 }));
 
@@ -117,6 +119,66 @@ describe("presetsSlice editing", () => {
     expect(names(state().draft)).toEqual(["Ghost", "Scream", "Wolf"]);
   });
 
+  it("adds a preset after the others", () => {
+    const { actions, state } = editing();
+
+    actions.add(newPreset());
+
+    expect(names(state().draft)).toEqual([
+      "Ghost",
+      "Scream",
+      "Wolf",
+      "New preset",
+    ]);
+  });
+
+  it("changes one preset and leaves the others be", () => {
+    const { actions, state } = editing();
+
+    actions.change(scream.id, { name: "Shriek", sound: null });
+
+    expect(state().draft).toEqual([
+      ghost,
+      { ...scream, name: "Shriek", sound: null },
+      wolf,
+    ]);
+    expect(state().presets).toEqual([ghost, scream, wolf]);
+  });
+
+  it("tries out a preset as it has been edited so far", async () => {
+    const connection = {} as PumpkinConnection;
+    const stopStreaming = vi.fn().mockResolvedValue(undefined);
+    const setStatus = vi.fn();
+    vi.mocked(api.playPreset).mockResolvedValue();
+    let state: PresetsState = {
+      ...presetsSlice.initialState,
+      presets: [ghost],
+      draft: [{ ...ghost, sound: "boo.wav" }],
+    };
+    const actions = presetsSlice.createActions({
+      getState: () => state,
+      update: (partial) => {
+        state = { ...state, ...partial };
+      },
+      app: {
+        connection: async () => connection,
+        actions: () => ({
+          audioSource: { stopStreaming },
+          status: { set: setStatus },
+        }),
+      } as unknown as AppAccess,
+    });
+
+    actions.tryOut(ghost.id);
+
+    await vi.waitFor(() => expect(setStatus).toHaveBeenCalled());
+    expect(stopStreaming).toHaveBeenCalledOnce();
+    expect(api.playPreset).toHaveBeenCalledExactlyOnceWith(
+      connection,
+      expect.objectContaining({ sound: "boo.wav" }),
+    );
+  });
+
   it("takes a preset away", () => {
     const { actions, state } = editing();
 
@@ -168,6 +230,28 @@ describe("presetsSlice editing", () => {
     );
     // What was saved is all there is now, and every bit of it reads.
     expect(state().problems).toEqual([]);
+  });
+
+  it("won't save a preset without a name", () => {
+    const { actions, state } = editing();
+
+    actions.change(scream.id, { name: "  " });
+    actions.finishEditing();
+
+    expect(state().error).toBe("Preset 2 needs a name");
+    expect(state().draft).not.toBeNull();
+    expect(api.savePresetsFile).not.toHaveBeenCalled();
+  });
+
+  it("saves names without the spaces around them", async () => {
+    vi.mocked(api.savePresetsFile).mockResolvedValue();
+    const { actions, state } = editing([ghost]);
+
+    actions.change(ghost.id, { name: " Boo " });
+    actions.finishEditing();
+
+    await vi.waitFor(() => expect(state().draft).toBeNull());
+    expect(names(state().presets)).toEqual(["Boo"]);
   });
 
   it("keeps the edits when they couldn't be saved", async () => {

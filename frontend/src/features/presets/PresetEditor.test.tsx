@@ -40,6 +40,60 @@ describe("PresetEditor", () => {
     ]);
   });
 
+  it("opens a preset in the form, and goes back to the list", async () => {
+    const user = userEvent.setup();
+    renderEditing();
+
+    await user.click(screen.getByRole("button", { name: "Change Scream" }));
+
+    expect(screen.getByRole("dialog", { name: "Edit preset" })).toBeVisible();
+    expect(screen.getByLabelText("Name")).toHaveValue("Scream");
+
+    await user.click(screen.getByRole("button", { name: "Back" }));
+
+    expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
+  });
+
+  it("changes the open preset as it is edited", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderEditing();
+
+    await user.click(screen.getByRole("button", { name: "Change Wolf" }));
+    await user.type(screen.getByLabelText("Name"), "!");
+
+    expect(controller.actions.presets.change).toHaveBeenCalledWith(wolf.id, {
+      name: "Wolf!",
+    });
+  });
+
+  it("tries out and deletes the open preset", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderEditing();
+
+    await user.click(screen.getByRole("button", { name: "Change Wolf" }));
+    await user.click(screen.getByRole("button", { name: "Try" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(controller.actions.presets.tryOut).toHaveBeenCalledExactlyOnceWith(
+      wolf.id,
+    );
+    expect(controller.actions.presets.remove).toHaveBeenCalledExactlyOnceWith(
+      wolf.id,
+    );
+    expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
+  });
+
+  it("adds a preset", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderEditing();
+
+    await user.click(screen.getByRole("button", { name: "Add preset" }));
+
+    expect(controller.actions.presets.add).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ name: "New preset" }),
+    );
+  });
+
   it("moves a preset up and down", async () => {
     const user = userEvent.setup();
     const { controller } = renderEditing();

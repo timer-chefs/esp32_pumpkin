@@ -1,25 +1,44 @@
-import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { ArrowDown, ArrowUp, Play, Plus, Trash2 } from "lucide-react";
+import { Fragment, useState, type CSSProperties } from "react";
 import { Alert, Button, ListGroup, Modal, Spinner } from "react-bootstrap";
 
+import { PresetForm } from "./PresetForm.tsx";
 import "./presets.css";
-import { presetIcons, type Preset } from "./presets.ts";
+import { newPreset, presetIcons, type Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
 import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 
 /**
- * Where the presets are put in order and taken away. Nothing reaches the
- * card until Done, so Cancel takes back all of it.
+ * Where the presets are added, changed, put in order and taken away.
+ * Nothing reaches the card until Done, so Cancel takes back all of it.
  */
 export function PresetEditor() {
-  const { draft, isSaving, error, move, remove, finishEditing, cancelEditing } =
-    usePresets();
+  const {
+    draft,
+    isSaving,
+    error,
+    add,
+    change,
+    tryOut,
+    move,
+    remove,
+    finishEditing,
+    cancelEditing,
+  } = usePresets();
   const isSoundMissing = useIsSoundMissing();
+  // The preset open in the form, rather than the list of them all.
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openPreset = draft?.find((preset) => preset.id === openId) ?? null;
+
+  const leave = (action: () => void) => {
+    setOpenId(null);
+    action();
+  };
 
   return (
     <Modal
       show={draft !== null}
-      onHide={cancelEditing}
+      onHide={() => leave(cancelEditing)}
       // Leaving is Cancel or Done, never a stray Escape that loses the edits.
       backdrop="static"
       keyboard={false}
@@ -30,27 +49,53 @@ export function PresetEditor() {
     >
       <Modal.Header>
         <Modal.Title as="h2" id="edit-presets-heading">
-          Edit presets
+          {openPreset ? "Edit preset" : "Edit presets"}
         </Modal.Title>
       </Modal.Header>
+
       <Modal.Body>
-        {draft && draft.length > 0 ? (
-          <ListGroup as="ol">
-            {draft.map((preset, index) => (
-              <PresetRow
-                key={preset.id}
-                preset={preset}
-                isSoundMissing={isSoundMissing(preset)}
-                canMoveUp={!isSaving && index > 0}
-                canMoveDown={!isSaving && index < draft.length - 1}
-                canRemove={!isSaving}
-                onMove={(by) => move(preset.id, by)}
-                onRemove={() => remove(preset.id)}
-              />
-            ))}
-          </ListGroup>
+        {openPreset ? (
+          <PresetForm
+            key={openPreset.id}
+            preset={openPreset}
+            onChange={(changes) => change(openPreset.id, changes)}
+          />
         ) : (
-          <p className="empty-state mb-0">No presets</p>
+          <>
+            {draft && draft.length > 0 ? (
+              <ListGroup as="ol">
+                {draft.map((preset, index) => (
+                  <PresetRow
+                    key={preset.id}
+                    preset={preset}
+                    isSoundMissing={isSoundMissing(preset)}
+                    canMoveUp={!isSaving && index > 0}
+                    canMoveDown={!isSaving && index < draft.length - 1}
+                    isSaving={isSaving}
+                    onOpen={() => setOpenId(preset.id)}
+                    onMove={(by) => move(preset.id, by)}
+                    onRemove={() => remove(preset.id)}
+                  />
+                ))}
+              </ListGroup>
+            ) : (
+              <p className="empty-state mb-0">No presets</p>
+            )}
+
+            <Button
+              variant="outline-dark"
+              className="icon-label-button mt-3"
+              disabled={isSaving}
+              onClick={() => {
+                const preset = newPreset();
+                add(preset);
+                setOpenId(preset.id);
+              }}
+            >
+              <Plus aria-hidden="true" />
+              Add preset
+            </Button>
+          </>
         )}
 
         {error && (
@@ -59,25 +104,53 @@ export function PresetEditor() {
           </Alert>
         )}
       </Modal.Body>
+
       <Modal.Footer>
-        <Button
-          variant="outline-dark"
-          disabled={isSaving}
-          onClick={cancelEditing}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="dark"
-          className="icon-label-button"
-          disabled={isSaving}
-          onClick={finishEditing}
-        >
-          {isSaving && (
-            <Spinner animation="border" size="sm" aria-hidden="true" />
-          )}
-          {isSaving ? "Saving" : "Done"}
-        </Button>
+        {/* Keyed apart, so that Done doesn't turn into Try in passing. */}
+        {openPreset ? (
+          <Fragment key="preset">
+            <Button
+              variant="outline-danger"
+              className="icon-label-button me-auto"
+              onClick={() => leave(() => remove(openPreset.id))}
+            >
+              <Trash2 aria-hidden="true" />
+              Delete
+            </Button>
+            <Button
+              variant="outline-dark"
+              className="icon-label-button"
+              onClick={() => tryOut(openPreset.id)}
+            >
+              <Play aria-hidden="true" />
+              Try
+            </Button>
+            <Button variant="dark" onClick={() => setOpenId(null)}>
+              Back
+            </Button>
+          </Fragment>
+        ) : (
+          <Fragment key="presets">
+            <Button
+              variant="outline-dark"
+              disabled={isSaving}
+              onClick={() => leave(cancelEditing)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="dark"
+              className="icon-label-button"
+              disabled={isSaving}
+              onClick={finishEditing}
+            >
+              {isSaving && (
+                <Spinner animation="border" size="sm" aria-hidden="true" />
+              )}
+              {isSaving ? "Saving" : "Done"}
+            </Button>
+          </Fragment>
+        )}
       </Modal.Footer>
     </Modal>
   );
@@ -88,7 +161,8 @@ interface PresetRowProps {
   isSoundMissing: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
-  canRemove: boolean;
+  isSaving: boolean;
+  onOpen: () => void;
   onMove: (by: -1 | 1) => void;
   onRemove: () => void;
 }
@@ -98,34 +172,44 @@ function PresetRow({
   isSoundMissing,
   canMoveUp,
   canMoveDown,
-  canRemove,
+  isSaving,
+  onOpen,
   onMove,
   onRemove,
 }: PresetRowProps) {
   const Icon = presetIcons[preset.icon];
   const style = { "--preset-color": preset.light?.color } as CSSProperties;
+  const name = preset.name.trim() || "Unnamed";
 
   return (
     <ListGroup.Item as="li" className="preset-edit-row">
-      <span className="preset-icon preset-icon-small" style={style}>
-        <Icon aria-hidden="true" />
-      </span>
-      <span className="preset-edit-text">
-        <span className="preset-name">{preset.name}</span>
-        <small
-          className={isSoundMissing ? "text-danger" : "text-body-secondary"}
-        >
-          {preset.sound === null
-            ? "No sound"
-            : isSoundMissing
-              ? `${preset.sound} isn't on the SD card`
-              : preset.sound}
-        </small>
-      </span>
+      <button
+        type="button"
+        className="preset-edit-open"
+        aria-label={`Change ${name}`}
+        disabled={isSaving}
+        onClick={onOpen}
+      >
+        <span className="preset-icon preset-icon-small" style={style}>
+          <Icon aria-hidden="true" />
+        </span>
+        <span className="preset-edit-text">
+          <span className="preset-name">{name}</span>
+          <small
+            className={isSoundMissing ? "text-danger" : "text-body-secondary"}
+          >
+            {preset.sound === null
+              ? "No sound"
+              : isSoundMissing
+                ? `${preset.sound} isn't on the SD card`
+                : preset.sound}
+          </small>
+        </span>
+      </button>
       <span className="preset-edit-actions">
         <Button
           variant="light"
-          aria-label={`Move ${preset.name} up`}
+          aria-label={`Move ${name} up`}
           disabled={!canMoveUp}
           onClick={() => onMove(-1)}
         >
@@ -133,7 +217,7 @@ function PresetRow({
         </Button>
         <Button
           variant="light"
-          aria-label={`Move ${preset.name} down`}
+          aria-label={`Move ${name} down`}
           disabled={!canMoveDown}
           onClick={() => onMove(1)}
         >
@@ -141,8 +225,8 @@ function PresetRow({
         </Button>
         <Button
           variant="light"
-          aria-label={`Delete ${preset.name}`}
-          disabled={!canRemove}
+          aria-label={`Delete ${name}`}
+          disabled={isSaving}
           onClick={onRemove}
         >
           <Trash2 aria-hidden="true" />

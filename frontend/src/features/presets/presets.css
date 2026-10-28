@@ -149,6 +149,20 @@
   height: 1.25rem;
 }
 
+/* The icon and the words, as one button that opens the preset. */
+.preset-edit-open {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0;
+  color: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+}
+
 .preset-edit-text {
   flex: 1 1 auto;
   display: flex;
@@ -161,4 +175,36 @@
   flex: none;
   display: flex;
   gap: 0.25rem;
+}
+
+.preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preset-form fieldset {
+  margin: 0;
+}
+
+/* A label like the others, rather than the heading Bootstrap makes it. */
+.preset-form legend {
+  font-size: inherit;
+}
+
+.preset-icon-picker {
+  flex-wrap: wrap;
+}
+
+.preset-form-light {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.preset-form-light > :first-child {
+  flex: 1 1 auto;
+}
+
+.preset-form .form-control-color {
+  width: 4rem;
 }

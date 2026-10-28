@@ -20,10 +20,17 @@ export interface PresetsState {
   error: string | null;
 }
 
+export type PresetChanges = Partial<Omit<Preset, "id">>;
+
 export interface PresetsActions {
   load: () => void;
   play: (id: string) => void;
   edit: () => void;
+  /** Adds a preset after the ones being edited. */
+  add: (preset: Preset) => void;
+  change: (id: string, changes: PresetChanges) => void;
+  /** Plays a preset being edited, as it is so far. */
+  tryOut: (id: string) => void;
   /** Moves a preset being edited one place earlier (-1) or later (1). */
   move: (id: string, by: -1 | 1) => void;
   remove: (id: string) => void;
@@ -42,105 +49,142 @@ export const presetsSlice: Slice<PresetsState, PresetsActions> = {
     isSaving: false,
     error: null,
   },
-  createActions: ({ getState, update, app }) => ({
-    load: () =>
-      runAction(async () => {
-        update({ isLoading: true, error: null });
-        try {
-          const csv = await api.getPresetsFile();
-          // A card that has never had presets saved to it starts off with
-          // these.
-          update(
-            csv === null
-              ? { presets: defaultPresets, problems: [] }
-              : parsePresetsCsv(csv),
-          );
-        } catch (error) {
-          console.error("Could not read the presets:", error);
-          update({
-            error: `Could not read the presets: ${toError(error).message}`,
-          });
-        } finally {
-          update({ isLoading: false });
-        }
-      }),
+  createActions: ({ getState, update, app }) => {
+    const playPreset = async (preset: Preset): Promise<void> => {
+      update({ error: null });
+      // The device plays the preset's sound on its own, so hand it back from
+      // whatever the browser was streaming first.
+      await app.actions().audioSource.stopStreaming();
 
-    play: (id) =>
-      runAction(async () => {
-        const preset = getState().presets?.find((preset) => preset.id === id);
-        if (!preset) {
-          return;
-        }
-
-        update({ error: null });
-        // The device plays the preset's sound on its own, so hand it back
-        // from whatever the browser was streaming first.
-        await app.actions().audioSource.stopStreaming();
-
-        try {
-          await api.playPreset(await app.connection(), preset);
-          app.actions().status.set({ mode: "Preset", streaming: preset.name });
-        } catch (error) {
-          console.error(`Could not play the "${preset.name}" preset:`, error);
-          update({
-            error: `Could not play ${preset.name}: ${toError(error).message}`,
-          });
-        }
-      }),
-
-    edit: () => {
-      const { presets } = getState();
-      if (presets) {
-        update({ draft: presets, error: null });
+      try {
+        await api.playPreset(await app.connection(), preset);
+        app.actions().status.set({ mode: "Preset", streaming: preset.name });
+      } catch (error) {
+        console.error(`Could not play the "${preset.name}" preset:`, error);
+        update({
+          error: `Could not play ${preset.name}: ${toError(error).message}`,
+        });
       }
-    },
+    };
 
-    move: (id, by) => {
-      const { draft } = getState();
-      const from = draft?.findIndex((preset) => preset.id === id) ?? -1;
-      const to = from + by;
-      if (!draft || from < 0 || to < 0 || to >= draft.length) {
-        return;
-      }
-
-      const moved = [...draft];
-      [moved[from], moved[to]] = [moved[to], moved[from]];
-      update({ draft: moved });
-    },
-
-    remove: (id) => {
+    const updateDraft = (change: (draft: Preset[]) => Preset[]) => {
       const { draft } = getState();
       if (draft) {
-        update({ draft: draft.filter((preset) => preset.id !== id) });
+        update({ draft: change(draft) });
       }
-    },
+    };
 
-    finishEditing: () =>
-      runAction(async () => {
-        const { draft, isSaving } = getState();
-        if (!draft || isSaving) {
+    return {
+      load: () =>
+        runAction(async () => {
+          update({ isLoading: true, error: null });
+          try {
+            const csv = await api.getPresetsFile();
+            // A card that has never had presets saved to it starts off with
+            // these.
+            update(
+              csv === null
+                ? { presets: defaultPresets, problems: [] }
+                : parsePresetsCsv(csv),
+            );
+          } catch (error) {
+            console.error("Could not read the presets:", error);
+            update({
+              error: `Could not read the presets: ${toError(error).message}`,
+            });
+          } finally {
+            update({ isLoading: false });
+          }
+        }),
+
+      play: (id) =>
+        runAction(async () => {
+          const preset = getState().presets?.find((preset) => preset.id === id);
+          if (preset) {
+            await playPreset(preset);
+          }
+        }),
+
+      edit: () => {
+        const { presets } = getState();
+        if (presets) {
+          update({ draft: presets, error: null });
+        }
+      },
+
+      add: (preset) => updateDraft((draft) => [...draft, preset]),
+
+      change: (id, changes) =>
+        updateDraft((draft) =>
+          draft.map((preset) =>
+            preset.id === id ? { ...preset, ...changes } : preset,
+          ),
+        ),
+
+      tryOut: (id) =>
+        runAction(async () => {
+          const preset = getState().draft?.find((preset) => preset.id === id);
+          if (preset) {
+            await playPreset(preset);
+          }
+        }),
+
+      move: (id, by) => {
+        const { draft } = getState();
+        const from = draft?.findIndex((preset) => preset.id === id) ?? -1;
+        const to = from + by;
+        if (!draft || from < 0 || to < 0 || to >= draft.length) {
           return;
         }
 
-        // Sent even when nothing was changed here: the device leaves the card
-        // alone if the file is the same, and otherwise this is what writes a
-        // card's first presets, or replaces a file that couldn't all be read.
-        update({ isSaving: true, error: null });
-        try {
-          await api.savePresetsFile(presetsToCsv(draft));
-          update({ presets: draft, draft: null, problems: [] });
-        } catch (error) {
-          console.error("Could not save the presets:", error);
-          update({
-            error: `Could not save the presets: ${toError(error).message}`,
-          });
-        } finally {
-          update({ isSaving: false });
-        }
-      }),
+        const moved = [...draft];
+        [moved[from], moved[to]] = [moved[to], moved[from]];
+        update({ draft: moved });
+      },
 
-    cancelEditing: () => update({ draft: null, error: null }),
-  }),
+      remove: (id) =>
+        updateDraft((draft) => draft.filter((preset) => preset.id !== id)),
+
+      finishEditing: () =>
+        runAction(async () => {
+          const { draft, isSaving } = getState();
+          if (!draft || isSaving) {
+            return;
+          }
+
+          const unnamed = draft.findIndex(
+            (preset) => preset.name.trim() === "",
+          );
+          if (unnamed >= 0) {
+            update({ error: `Preset ${unnamed + 1} needs a name` });
+            return;
+          }
+
+          const presets = draft.map((preset) => ({
+            ...preset,
+            name: preset.name.trim(),
+          }));
+
+          // Sent even when nothing was changed here: the device leaves the card
+          // alone if the file is the same, and otherwise this is what writes a
+          // card's first presets, or replaces a file that couldn't all be read.
+          update({ isSaving: true, error: null });
+          try {
+            await api.savePresetsFile(presetsToCsv(presets));
+            update({ presets, draft: null, problems: [] });
+          } catch (error) {
+            console.error("Could not save the presets:", error);
+            update({
+              error: `Could not save the presets: ${toError(error).message}`,
+            });
+          } finally {
+            update({ isSaving: false });
+          }
+        }),
+
+      cancelEditing: () => update({ draft: null, error: null }),
+    };
+  },
 };
 
 export function usePresets() {

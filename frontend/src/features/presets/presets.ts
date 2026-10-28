@@ -62,6 +62,18 @@ export function newPresetId(): string {
   return `preset-${lastPresetId}`;
 }
 
+/** What a preset added in the editor starts off as. */
+export function newPreset(): Preset {
+  return {
+    id: newPresetId(),
+    name: "New preset",
+    icon: "ghost",
+    light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#ff8800" },
+    sound: null,
+    eye: EyeEffectId.NONE,
+  };
+}
+
 export const defaultPresets: Preset[] = [
   {
     id: "ghost",
