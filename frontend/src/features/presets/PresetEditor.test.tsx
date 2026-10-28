@@ -117,6 +117,12 @@ describe("PresetEditor", () => {
     await user.click(screen.getByRole("button", { name: "Change Wolf" }));
     await user.click(screen.getByRole("button", { name: "Try" }));
     await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Delete Wolf?" })).getByRole(
+        "button",
+        { name: "Delete" },
+      ),
+    );
 
     expect(controller.actions.presets.tryOut).toHaveBeenCalledExactlyOnceWith(
       wolf.id,
@@ -168,15 +174,33 @@ describe("PresetEditor", () => {
     ).toBeDisabled();
   });
 
-  it("deletes a preset", async () => {
+  it("deletes a preset once that's been confirmed", async () => {
     const user = userEvent.setup();
     const { controller } = renderEditing();
 
     await user.click(screen.getByRole("button", { name: "Delete Wolf" }));
 
+    const question = screen.getByRole("dialog", { name: "Delete Wolf?" });
+    expect(controller.actions.presets.remove).not.toHaveBeenCalled();
+
+    await user.click(within(question).getByRole("button", { name: "Delete" }));
+
     expect(controller.actions.presets.remove).toHaveBeenCalledExactlyOnceWith(
       wolf.id,
     );
+    expect(screen.queryByRole("dialog", { name: "Delete Wolf?" })).toBeNull();
+  });
+
+  it("keeps a preset when deleting it is called off", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderEditing();
+
+    await user.click(screen.getByRole("button", { name: "Delete Wolf" }));
+    await user.click(screen.getByRole("button", { name: "Keep it" }));
+
+    expect(controller.actions.presets.remove).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "Delete Wolf?" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
   });
 
   it("saves on Save and gives up the edits on Cancel", async () => {

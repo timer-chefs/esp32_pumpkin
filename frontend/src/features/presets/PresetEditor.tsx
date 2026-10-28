@@ -42,9 +42,24 @@ export function PresetEditor() {
   const [open, setOpen] = useState<{ id: string; before: Preset | null }>();
   const openPreset = draft?.find((preset) => preset.id === open?.id) ?? null;
 
+  // The preset waiting on a yes before it's deleted.
+  const [deleting, setDeleting] = useState<Preset | null>(null);
+
   const leave = (action: () => void) => {
     setOpen(undefined);
     action();
+  };
+
+  const confirmDelete = () => {
+    if (!deleting) {
+      return;
+    }
+
+    remove(deleting.id);
+    if (open?.id === deleting.id) {
+      setOpen(undefined);
+    }
+    setDeleting(null);
   };
 
   const cancelPreset = () => {
@@ -62,141 +77,186 @@ export function PresetEditor() {
   };
 
   return (
-    <Modal
-      show={draft !== null}
-      onHide={() => leave(cancelEditing)}
-      // Leaving is Cancel or Save, never a stray Escape that loses the edits.
-      backdrop="static"
-      keyboard={false}
-      animation={false}
-      fullscreen
-      contentClassName="app-modal preset-editor"
-      aria-labelledby="edit-presets-heading"
-    >
-      <Modal.Header>
-        <Modal.Title as="h2" id="edit-presets-heading">
-          {openPreset ? "Edit preset" : "Edit presets"}
-        </Modal.Title>
-      </Modal.Header>
+    <>
+      <Modal
+        show={draft !== null}
+        onHide={() => leave(cancelEditing)}
+        // Leaving is Cancel or Save, never a stray Escape that loses the edits.
+        backdrop="static"
+        keyboard={false}
+        animation={false}
+        fullscreen
+        contentClassName="app-modal preset-editor"
+        aria-labelledby="edit-presets-heading"
+      >
+        <Modal.Header>
+          <Modal.Title as="h2" id="edit-presets-heading">
+            {openPreset ? "Edit preset" : "Edit presets"}
+          </Modal.Title>
+        </Modal.Header>
 
-      <Modal.Body>
-        {openPreset ? (
-          <PresetForm
-            key={openPreset.id}
-            preset={openPreset}
-            onChange={(changes) => change(openPreset.id, changes)}
-          />
-        ) : (
-          <>
-            {draft && draft.length > 0 ? (
-              <ListGroup as="ol">
-                {draft.map((preset, index) => (
-                  <PresetRow
-                    key={preset.id}
-                    preset={preset}
-                    isSoundMissing={isSoundMissing(preset)}
-                    canMoveUp={!isSaving && index > 0}
-                    canMoveDown={!isSaving && index < draft.length - 1}
-                    isSaving={isSaving}
-                    onOpen={() => setOpen({ id: preset.id, before: preset })}
-                    onMove={(by) => move(preset.id, by)}
-                    onRemove={() => remove(preset.id)}
-                  />
-                ))}
-              </ListGroup>
-            ) : (
-              <p className="empty-state mb-0">No presets</p>
-            )}
-
-            <Button
-              variant="outline-dark"
-              className="icon-label-button mt-3"
-              disabled={isSaving}
-              onClick={() => {
-                const preset = newPreset();
-                add(preset);
-                setOpen({ id: preset.id, before: null });
-              }}
-            >
-              <Plus aria-hidden="true" />
-              Add preset
-            </Button>
-          </>
-        )}
-
-        {error && (
-          <Alert variant="danger" className="compact-alert" aria-live="polite">
-            {error}
-          </Alert>
-        )}
-      </Modal.Body>
-
-      <Modal.Footer>
-        {/* Keyed apart, so that Save doesn't turn into Try in passing. */}
-        {openPreset ? (
-          <Fragment key="preset">
-            {/* Just the icon, so that all four fit across a phone. */}
-            <Button
-              variant="outline-danger"
-              className="icon-label-button me-auto"
-              aria-label="Delete"
-              title="Delete"
-              onClick={() => leave(() => remove(openPreset.id))}
-            >
-              <Trash2 aria-hidden="true" />
-            </Button>
-            <Button
-              variant="outline-dark"
-              className="icon-label-button"
-              onClick={() => tryOut(openPreset.id)}
-            >
-              <Play aria-hidden="true" />
-              Try
-            </Button>
-            <Button
-              variant="outline-dark"
-              className="icon-label-button"
-              onClick={cancelPreset}
-            >
-              <X aria-hidden="true" />
-              Cancel
-            </Button>
-            <Button
-              variant="dark"
-              className="icon-label-button"
-              onClick={() => setOpen(undefined)}
-            >
-              Done
-            </Button>
-          </Fragment>
-        ) : (
-          <Fragment key="presets">
-            <Button
-              variant="outline-dark"
-              className="icon-label-button"
-              disabled={isSaving}
-              onClick={() => leave(cancelEditing)}
-            >
-              <X aria-hidden="true" />
-              Cancel
-            </Button>
-            <Button
-              variant="dark"
-              className="icon-label-button"
-              disabled={isSaving}
-              onClick={finishEditing}
-            >
-              {isSaving ? (
-                <Spinner animation="border" size="sm" aria-hidden="true" />
+        <Modal.Body>
+          {openPreset ? (
+            <PresetForm
+              key={openPreset.id}
+              preset={openPreset}
+              onChange={(changes) => change(openPreset.id, changes)}
+            />
+          ) : (
+            <>
+              {draft && draft.length > 0 ? (
+                <ListGroup as="ol">
+                  {draft.map((preset, index) => (
+                    <PresetRow
+                      key={preset.id}
+                      preset={preset}
+                      isSoundMissing={isSoundMissing(preset)}
+                      canMoveUp={!isSaving && index > 0}
+                      canMoveDown={!isSaving && index < draft.length - 1}
+                      isSaving={isSaving}
+                      onOpen={() => setOpen({ id: preset.id, before: preset })}
+                      onMove={(by) => move(preset.id, by)}
+                      onRemove={() => setDeleting(preset)}
+                    />
+                  ))}
+                </ListGroup>
               ) : (
-                <Save aria-hidden="true" />
+                <p className="empty-state mb-0">No presets</p>
               )}
-              {isSaving ? "Saving" : "Save"}
-            </Button>
-          </Fragment>
-        )}
-      </Modal.Footer>
-    </Modal>
+
+              <Button
+                variant="outline-dark"
+                className="icon-label-button mt-3"
+                disabled={isSaving}
+                onClick={() => {
+                  const preset = newPreset();
+                  add(preset);
+                  setOpen({ id: preset.id, before: null });
+                }}
+              >
+                <Plus aria-hidden="true" />
+                Add preset
+              </Button>
+            </>
+          )}
+
+          {error && (
+            <Alert
+              variant="danger"
+              className="compact-alert"
+              aria-live="polite"
+            >
+              {error}
+            </Alert>
+          )}
+        </Modal.Body>
+
+        <Modal.Footer>
+          {/* Keyed apart, so that Save doesn't turn into Try in passing. */}
+          {openPreset ? (
+            <Fragment key="preset">
+              {/* Just the icon, so that all four fit across a phone. */}
+              <Button
+                variant="outline-danger"
+                className="icon-label-button me-auto"
+                aria-label="Delete"
+                title="Delete"
+                onClick={() => setDeleting(openPreset)}
+              >
+                <Trash2 aria-hidden="true" />
+              </Button>
+              <Button
+                variant="outline-dark"
+                className="icon-label-button"
+                onClick={() => tryOut(openPreset.id)}
+              >
+                <Play aria-hidden="true" />
+                Try
+              </Button>
+              <Button
+                variant="outline-dark"
+                className="icon-label-button"
+                onClick={cancelPreset}
+              >
+                <X aria-hidden="true" />
+                Cancel
+              </Button>
+              <Button
+                variant="dark"
+                className="icon-label-button"
+                onClick={() => setOpen(undefined)}
+              >
+                Done
+              </Button>
+            </Fragment>
+          ) : (
+            <Fragment key="presets">
+              <Button
+                variant="outline-dark"
+                className="icon-label-button"
+                disabled={isSaving}
+                onClick={() => leave(cancelEditing)}
+              >
+                <X aria-hidden="true" />
+                Cancel
+              </Button>
+              <Button
+                variant="dark"
+                className="icon-label-button"
+                disabled={isSaving}
+                onClick={finishEditing}
+              >
+                {isSaving ? (
+                  <Spinner animation="border" size="sm" aria-hidden="true" />
+                ) : (
+                  <Save aria-hidden="true" />
+                )}
+                {isSaving ? "Saving" : "Save"}
+              </Button>
+            </Fragment>
+          )}
+        </Modal.Footer>
+      </Modal>
+
+      <Modal
+        show={deleting !== null}
+        onHide={() => setDeleting(null)}
+        centered
+        animation={false}
+        // Over the editor, which is a modal of its own.
+        className="confirm-modal"
+        backdropClassName="confirm-backdrop"
+        contentClassName="app-modal"
+        aria-labelledby="delete-preset-heading"
+      >
+        <Modal.Header>
+          <Modal.Title as="h2" id="delete-preset-heading">
+            Delete {displayName(deleting)}?
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          It's deleted from the SD card when the presets are saved.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-dark"
+            className="icon-label-button"
+            onClick={() => setDeleting(null)}
+          >
+            <X aria-hidden="true" />
+            Keep it
+          </Button>
+          <Button
+            variant="danger"
+            className="icon-label-button"
+            onClick={confirmDelete}
+          >
+            <Trash2 aria-hidden="true" />
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 }
 
@@ -222,7 +282,7 @@ function PresetRow({
   onRemove,
 }: PresetRowProps) {
   const style = { "--preset-color": preset.light?.color } as CSSProperties;
-  const name = preset.name.trim() || "Unnamed";
+  const name = displayName(preset);
 
   return (
     <ListGroup.Item as="li" className="preset-edit-row">
@@ -285,4 +345,8 @@ function PresetRow({
       </span>
     </ListGroup.Item>
   );
+}
+
+function displayName(preset: Preset | null): string {
+  return preset?.name.trim() || "Unnamed";
 }

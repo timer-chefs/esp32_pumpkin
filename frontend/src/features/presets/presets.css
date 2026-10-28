@@ -216,3 +216,13 @@
 .preset-form .form-control-color {
   width: 4rem;
 }
+
+/* A question asked over the editor, which is a modal itself. Bootstrap would
+   put a second backdrop under the first modal rather than over it. */
+.modal-backdrop.confirm-backdrop {
+  z-index: 1060;
+}
+
+.modal.confirm-modal {
+  z-index: 1065;
+}
