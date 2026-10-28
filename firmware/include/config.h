@@ -114,6 +114,16 @@ constexpr uint16_t max_upload_chunk_size = 2048;
 // The leading dot keeps it out of the listing.
 constexpr const char* sd_upload_temporary_file = ".upload.tmp";
 
+// Presets
+// They live on the card next to the sounds they play, so a card carries a
+// whole set of them, and backing them up is copying the file off it.
+constexpr const char* presets_path = "/presets.csv";
+// What presets_path held before the last save that changed it.
+constexpr const char* presets_backup_path = "/presets.bak.csv";
+// A save lands here, and only takes presets_path's place once all of it
+// has arrived.
+constexpr const char* presets_temporary_path = "/.presets.tmp";
+
 // SDIO Pin 
 constexpr uint8_t pin_sd_clk = GPIO_NUM_12;
 constexpr uint8_t pin_sd_cmd = GPIO_NUM_11;

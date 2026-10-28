@@ -81,4 +81,7 @@ After changing it, use `flatc` 25.9.23 to regenerate the TypeScript and C++ bind
 ./protocol/generate.sh
 ```
 
-All audio and control traffic use this contract except `/api/ip` which remains HTTP-only because it's used during bootstrapping of the WiFi provisioning page.
+All audio and control traffic use this contract except two HTTP-only endpoints:
+
+- `/api/ip`, because it's used during bootstrapping of the WiFi provisioning page.
+- `/api/presets`, because a WebSocket message can't be larger than 15 kB. `GET` returns `presets.csv` from the SD card (404 when there isn't one) and `PUT` replaces it. The device stores the file without reading it; its format belongs to the client.

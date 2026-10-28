@@ -10,6 +10,7 @@
 #include "command_handler.h"
 #include "eye_commands.h"
 #include "preset_shows.h"
+#include "preset_store.h"
 #include "sd_audio.h"
 #include "sd_card.h"
 #include "sd_upload.h"
@@ -34,6 +35,7 @@ void setup()
 
     sd_card_init();
     sd_audio_init();
+    preset_store_init();
 
     wifi_manager_init();
 
