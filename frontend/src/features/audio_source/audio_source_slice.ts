@@ -61,11 +61,13 @@ export const audioSourceSlice: Slice<AudioSourceState, AudioSourceActions> = {
     let talkSession: AudioSession | null = null;
 
     const streamFile = (file: File) =>
-      streamAudioFile(file, (message, tone = "neutral") => {
-        update({ fileStatus: { message, tone } });
-      },
-      voiceLight,
-    );
+      streamAudioFile(
+        file,
+        (message, tone = "neutral") => {
+          update({ fileStatus: { message, tone } });
+        },
+        voiceLight,
+      );
 
     const endTalk = () => {
       heldPress = 0;

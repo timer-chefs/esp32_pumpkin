@@ -12,7 +12,7 @@ import {
   Skull,
   WandSparkles,
   Wand,
-  Square
+  Square,
 } from "lucide-react";
 
 import {
@@ -39,7 +39,7 @@ export const presetIcons = {
   skull: Skull,
   wand_sparkles: WandSparkles,
   wand: Wand,
-  square: Square
+  square: Square,
 } satisfies Record<string, LucideIcon>;
 
 export type PresetIcon = keyof typeof presetIcons;
@@ -72,7 +72,7 @@ export const defaultPresets: Preset[] = [
     name: "Scream",
     icon: "skull",
     light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#FF5C00" },
-    sound: "scream.wav",      //something happnes here
+    sound: "scream.wav", //something happnes here
     eye: EyeEffectId.STARE,
   },
   {
@@ -236,4 +236,3 @@ export const defaultPresets: Preset[] = [
     eye: EyeEffectId.SLEEP,
   },
 ];
-
