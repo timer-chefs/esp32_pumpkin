@@ -135,11 +135,11 @@ describe("PresetEditor", () => {
     );
   });
 
-  it("saves on Done and gives up the edits on Cancel", async () => {
+  it("saves on Save and gives up the edits on Cancel", async () => {
     const user = userEvent.setup();
     const { controller } = renderEditing();
 
-    await user.click(screen.getByRole("button", { name: "Done" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(controller.actions.presets.finishEditing).toHaveBeenCalledOnce();

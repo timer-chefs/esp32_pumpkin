@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Play, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Play, Plus, Save, Trash2 } from "lucide-react";
 import { Fragment, useState, type CSSProperties } from "react";
 import { Alert, Button, ListGroup, Modal, Spinner } from "react-bootstrap";
 
@@ -10,7 +10,7 @@ import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 
 /**
  * Where the presets are added, changed, put in order and taken away.
- * Nothing reaches the card until Done, so Cancel takes back all of it.
+ * Nothing reaches the card until Save, so Cancel takes back all of it.
  */
 export function PresetEditor() {
   const {
@@ -39,7 +39,7 @@ export function PresetEditor() {
     <Modal
       show={draft !== null}
       onHide={() => leave(cancelEditing)}
-      // Leaving is Cancel or Done, never a stray Escape that loses the edits.
+      // Leaving is Cancel or Save, never a stray Escape that loses the edits.
       backdrop="static"
       keyboard={false}
       animation={false}
@@ -106,7 +106,7 @@ export function PresetEditor() {
       </Modal.Body>
 
       <Modal.Footer>
-        {/* Keyed apart, so that Done doesn't turn into Try in passing. */}
+        {/* Keyed apart, so that Save doesn't turn into Try in passing. */}
         {openPreset ? (
           <Fragment key="preset">
             <Button
@@ -144,10 +144,12 @@ export function PresetEditor() {
               disabled={isSaving}
               onClick={finishEditing}
             >
-              {isSaving && (
+              {isSaving ? (
                 <Spinner animation="border" size="sm" aria-hidden="true" />
+              ) : (
+                <Save aria-hidden="true" />
               )}
-              {isSaving ? "Saving" : "Done"}
+              {isSaving ? "Saving" : "Save"}
             </Button>
           </Fragment>
         )}
