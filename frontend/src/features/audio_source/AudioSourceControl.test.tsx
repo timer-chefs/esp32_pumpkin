@@ -46,6 +46,12 @@ describe("AudioSourceControl", () => {
       },
     });
     const file = new File(["audio"], "song.wav", { type: "audio/wav" });
+    expect(screen.getByRole("button", { name: "Stream" })).toHaveClass(
+      "btn-warning",
+    );
+    expect(screen.getByRole("button", { name: "Stop" })).toHaveClass(
+      "btn-danger",
+    );
 
     await user.upload(screen.getByLabelText("Audio file"), file);
     await user.click(screen.getByRole("button", { name: "Stream" }));
@@ -66,6 +72,9 @@ describe("AudioSourceControl", () => {
     });
 
     expect(screen.getByText("Microphone streaming")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Stop" })).toHaveClass(
+      "btn-danger",
+    );
     await user.click(screen.getByRole("button", { name: "Stop" }));
 
     expect(

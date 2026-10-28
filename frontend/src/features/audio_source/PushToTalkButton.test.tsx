@@ -14,6 +14,8 @@ describe("PushToTalkButton", () => {
   it("talks only while the button is held", () => {
     const { controller } = renderWithAppContext(<PushToTalkButton />);
     const button = screen.getByRole("button", { name: "Hold to talk" });
+    expect(button).toHaveAttribute("aria-pressed", "false");
+    expect(button).not.toHaveClass("push-to-talk--live");
 
     fireEvent.pointerDown(button, { button: 0, pointerId: 1 });
     expect(controller.actions.audioSource.pressToTalk).toHaveBeenCalledOnce();
@@ -52,9 +54,18 @@ describe("PushToTalkButton", () => {
       state: { audioSource: { pushToTalk: "talking" } },
     });
 
-    expect(screen.getByRole("button", { name: "Talking" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    const button = screen.getByRole("button", { name: "Talking" });
+    expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(button).toHaveClass("push-to-talk--live");
+  });
+
+  it("marks startup as held without claiming the microphone is live", () => {
+    renderWithAppContext(<PushToTalkButton />, {
+      state: { audioSource: { pushToTalk: "starting" } },
+    });
+
+    const button = screen.getByRole("button", { name: "Starting microphone" });
+    expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(button).not.toHaveClass("push-to-talk--live");
   });
 });

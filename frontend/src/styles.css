@@ -1,12 +1,46 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 
-:root {
+:root,
+[data-bs-theme="dark"] {
+  color-scheme: dark;
+  --pumpkin-ink: #100d14;
+  --pumpkin-text: #f5ead8;
+  --pumpkin-line: #76617f;
+  --pumpkin-surface: #211927;
+  --pumpkin-muted: #b7a9bf;
+  --pumpkin-paper: #100d14;
+  --pumpkin-accent: #ff7518;
+  --pumpkin-spectral: #a879ff;
+  --pumpkin-danger: #ff5266;
+  /* Bootstrap controls and portalled dialogs share the page's palette. */
   --bs-body-font-family: "DM Sans", "Trebuchet MS", sans-serif;
-  --pumpkin-ink: #20231f;
-  --pumpkin-line: #cbd1c8;
-  --pumpkin-surface: #ffffff;
-  --pumpkin-muted: #667066;
-  --pumpkin-paper: #f1f3ef;
+  --bs-body-color: var(--pumpkin-text);
+  --bs-body-color-rgb: 245, 234, 216;
+  --bs-body-bg: var(--pumpkin-paper);
+  --bs-body-bg-rgb: 16, 13, 20;
+  --bs-emphasis-color: var(--pumpkin-text);
+  --bs-emphasis-color-rgb: 245, 234, 216;
+  --bs-secondary-color: var(--pumpkin-muted);
+  --bs-secondary-color-rgb: 183, 169, 191;
+  --bs-secondary-bg: var(--pumpkin-surface);
+  --bs-secondary-bg-rgb: 33, 25, 39;
+  --bs-tertiary-color: var(--pumpkin-muted);
+  --bs-tertiary-color-rgb: 183, 169, 191;
+  --bs-tertiary-bg: #302638;
+  --bs-tertiary-bg-rgb: 48, 38, 56;
+  --bs-border-color: var(--pumpkin-line);
+  --bs-border-color-translucent: rgba(118, 97, 127, 0.5);
+  --bs-primary: var(--pumpkin-accent);
+  --bs-primary-rgb: 255, 117, 24;
+  --bs-warning: var(--pumpkin-accent);
+  --bs-warning-rgb: 255, 117, 24;
+  --bs-dark: var(--pumpkin-ink);
+  --bs-dark-rgb: 16, 13, 20;
+  --bs-link-color: var(--pumpkin-spectral);
+  --bs-link-color-rgb: 168, 121, 255;
+  --bs-link-hover-color: #c4a4ff;
+  --bs-link-hover-color-rgb: 196, 164, 255;
+  --bs-focus-ring-color: rgba(255, 117, 24, 0.5);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -26,13 +60,125 @@ h2 {
 }
 
 .app-shell {
-  color: var(--pumpkin-ink);
+  color: var(--pumpkin-text);
   background-color: var(--pumpkin-paper);
-  background-image: linear-gradient(
-    rgba(32, 35, 31, 0.035) 1px,
-    transparent 1px
-  );
-  background-size: 100% 2rem;
+  /* Static atmosphere, with no images, animation, or extra downloads. */
+  background-image:
+    radial-gradient(
+      ellipse 45rem 28rem at 5% 0%,
+      rgba(255, 117, 24, 0.09),
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 40rem 32rem at 100% 20rem,
+      rgba(168, 121, 255, 0.07),
+      transparent 75%
+    );
+}
+
+/* These Bootstrap variants use literal colors rather than root tokens. */
+.btn-dark,
+.btn-outline-dark {
+  --bs-btn-color: var(--pumpkin-text);
+  --bs-btn-border-color: var(--pumpkin-line);
+  --bs-btn-hover-color: var(--pumpkin-text);
+  --bs-btn-hover-bg: var(--bs-tertiary-bg);
+  --bs-btn-hover-border-color: var(--pumpkin-muted);
+  --bs-btn-active-color: var(--pumpkin-text);
+  --bs-btn-active-bg: var(--bs-tertiary-bg);
+  --bs-btn-active-border-color: var(--pumpkin-muted);
+  --bs-btn-disabled-color: var(--pumpkin-muted);
+  --bs-btn-disabled-border-color: var(--pumpkin-line);
+  --bs-btn-focus-shadow-rgb: 255, 117, 24;
+}
+
+.btn-dark {
+  --bs-btn-bg: var(--pumpkin-surface);
+  --bs-btn-disabled-bg: var(--pumpkin-surface);
+}
+
+.btn-warning {
+  --bs-btn-color: var(--pumpkin-ink);
+  --bs-btn-bg: var(--pumpkin-accent);
+  --bs-btn-border-color: var(--pumpkin-accent);
+  --bs-btn-hover-color: var(--pumpkin-ink);
+  --bs-btn-hover-bg: #ff944d;
+  --bs-btn-hover-border-color: #ff944d;
+  --bs-btn-active-color: var(--pumpkin-ink);
+  --bs-btn-active-bg: #ff944d;
+  --bs-btn-active-border-color: #ff944d;
+  --bs-btn-disabled-color: var(--pumpkin-ink);
+  --bs-btn-disabled-bg: var(--pumpkin-accent);
+  --bs-btn-disabled-border-color: var(--pumpkin-accent);
+  --bs-btn-focus-shadow-rgb: 255, 117, 24;
+}
+
+.btn-danger,
+.btn-outline-danger {
+  --bs-btn-color: var(--pumpkin-ink);
+  --bs-btn-bg: var(--pumpkin-danger);
+  --bs-btn-border-color: var(--pumpkin-danger);
+  --bs-btn-hover-color: var(--pumpkin-ink);
+  --bs-btn-hover-bg: #ff7989;
+  --bs-btn-hover-border-color: #ff7989;
+  --bs-btn-active-color: var(--pumpkin-ink);
+  --bs-btn-active-bg: #ff7989;
+  --bs-btn-active-border-color: #ff7989;
+  --bs-btn-disabled-color: var(--pumpkin-ink);
+  --bs-btn-disabled-bg: var(--pumpkin-danger);
+  --bs-btn-disabled-border-color: var(--pumpkin-danger);
+  --bs-btn-focus-shadow-rgb: 255, 82, 102;
+}
+
+/* Cancel remains an outline action, distinct from solid-red Stop. */
+.btn-outline-danger {
+  --bs-btn-color: var(--pumpkin-danger);
+  --bs-btn-bg: transparent;
+  --bs-btn-disabled-color: var(--pumpkin-danger);
+  --bs-btn-disabled-bg: transparent;
+}
+
+/* All control feedback is static, including Bootstrap's default fades. */
+.app-shell .btn,
+.app-modal .btn,
+.app-shell .form-control,
+.app-modal .form-control,
+.app-shell .form-select,
+.app-modal .form-select {
+  transition: none;
+}
+
+.app-shell .btn:focus-visible,
+.app-modal .btn:focus-visible,
+.app-modal .btn-close:focus-visible {
+  outline: 2px solid var(--pumpkin-text);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .btn-warning:hover:not(:disabled) {
+    box-shadow: 0 0 0.85rem rgba(255, 117, 24, 0.3);
+  }
+}
+
+.btn-warning:active:not(:disabled) {
+  box-shadow: 0 0 0.85rem rgba(255, 117, 24, 0.4);
+}
+
+.form-control,
+.form-select {
+  background-color: var(--pumpkin-surface);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--pumpkin-accent);
+  box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+}
+
+.progress {
+  --bs-progress-bar-bg: var(--pumpkin-accent);
+  --bs-progress-bar-color: var(--pumpkin-ink);
 }
 
 .app-container {
@@ -45,13 +191,39 @@ h2 {
   justify-content: space-between;
   gap: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 2px solid var(--pumpkin-ink);
+  border-bottom: 2px solid var(--pumpkin-line);
 }
 
 .app-header h1 {
   font-size: 2.75rem;
   font-weight: 700;
   line-height: 1;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+  white-space: nowrap;
+}
+
+.app-brand-emblem {
+  width: 0.85em;
+  height: 1em;
+  flex: 0 0 auto;
+  color: var(--pumpkin-accent);
+  filter: drop-shadow(0 0 0.2em rgba(255, 117, 24, 0.65));
+}
+
+.app-brand-label {
+  /* Make room for the emblem within the old title's footprint. Both scale
+     with the existing mobile heading size, without adding another row. */
+  font-size: 0.75em;
+  letter-spacing: -0.035em;
+  color: var(--pumpkin-accent);
+  text-shadow:
+    0 0 0.2em rgba(255, 117, 24, 0.65),
+    0 0 0.7em rgba(255, 117, 24, 0.4);
 }
 
 .app-kicker {
@@ -69,8 +241,8 @@ h2 {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  color: white;
-  background: var(--pumpkin-ink);
+  color: var(--pumpkin-text);
+  background: var(--pumpkin-surface);
   border-radius: 6px;
 }
 
@@ -80,13 +252,13 @@ h2 {
 }
 
 .app-status small {
-  color: #adb7ac;
+  color: var(--pumpkin-muted);
   line-height: 1;
 }
 
 .wake-lock-indicator {
   display: inline-flex;
-  color: #7d897a;
+  color: var(--pumpkin-muted);
 }
 
 .wake-lock-indicator--active {
@@ -95,7 +267,7 @@ h2 {
 
 .streaming-label {
   margin-left: auto;
-  color: #d7ddd5;
+  color: var(--pumpkin-muted);
   font-size: 0.875rem;
   text-align: right;
 }
@@ -107,11 +279,14 @@ h2 {
 }
 
 .page-nav .nav-link {
-  color: var(--pumpkin-muted);
+  color: var(--pumpkin-accent);
 }
 
+.page-nav .nav-link:hover,
+.page-nav .nav-link:focus,
 .page-nav .nav-link.active {
-  color: var(--pumpkin-ink);
+  color: var(--pumpkin-accent);
+  text-shadow: 0 0 0.6em rgba(255, 117, 24, 0.5);
 }
 
 .page-nav-count {
@@ -177,6 +352,18 @@ h2 {
   height: 1.25rem;
 }
 
+.source-button:disabled {
+  /* Disabled here means selected, not unavailable. */
+  --bs-btn-disabled-color: var(--pumpkin-text);
+  --bs-btn-disabled-bg: color-mix(
+    in srgb,
+    var(--pumpkin-spectral) 12%,
+    var(--pumpkin-surface)
+  );
+  --bs-btn-disabled-border-color: var(--pumpkin-spectral);
+  --bs-btn-disabled-opacity: 1;
+}
+
 .source-workspace {
   min-height: 10rem;
   margin-top: 0.75rem;
@@ -240,8 +427,8 @@ h2 {
   justify-content: center;
   gap: 0.2rem;
   background: var(--pumpkin-surface);
-  border-top: 1px solid var(--pumpkin-ink);
-  border-bottom: 1px solid var(--pumpkin-ink);
+  border-top: 1px solid var(--pumpkin-line);
+  border-bottom: 1px solid var(--pumpkin-line);
 }
 
 .volume-readout strong {
@@ -264,14 +451,18 @@ h2 {
 
 /* Doubled up to outrank .modal-content, whose stylesheet loads after this one. */
 .modal-content.app-modal {
+  color: var(--pumpkin-text);
   background-color: var(--pumpkin-paper);
+  border-color: var(--pumpkin-line);
+  box-shadow: 0 0 2rem rgba(168, 121, 255, 0.12);
 }
 
 .app-modal .modal-header {
-  border-bottom: 2px solid var(--pumpkin-ink);
+  border-bottom: 2px solid var(--pumpkin-line);
 }
 
 .app-modal .modal-title {
+  color: var(--pumpkin-accent);
   font-size: 1.25rem;
   font-weight: 700;
 }

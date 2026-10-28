@@ -19,8 +19,9 @@ export interface StreamPcmOptions {
 export async function streamAudioFile(
   file: File,
   setStatus: AudioFileStatus = () => {},
+  light?: LightScene,
 ): Promise<void> {
-  await streamPcm(await decodeAudioFile(file), { setStatus });
+  await streamPcm(await decodeAudioFile(file), { setStatus, light });
 }
 
 /**

@@ -5,6 +5,17 @@ import { renderWithAppContext } from "../test/render_with_app_context.tsx";
 import { AppHeader } from "./AppHeader.tsx";
 
 describe("AppHeader", () => {
+  it("keeps the heading accessible while the pumpkin emblem is decorative", () => {
+    renderWithAppContext(<AppHeader />);
+
+    const heading = screen.getByRole("heading", { level: 1, name: "Pumpkin" });
+    expect(heading).toBeVisible();
+    const emblem = heading.querySelector("svg");
+    expect(emblem).toHaveAttribute("aria-hidden", "true");
+    expect(emblem).toHaveAttribute("focusable", "false");
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
   it("presents the current mode and stream", () => {
     renderWithAppContext(<AppHeader />, {
       state: { status: { mode: "Audio File", streaming: "ghost.wav" } },

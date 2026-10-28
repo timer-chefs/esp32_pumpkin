@@ -31,7 +31,7 @@ export function SdCardFileList() {
           Refresh
         </Button>
         <Button
-          variant="outline-danger"
+          variant="danger"
           size="sm"
           className="icon-label-button"
           disabled={playingFile === null}

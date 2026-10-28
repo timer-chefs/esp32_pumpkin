@@ -83,6 +83,9 @@ describe("SpeechControl", () => {
     render(<SpeakingSpeechControl say={say} />);
 
     await user.type(screen.getByLabelText("What to say"), "Boo");
+    expect(screen.getByRole("button", { name: "Stop" })).toHaveClass(
+      "btn-danger",
+    );
     await user.click(screen.getByRole("button", { name: "Stop" }));
 
     expect(screen.getByRole("button", { name: "Say" })).toBeInTheDocument();
