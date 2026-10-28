@@ -1,6 +1,6 @@
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
-import { Alert, Button, Modal } from "react-bootstrap";
+import { Alert, Button, Modal, Spinner } from "react-bootstrap";
 
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
 import "./presets.css";
@@ -11,16 +11,52 @@ import { usePresets } from "./presets_slice.ts";
 const shownPresetCount = 5;
 
 export function PresetGrid() {
-  const { presets, error, play } = usePresets();
-  const { files, isLoading, refresh } = useSdCard();
+  const { presets, problems, isLoading, error, load, play } = usePresets();
+  const { files, isLoading: isListingCard, refresh } = useSdCard();
   const [isShowingAll, setIsShowingAll] = useState(false);
 
-  // Knowing what's on the card is what lets a preset say its sound is missing.
   useEffect(() => {
-    if (files === null && !isLoading) {
+    if (presets === null && !isLoading) {
+      load();
+    }
+
+    // Knowing what's on the card is what lets a preset say its sound is
+    // missing.
+    if (files === null && !isListingCard) {
       refresh();
     }
   }, []);
+
+  if (presets === null) {
+    return (
+      <section className="control-section" aria-label="Presets">
+        <p className="empty-state mb-0">
+          {isLoading ? (
+            <Spinner
+              animation="border"
+              size="sm"
+              aria-label="Reading the presets"
+            />
+          ) : (
+            <Button
+              variant="outline-dark"
+              className="icon-label-button"
+              onClick={load}
+            >
+              <RefreshCw aria-hidden="true" />
+              Read the presets
+            </Button>
+          )}
+        </p>
+
+        {error && (
+          <Alert variant="danger" className="compact-alert" aria-live="polite">
+            {error}
+          </Alert>
+        )}
+      </section>
+    );
+  }
 
   // The card's file system ignores case, so a preset finds its sound however
   // the file happens to be spelled.
@@ -44,7 +80,7 @@ export function PresetGrid() {
   );
 
   return (
-    <section className="control-section" aria-labelledby="presets-heading">
+    <section className="control-section" aria-label="Presets">
       <div className="preset-grid">
         {presets.slice(0, shownPresetCount).map(presetButton)}
         <Button
@@ -62,6 +98,23 @@ export function PresetGrid() {
       {error && (
         <Alert variant="danger" className="compact-alert" aria-live="polite">
           {error}
+        </Alert>
+      )}
+
+      {problems.length > 0 && (
+        <Alert variant="warning" className="compact-alert">
+          <details>
+            <summary>
+              {problems.length === 1
+                ? "Part of presets.csv couldn't be read"
+                : `${problems.length} parts of presets.csv couldn't be read`}
+            </summary>
+            <ul className="preset-problems">
+              {problems.map((problem, index) => (
+                <li key={index}>{problem}</li>
+              ))}
+            </ul>
+          </details>
         </Alert>
       )}
 

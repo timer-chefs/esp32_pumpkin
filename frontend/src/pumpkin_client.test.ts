@@ -1,5 +1,5 @@
 import * as flatbuffers from "flatbuffers";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   ClientPayload,
@@ -150,5 +150,58 @@ describe("PumpkinClient servo calibration", () => {
     expect(save.servo()).toBe(EyeServoId.BALL);
     expect(save.range()?.minAngle()).toBe(170);
     expect(save.range()?.maxAngle()).toBe(15);
+  });
+});
+
+describe("PumpkinClient presets file", () => {
+  function answer(status: number, body = "") {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(body || null, { status }));
+    vi.stubGlobal("fetch", fetch);
+    return fetch;
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reads the file the device has, fresh every time", async () => {
+    const fetch = answer(200, "name\nGhost\n");
+
+    await expect(api.getPresetsFile()).resolves.toBe("name\nGhost\n");
+    expect(fetch).toHaveBeenCalledWith("/api/presets", { cache: "no-store" });
+  });
+
+  it("reads a card that has no file as having none", async () => {
+    answer(404, "No presets are stored on the SD card");
+
+    await expect(api.getPresetsFile()).resolves.toBeNull();
+  });
+
+  it("passes on the device's explanation of what went wrong", async () => {
+    answer(503, "No SD card detected");
+
+    await expect(api.getPresetsFile()).rejects.toThrow("No SD card detected");
+  });
+
+  it("puts the whole file in place of the stored one", async () => {
+    const fetch = answer(204);
+
+    await api.savePresetsFile("name\nGhost\n");
+
+    expect(fetch).toHaveBeenCalledWith("/api/presets", {
+      method: "PUT",
+      headers: { "Content-Type": "text/csv; charset=utf-8" },
+      body: "name\nGhost\n",
+    });
+  });
+
+  it("says what the device answered when it gives no reason", async () => {
+    answer(500);
+
+    await expect(api.savePresetsFile("name\n")).rejects.toThrow(
+      "The device answered 500",
+    );
   });
 });

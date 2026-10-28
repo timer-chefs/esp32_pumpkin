@@ -121,3 +121,8 @@
   max-width: 880px;
   margin: 0 auto;
 }
+
+.preset-problems {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}

@@ -3,23 +3,50 @@ import { runAction, type Slice } from "../../app/slice.ts";
 import api from "../../pumpkin_client.ts";
 import { toError } from "../../to_error.ts";
 import { defaultPresets, type Preset } from "./presets.ts";
+import { parsePresetsCsv } from "./presets_csv.ts";
 
 export interface PresetsState {
-  /** Fixed for now, but held here so that editing them later is a matter of updating it. */
-  presets: Preset[];
+  /** What the device has stored. Null until it has said. */
+  presets: Preset[] | null;
+  /** What couldn't be read from the stored file, and was left at its default. */
+  problems: string[];
+  isLoading: boolean;
   error: string | null;
 }
 
 export interface PresetsActions {
+  load: () => void;
   play: (id: string) => void;
 }
 
 export const presetsSlice: Slice<PresetsState, PresetsActions> = {
-  initialState: { presets: defaultPresets, error: null },
+  initialState: { presets: null, problems: [], isLoading: false, error: null },
   createActions: ({ getState, update, app }) => ({
+    load: () =>
+      runAction(async () => {
+        update({ isLoading: true, error: null });
+        try {
+          const csv = await api.getPresetsFile();
+          // A card that has never had presets saved to it starts off with
+          // these.
+          update(
+            csv === null
+              ? { presets: defaultPresets, problems: [] }
+              : parsePresetsCsv(csv),
+          );
+        } catch (error) {
+          console.error("Could not read the presets:", error);
+          update({
+            error: `Could not read the presets: ${toError(error).message}`,
+          });
+        } finally {
+          update({ isLoading: false });
+        }
+      }),
+
     play: (id) =>
       runAction(async () => {
-        const preset = getState().presets.find((preset) => preset.id === id);
+        const preset = getState().presets?.find((preset) => preset.id === id);
         if (!preset) {
           return;
         }
