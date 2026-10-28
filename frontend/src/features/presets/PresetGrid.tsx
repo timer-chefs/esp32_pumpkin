@@ -134,13 +134,17 @@ export function PresetGrid() {
         <Modal.Footer>
           <Button
             variant="outline-dark"
-            className="icon-label-button me-auto"
+            className="icon-label-button"
             onClick={edit}
           >
             <Pencil aria-hidden="true" />
             Edit
           </Button>
-          <Button variant="dark" onClick={() => setIsShowingAll(false)}>
+          <Button
+            variant="dark"
+            className="icon-label-button"
+            onClick={() => setIsShowingAll(false)}
+          >
             Close
           </Button>
         </Modal.Footer>

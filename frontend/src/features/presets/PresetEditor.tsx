@@ -1,4 +1,13 @@
-import { ArrowDown, ArrowUp, Play, Plus, Save, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Edit,
+  Play,
+  Plus,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Fragment, useState, type CSSProperties } from "react";
 import { Alert, Button, ListGroup, Modal, Spinner } from "react-bootstrap";
 
@@ -125,17 +134,23 @@ export function PresetEditor() {
               <Play aria-hidden="true" />
               Try
             </Button>
-            <Button variant="dark" onClick={() => setOpenId(null)}>
-              Back
+            <Button
+              variant="dark"
+              className="icon-label-button"
+              onClick={() => setOpenId(null)}
+            >
+              Done
             </Button>
           </Fragment>
         ) : (
           <Fragment key="presets">
             <Button
               variant="outline-dark"
+              className="icon-label-button"
               disabled={isSaving}
               onClick={() => leave(cancelEditing)}
             >
+              <X aria-hidden="true" />
               Cancel
             </Button>
             <Button
@@ -209,6 +224,14 @@ function PresetRow({
         </span>
       </button>
       <span className="preset-edit-actions">
+        <Button
+          variant="light"
+          aria-label={`Edit ${name}`}
+          disabled={isSaving}
+          onClick={onOpen}
+        >
+          <Edit aria-hidden="true" />
+        </Button>
         <Button
           variant="light"
           aria-label={`Move ${name} up`}

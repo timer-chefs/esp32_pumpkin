@@ -49,7 +49,7 @@ describe("PresetEditor", () => {
     expect(screen.getByRole("dialog", { name: "Edit preset" })).toBeVisible();
     expect(screen.getByLabelText("Name")).toHaveValue("Scream");
 
-    await user.click(screen.getByRole("button", { name: "Back" }));
+    await user.click(screen.getByRole("button", { name: "Done" }));
 
     expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
   });
