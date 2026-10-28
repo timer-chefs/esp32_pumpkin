@@ -195,6 +195,12 @@ describe("PresetGrid", () => {
     expect(screen.getByText("Line 3: there's no name")).toBeVisible();
   });
 
+  it("reads the icons when it hasn't yet", () => {
+    const { controller } = renderLoaded();
+
+    expect(controller.actions.iconSet.load).toHaveBeenCalledOnce();
+  });
+
   it("lists the SD card when it hasn't been yet", () => {
     const { controller } = renderLoaded();
 

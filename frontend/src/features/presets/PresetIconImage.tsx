@@ -1,9 +1,24 @@
-import { CircleQuestionMark } from "lucide-react";
+import { CircleQuestionMark, Icon } from "lucide-react";
 
+import { useIconSet } from "./icon_set_slice.ts";
 import { isBuiltInIcon, presetIcons } from "./presets.ts";
 
-/** A preset's icon. One the page can't show is a question mark. */
+/**
+ * A preset's icon: one the page carries, or else one from the SD card's
+ * file of them all. One it can't find there either is a question mark.
+ */
 export function PresetIconImage({ name }: { name: string }) {
-  const Icon = isBuiltInIcon(name) ? presetIcons[name] : CircleQuestionMark;
-  return <Icon aria-hidden="true" />;
+  const { icons } = useIconSet();
+
+  if (isBuiltInIcon(name)) {
+    const BuiltInIcon = presetIcons[name];
+    return <BuiltInIcon aria-hidden="true" />;
+  }
+
+  const iconNode = icons?.get(name);
+  return iconNode ? (
+    <Icon iconNode={iconNode} className={`lucide-${name}`} aria-hidden="true" />
+  ) : (
+    <CircleQuestionMark aria-hidden="true" />
+  );
 }

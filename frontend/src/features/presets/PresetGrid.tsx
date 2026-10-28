@@ -3,6 +3,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { Alert, Button, Modal, Spinner } from "react-bootstrap";
 
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
+import { useIconSet } from "./icon_set_slice.ts";
 import { PresetEditor } from "./PresetEditor.tsx";
 import "./presets.css";
 import { PresetIconImage } from "./PresetIconImage.tsx";
@@ -17,6 +18,7 @@ export function PresetGrid() {
   const { presets, draft, problems, isLoading, error, load, play, edit } =
     usePresets();
   const { files, isLoading: isListingCard, refresh } = useSdCard();
+  const { icons, isLoading: isLoadingIcons, load: loadIcons } = useIconSet();
   const isSoundMissing = useIsSoundMissing();
   const [isShowingAll, setIsShowingAll] = useState(false);
 
@@ -29,6 +31,10 @@ export function PresetGrid() {
     // missing.
     if (files === null && !isListingCard) {
       refresh();
+    }
+
+    if (icons === null && !isLoadingIcons) {
+      loadIcons();
     }
   }, []);
 

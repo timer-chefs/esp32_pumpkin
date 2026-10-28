@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Form, ToggleButton, ToggleButtonGroup } from "react-bootstrap";
+import { Form, ToggleButton } from "react-bootstrap";
 
 import {
   EyeEffectId,
   LightEffectId,
 } from "../../generated/pumpkin/protocol.ts";
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
-import { presetIcons, type Preset, type PresetIcon } from "./presets.ts";
+import { type IconSet, useIconSet } from "./icon_set_slice.ts";
+import { PresetIconImage } from "./PresetIconImage.tsx";
+import { presetIcons, type Preset } from "./presets.ts";
 import type { PresetChanges } from "./presets_slice.ts";
 
-const icons = Object.keys(presetIcons) as PresetIcon[];
+/** As many matches as fit a phone's screen without scrolling past them. */
+const shownIconCount = 48;
 
 /** What the color input shows for a preset that doesn't light the pumpkin. */
 const defaultColor = "#ff8800";
@@ -32,6 +35,9 @@ interface PresetFormProps {
 /** Every part of one preset. Changes go straight to the presets being edited. */
 export function PresetForm({ preset, onChange }: PresetFormProps) {
   const { files } = useSdCard();
+  const { icons, error: iconsError } = useIconSet();
+  const [iconQuery, setIconQuery] = useState("");
+  const iconChoices = findIcons(iconQuery, icons, preset.icon);
   // Kept for when a light that was taken away is put back.
   const [color, setColor] = useState(preset.light?.color ?? defaultColor);
 
@@ -65,28 +71,47 @@ export function PresetForm({ preset, onChange }: PresetFormProps) {
 
       <fieldset>
         <legend className="form-label">Icon</legend>
-        <ToggleButtonGroup
-          type="radio"
-          name="preset-icon"
-          className="preset-icon-picker"
-          value={preset.icon}
-          onChange={(icon: PresetIcon) => onChange({ icon })}
-        >
-          {icons.map((icon) => {
-            const Icon = presetIcons[icon];
-            return (
-              <ToggleButton
-                key={icon}
-                id={`preset-icon-${icon}`}
-                value={icon}
-                variant="outline-dark"
-              >
-                <Icon aria-hidden="true" />
-                <span className="visually-hidden">{labelOf(icon)}</span>
-              </ToggleButton>
-            );
-          })}
-        </ToggleButtonGroup>
+        {icons && (
+          <Form.Control
+            type="search"
+            className="mb-2"
+            placeholder={`Search all ${icons.size} icons`}
+            aria-label="Search the icons"
+            value={iconQuery}
+            onChange={(event) => setIconQuery(event.target.value)}
+          />
+        )}
+        <div className="preset-icon-choices">
+          {iconChoices.shown.map((icon) => (
+            <ToggleButton
+              key={icon}
+              id={`preset-icon-${icon}`}
+              type="radio"
+              name="preset-icon"
+              value={icon}
+              checked={preset.icon === icon}
+              onChange={() => onChange({ icon })}
+              variant="outline-dark"
+              title={icon}
+            >
+              <PresetIconImage name={icon} />
+              <span className="visually-hidden">{labelOf(icon)}</span>
+            </ToggleButton>
+          ))}
+        </div>
+        {iconQuery.trim() !== "" && iconChoices.shown.length === 0 && (
+          <Form.Text>No icon has a name like that.</Form.Text>
+        )}
+        {iconChoices.notShown > 0 && (
+          <Form.Text>
+            {iconChoices.notShown} more match. Keep typing to narrow them down.
+          </Form.Text>
+        )}
+        {iconsError !== null && (
+          <Form.Text>
+            The rest of Lucide's icons couldn't be fetched from the internet.
+          </Form.Text>
+        )}
       </fieldset>
 
       <div className="preset-form-light">
@@ -173,6 +198,52 @@ export function PresetForm({ preset, onChange }: PresetFormProps) {
       </Form.Group>
     </Form>
   );
+}
+
+/**
+ * The icons that match what was typed, best first. Before anything is
+ * typed, or without the icon file, the icons the page carries, along with
+ * the preset's own.
+ */
+function findIcons(
+  query: string,
+  icons: IconSet | null,
+  current: string,
+): { shown: string[]; notShown: number } {
+  const words = query
+    .trim()
+    .toLowerCase()
+    .split(/[\s_-]+/)
+    .filter((word) => word !== "");
+
+  if (words.length === 0 || !icons) {
+    const builtIn = Object.keys(presetIcons);
+    return {
+      shown: builtIn.includes(current) ? builtIn : [current, ...builtIn],
+      notShown: 0,
+    };
+  }
+
+  const typed = words.join("-");
+  // The icon called just that, then the ones whose names start that way:
+  // "cat" before "cat-sleeping" before "sleeping-cat".
+  const rank = (name: string) =>
+    name === typed ? 0 : name.startsWith(typed) ? 1 : 2;
+  // Each word typed starts one of the name's: "light" finds
+  // cloud-lightning, but "cat" doesn't find locate.
+  const matches = [...icons.keys()]
+    .filter((name) => {
+      const nameWords = name.split("-");
+      return words.every((word) =>
+        nameWords.some((nameWord) => nameWord.startsWith(word)),
+      );
+    })
+    .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+
+  return {
+    shown: matches.slice(0, shownIconCount),
+    notShown: Math.max(0, matches.length - shownIconCount),
+  };
 }
 
 /** An enum's values, each named as the protocol names it, but for a person. */

@@ -4,6 +4,7 @@ import { audioSourceSlice } from "../features/audio_source/audio_source_slice.ts
 import { calibrationSlice } from "../features/calibration/calibration_slice.ts";
 import { eyeSlice } from "../features/eye/eye_slice.ts";
 import { logSlice } from "../features/log/log_slice.ts";
+import { iconSetSlice } from "../features/presets/icon_set_slice.ts";
 import { presetsSlice } from "../features/presets/presets_slice.ts";
 import { sdCardSlice } from "../features/sd_card/sd_card_slice.ts";
 import { speechSlice } from "../features/speech/speech_slice.ts";
@@ -25,6 +26,7 @@ const slices: {
   audioSource: audioSourceSlice,
   calibration: calibrationSlice,
   eye: eyeSlice,
+  iconSet: iconSetSlice,
   log: logSlice,
   presets: presetsSlice,
   sdCard: sdCardSlice,

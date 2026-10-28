@@ -39,6 +39,8 @@ Candles,flame,candle,#ffa500,,sleep
 
 Anything in the file that can't be read is pointed out on the presets page, and the rest of it still loads.
 
+A preset's icon can be any of Lucide's. The page carries six of them itself (`cloud-lightning`, `flame`, `ghost`, `moon`, `skull` and `wand-sparkles`) and fetches the rest from jsDelivr, so those need the phone to have internet. Without it, they show as a question mark.
+
 The presets can also be edited in the UI, from the Edit button under More. The changes stay in the editor until Save writes them to the card. Saving keeps the file it replaces as `presets.bak.csv`. If the presets haven't changed, neither file is touched, so the backup always holds the last presets that were different.
 
 A card without `presets.csv` starts with the built-in presets, defined in `frontend/src/features/presets/presets.ts`. Their sounds are `ghost.wav`, `witch.wav`, `scream.wav`, `wolf.wav` and `thunder.wav`. A preset whose sound isn't on the card says so on its button.
