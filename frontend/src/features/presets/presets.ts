@@ -69,6 +69,45 @@ export function newPresetId(): string {
   return `preset-${lastPresetId}`;
 }
 
+/** Whether two presets look and play the same. */
+export function isSamePreset(preset: Preset, other: Preset): boolean {
+  return (
+    preset.name === other.name &&
+    preset.icon === other.icon &&
+    preset.light?.effect === other.light?.effect &&
+    preset.light?.color === other.light?.color &&
+    preset.sound === other.sound &&
+    preset.eye === other.eye
+  );
+}
+
+/** What editing has done to a preset, against the presets as they're saved. */
+export function changeTo(
+  preset: Preset,
+  saved: Preset[],
+): "new" | "changed" | null {
+  const before = saved.find((savedPreset) => savedPreset.id === preset.id);
+  if (!before) {
+    return "new";
+  }
+
+  return isSamePreset(preset, before) ? null : "changed";
+}
+
+/**
+ * Whether the edited presets are any different from the saved ones: added
+ * to, changed, taken away from or put in another order.
+ */
+export function hasChanges(edited: Preset[], saved: Preset[]): boolean {
+  return (
+    edited.length !== saved.length ||
+    edited.some(
+      (preset, index) =>
+        preset.id !== saved[index].id || !isSamePreset(preset, saved[index]),
+    )
+  );
+}
+
 /** What a preset added in the editor starts off as. */
 export function newPreset(): Preset {
   return {

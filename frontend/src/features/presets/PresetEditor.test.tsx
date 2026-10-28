@@ -13,7 +13,11 @@ const [ghost, scream, wolf] = defaultPresets;
 function renderEditing(presets: Partial<PresetsState> = {}) {
   return renderWithAppContext(<PresetEditor />, {
     state: {
-      presets: { draft: [ghost, scream, wolf], ...presets },
+      presets: {
+        presets: [ghost, scream, wolf],
+        draft: [ghost, scream, wolf],
+        ...presets,
+      },
       sdCard: { files: [{ name: "ghost.wav", size: 1 }] },
     },
   });
@@ -142,6 +146,50 @@ describe("PresetEditor", () => {
     expect(controller.actions.presets.add).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ name: "New preset" }),
     );
+  });
+
+  it("marks the presets that have been changed or added", () => {
+    const added = { ...wolf, id: "added", name: "Bats" };
+    renderEditing({ draft: [ghost, { ...scream, sound: null }, wolf, added] });
+
+    const rows = screen.getAllByRole("listitem");
+    expect(rows.map((row) => row.className.match(/is-\w+/)?.[0])).toEqual([
+      undefined,
+      "is-changed",
+      undefined,
+      "is-new",
+    ]);
+    expect(within(rows[1]).getByText("Changed")).toBeVisible();
+    expect(within(rows[3]).getByText("New")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Change Scream (changed)" }),
+    ).toBeVisible();
+  });
+
+  it("doesn't mark a preset that was changed and changed back", () => {
+    renderEditing({ draft: [{ ...ghost }, scream, wolf] });
+
+    expect(screen.queryByText("Changed")).toBeNull();
+  });
+
+  it("makes Save stand out only once there's something to save", () => {
+    const { unmount } = renderEditing();
+    expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
+      "btn-outline-dark",
+    );
+    unmount();
+
+    // Taking one away, or putting them in another order, is a change too.
+    for (const draft of [
+      [ghost, scream],
+      [scream, ghost, wolf],
+    ]) {
+      const { unmount } = renderEditing({ draft });
+      expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
+        "btn-dark",
+      );
+      unmount();
+    }
   });
 
   it("moves a preset up and down", async () => {

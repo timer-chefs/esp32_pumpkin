@@ -9,12 +9,19 @@ import {
   X,
 } from "lucide-react";
 import { Fragment, useState, type CSSProperties } from "react";
-import { Alert, Button, ListGroup, Modal, Spinner } from "react-bootstrap";
+import {
+  Alert,
+  Badge,
+  Button,
+  ListGroup,
+  Modal,
+  Spinner,
+} from "react-bootstrap";
 
 import { PresetForm } from "./PresetForm.tsx";
 import { PresetIconImage } from "./PresetIconImage.tsx";
 import "./presets.css";
-import { newPreset, type Preset } from "./presets.ts";
+import { changeTo, hasChanges, newPreset, type Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
 import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 
@@ -24,6 +31,7 @@ import { useIsSoundMissing } from "./use_is_sound_missing.ts";
  */
 export function PresetEditor() {
   const {
+    presets,
     draft,
     isSaving,
     error,
@@ -36,6 +44,8 @@ export function PresetEditor() {
     cancelEditing,
   } = usePresets();
   const isSoundMissing = useIsSoundMissing();
+  const hasUnsavedChanges =
+    draft !== null && presets !== null && hasChanges(draft, presets);
   // The preset open in the form, rather than the list of them all, and how
   // it was before, for Cancel to put back. Null for one that Add preset has
   // only just made, which Cancel takes away again.
@@ -111,6 +121,7 @@ export function PresetEditor() {
                       key={preset.id}
                       preset={preset}
                       isSoundMissing={isSoundMissing(preset)}
+                      change={presets && changeTo(preset, presets)}
                       canMoveUp={!isSaving && index > 0}
                       canMoveDown={!isSaving && index < draft.length - 1}
                       isSaving={isSaving}
@@ -200,8 +211,11 @@ export function PresetEditor() {
                 <X aria-hidden="true" />
                 Cancel
               </Button>
+              {/* Quiet until there's something to save. It still saves
+                  presets that haven't changed, which a card without a
+                  file of them needs. */}
               <Button
-                variant="dark"
+                variant={hasUnsavedChanges ? "dark" : "outline-dark"}
                 className="icon-label-button"
                 disabled={isSaving}
                 onClick={finishEditing}
@@ -212,6 +226,9 @@ export function PresetEditor() {
                   <Save aria-hidden="true" />
                 )}
                 {isSaving ? "Saving" : "Save"}
+                {hasUnsavedChanges && !isSaving && (
+                  <span className="unsaved-dot" aria-hidden="true" />
+                )}
               </Button>
             </Fragment>
           )}
@@ -263,6 +280,8 @@ export function PresetEditor() {
 interface PresetRowProps {
   preset: Preset;
   isSoundMissing: boolean;
+  /** What editing has done to it, if anything. */
+  change: "new" | "changed" | null;
   canMoveUp: boolean;
   canMoveDown: boolean;
   isSaving: boolean;
@@ -271,9 +290,12 @@ interface PresetRowProps {
   onRemove: () => void;
 }
 
+const changeLabels = { new: "New", changed: "Changed" };
+
 function PresetRow({
   preset,
   isSoundMissing,
+  change,
   canMoveUp,
   canMoveDown,
   isSaving,
@@ -285,11 +307,18 @@ function PresetRow({
   const name = displayName(preset);
 
   return (
-    <ListGroup.Item as="li" className="preset-edit-row">
+    <ListGroup.Item
+      as="li"
+      className={`preset-edit-row ${change ? `is-${change}` : ""}`}
+    >
       <button
         type="button"
         className="preset-edit-open"
-        aria-label={`Change ${name}`}
+        aria-label={
+          change
+            ? `Change ${name} (${changeLabels[change].toLowerCase()})`
+            : `Change ${name}`
+        }
         disabled={isSaving}
         onClick={onOpen}
       >
@@ -297,7 +326,18 @@ function PresetRow({
           <PresetIconImage name={preset.icon} />
         </span>
         <span className="preset-edit-text">
-          <span className="preset-name">{name}</span>
+          <span className="preset-edit-title">
+            <span className="preset-name">{name}</span>
+            {change && (
+              <Badge
+                pill
+                bg={change === "new" ? "success" : "warning"}
+                text={change === "new" ? undefined : "dark"}
+              >
+                {changeLabels[change]}
+              </Badge>
+            )}
+          </span>
           <small
             className={isSoundMissing ? "text-danger" : "text-body-secondary"}
           >
