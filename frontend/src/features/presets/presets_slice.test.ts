@@ -4,11 +4,13 @@ import type { AppAccess } from "../../app/slice.ts";
 import { EyeEffectId } from "../../generated/pumpkin/protocol.ts";
 import api from "../../pumpkin_client.ts";
 import { defaultPresets } from "./presets.ts";
+import { presetsToCsv } from "./presets_csv.ts";
 import { presetsSlice, type PresetsState } from "./presets_slice.ts";
 
 vi.mock("../../pumpkin_client.ts", () => ({
   default: {
     getPresetsFile: vi.fn(),
+    savePresetsFile: vi.fn(),
   },
 }));
 
@@ -75,5 +77,113 @@ describe("presetsSlice.load", () => {
     expect(state().error).toBe(
       "Could not read the presets: No SD card detected",
     );
+  });
+});
+
+describe("presetsSlice editing", () => {
+  const [ghost, scream, wolf] = defaultPresets;
+  const names = (presets: readonly { name: string }[] | null) =>
+    presets?.map((preset) => preset.name);
+
+  function editing(presets = [ghost, scream, wolf]) {
+    const slice = createPresets({ presets, error: "Earlier" });
+    slice.actions.edit();
+    return slice;
+  }
+
+  it("edits the presets as they are", () => {
+    const { state } = editing();
+
+    expect(state().draft).toEqual(state().presets);
+    expect(state().error).toBeNull();
+  });
+
+  it("moves a preset up and down", () => {
+    const { actions, state } = editing();
+
+    actions.move(wolf.id, -1);
+    expect(names(state().draft)).toEqual(["Ghost", "Wolf", "Scream"]);
+
+    actions.move(ghost.id, 1);
+    expect(names(state().draft)).toEqual(["Wolf", "Ghost", "Scream"]);
+  });
+
+  it("doesn't move a preset past either end", () => {
+    const { actions, state } = editing();
+
+    actions.move(ghost.id, -1);
+    actions.move(wolf.id, 1);
+
+    expect(names(state().draft)).toEqual(["Ghost", "Scream", "Wolf"]);
+  });
+
+  it("takes a preset away", () => {
+    const { actions, state } = editing();
+
+    actions.remove(scream.id);
+
+    expect(names(state().draft)).toEqual(["Ghost", "Wolf"]);
+  });
+
+  it("leaves the presets as they were when cancelled", () => {
+    const { actions, state } = editing();
+
+    actions.remove(scream.id);
+    actions.cancelEditing();
+
+    expect(state().draft).toBeNull();
+    expect(names(state().presets)).toEqual(["Ghost", "Scream", "Wolf"]);
+    expect(api.savePresetsFile).not.toHaveBeenCalled();
+  });
+
+  it("saves the edited presets to the card", async () => {
+    vi.mocked(api.savePresetsFile).mockResolvedValue();
+    const { actions, state } = editing();
+
+    actions.remove(scream.id);
+    actions.finishEditing();
+
+    expect(state().isSaving).toBe(true);
+    await vi.waitFor(() => expect(state().isSaving).toBe(false));
+    expect(api.savePresetsFile).toHaveBeenCalledExactlyOnceWith(
+      presetsToCsv([ghost, wolf]),
+    );
+    expect(state().draft).toBeNull();
+    expect(names(state().presets)).toEqual(["Ghost", "Wolf"]);
+  });
+
+  it("saves unchanged presets, which a card without a file needs", async () => {
+    vi.mocked(api.savePresetsFile).mockResolvedValue();
+    const { actions, state } = createPresets({
+      presets: defaultPresets,
+      problems: ["Line 2: there's no name"],
+    });
+
+    actions.edit();
+    actions.finishEditing();
+
+    await vi.waitFor(() => expect(state().draft).toBeNull());
+    expect(api.savePresetsFile).toHaveBeenCalledExactlyOnceWith(
+      presetsToCsv(defaultPresets),
+    );
+    // What was saved is all there is now, and every bit of it reads.
+    expect(state().problems).toEqual([]);
+  });
+
+  it("keeps the edits when they couldn't be saved", async () => {
+    vi.mocked(api.savePresetsFile).mockRejectedValue(
+      new Error("No SD card detected"),
+    );
+    const { actions, state } = editing();
+
+    actions.remove(scream.id);
+    actions.finishEditing();
+
+    await vi.waitFor(() => expect(state().isSaving).toBe(false));
+    expect(state().error).toBe(
+      "Could not save the presets: No SD card detected",
+    );
+    expect(names(state().draft)).toEqual(["Ghost", "Wolf"]);
+    expect(names(state().presets)).toEqual(["Ghost", "Scream", "Wolf"]);
   });
 });

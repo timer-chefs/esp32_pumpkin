@@ -1,18 +1,22 @@
-import { Plus, RefreshCw } from "lucide-react";
+import { Pencil, Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 import { Alert, Button, Modal, Spinner } from "react-bootstrap";
 
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
+import { PresetEditor } from "./PresetEditor.tsx";
 import "./presets.css";
 import { presetIcons, type Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
+import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 
 /** How many presets fit on the page; the rest are a press of "More" away. */
 const shownPresetCount = 5;
 
 export function PresetGrid() {
-  const { presets, problems, isLoading, error, load, play } = usePresets();
+  const { presets, problems, isLoading, error, load, play, edit } =
+    usePresets();
   const { files, isLoading: isListingCard, refresh } = useSdCard();
+  const isSoundMissing = useIsSoundMissing();
   const [isShowingAll, setIsShowingAll] = useState(false);
 
   useEffect(() => {
@@ -58,20 +62,11 @@ export function PresetGrid() {
     );
   }
 
-  // The card's file system ignores case, so a preset finds its sound however
-  // the file happens to be spelled.
-  const filesOnCard =
-    files && new Set(files.map((file) => file.name.toLowerCase()));
-
   const presetButton = (preset: Preset) => (
     <PresetButton
       key={preset.id}
       preset={preset}
-      isSoundMissing={
-        preset.sound !== null &&
-        filesOnCard !== null &&
-        !filesOnCard.has(preset.sound.toLowerCase())
-      }
+      isSoundMissing={isSoundMissing(preset)}
       onPlay={() => {
         setIsShowingAll(false);
         play(preset.id);
@@ -135,11 +130,24 @@ export function PresetGrid() {
           <div className="preset-grid">{presets.map(presetButton)}</div>
         </Modal.Body>
         <Modal.Footer>
+          <Button
+            variant="outline-dark"
+            className="icon-label-button me-auto"
+            onClick={() => {
+              setIsShowingAll(false);
+              edit();
+            }}
+          >
+            <Pencil aria-hidden="true" />
+            Edit
+          </Button>
           <Button variant="dark" onClick={() => setIsShowingAll(false)}>
             Close
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <PresetEditor />
     </section>
   );
 }

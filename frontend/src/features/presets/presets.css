@@ -116,7 +116,9 @@
 
 /* Kept to the page's width so a desktop doesn't get one long row. */
 .all-presets .modal-header,
-.all-presets .modal-body {
+.all-presets .modal-body,
+.preset-editor .modal-header,
+.preset-editor .modal-body {
   width: 100%;
   max-width: 880px;
   margin: 0 auto;
@@ -125,4 +127,38 @@
 .preset-problems {
   margin: 0.5rem 0 0;
   padding-left: 1.25rem;
+}
+
+/* Doubled up to outrank .list-group-item, which loads after this. */
+.list-group-item.preset-edit-row {
+  /* Grey for a preset that leaves the lights alone. */
+  --preset-color: var(--pumpkin-line);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.preset-icon.preset-icon-small {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.preset-icon-small svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.preset-edit-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.preset-edit-actions {
+  flex: none;
+  display: flex;
+  gap: 0.25rem;
 }

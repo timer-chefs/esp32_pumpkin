@@ -108,6 +108,17 @@ describe("PresetGrid", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
+  it("edits the presets from the list of all of them", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderLoaded();
+
+    await user.click(screen.getByRole("button", { name: "More" }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+
+    expect(controller.actions.presets.edit).toHaveBeenCalledOnce();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
   it("reads the presets when it hasn't yet", () => {
     const { controller } = renderWithAppContext(<PresetGrid />);
 
