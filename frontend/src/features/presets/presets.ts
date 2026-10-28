@@ -50,6 +50,18 @@ export interface Preset extends PresetScene {
   icon: PresetIcon;
 }
 
+let lastPresetId = 0;
+
+/**
+ * Tells presets apart while they're shown and edited. Not stored: where a
+ * preset is in the list is all that identifies it on the device. A counter
+ * rather than crypto.randomUUID(), which only a secure context has.
+ */
+export function newPresetId(): string {
+  lastPresetId += 1;
+  return `preset-${lastPresetId}`;
+}
+
 export const defaultPresets: Preset[] = [
   {
     id: "ghost",
