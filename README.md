@@ -97,6 +97,17 @@ pio run -d firmware -e application upload
 pio run -d firmware -e application uploadfs
 ```
 
+### Upgrade Lucide
+
+The presets page fetches most of its icons from jsDelivr, pinned in `frontend/src/features/presets/icon_set_slice.ts` to the version of `lucide-react` it's built with, along with a checksum the browser holds the file to. After upgrading `lucide-react`, put its version there, along with the checksum of that version's `icon-nodes.json` as npm has it. The checksum goes after `sha384-`:
+
+```sh
+npm pack lucide-static@<version>
+tar -xzOf lucide-static-<version>.tgz package/icon-nodes.json | openssl dgst -sha384 -binary | openssl base64 -A
+```
+
+A test fails until the two versions match.
+
 ### Client-server protocol contract
 
 The browser/device WebSocket contract is defined through the FlatBuffer specification in `protocol/pumpkin.fbs`.

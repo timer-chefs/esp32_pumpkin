@@ -2,7 +2,11 @@ import { version as lucideVersion } from "lucide-react/package.json";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AppAccess } from "../../app/slice.ts";
-import { iconSetSlice, type IconSetState } from "./icon_set_slice.ts";
+import {
+  iconSetSlice,
+  type IconSetState,
+  lucideIcons,
+} from "./icon_set_slice.ts";
 
 function createIconSet() {
   let state: IconSetState = { ...iconSetSlice.initialState };
@@ -54,7 +58,7 @@ describe("iconSetSlice", () => {
     ]);
   });
 
-  it("fetches the version of Lucide the page was built with", async () => {
+  it("fetches the icons only as their checksum says they should be", async () => {
     const fetch = answer(Response.json({}));
     const { actions, state } = createIconSet();
 
@@ -62,8 +66,15 @@ describe("iconSetSlice", () => {
 
     await vi.waitFor(() => expect(state().isLoading).toBe(false));
     expect(fetch).toHaveBeenCalledWith(
-      `https://cdn.jsdelivr.net/npm/lucide-static@${lucideVersion}/icon-nodes.json`,
+      `https://cdn.jsdelivr.net/npm/lucide-static@${lucideIcons.version}/icon-nodes.json`,
+      { integrity: lucideIcons.integrity },
     );
+  });
+
+  it("fetches the icons of the Lucide the page carries its own from", () => {
+    // On upgrading lucide-react, the icons' version and checksum go with it.
+    // The README says how to work out the checksum.
+    expect(lucideIcons.version).toBe(lucideVersion);
   });
 
   it("says why the icons couldn't be fetched", async () => {

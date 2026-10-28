@@ -1,5 +1,4 @@
 import type { IconNode } from "lucide-react";
-import { version as lucideVersion } from "lucide-react/package.json";
 
 import { useSlice } from "../../app/app_context.tsx";
 import { runAction, type Slice } from "../../app/slice.ts";
@@ -24,9 +23,21 @@ export interface IconSetActions {
   load: () => void;
 }
 
-// The version of Lucide the page was built with, so these draw just like the
-// icons it carries.
-const iconsUrl = `https://cdn.jsdelivr.net/npm/lucide-static@${lucideVersion}/icon-nodes.json`;
+/**
+ * Which of Lucide's icon files to fetch, and its checksum as Lucide published
+ * it to npm. The browser refuses whatever jsDelivr sends unless it matches
+ * byte for byte: the icons become elements on the page, so a file that had
+ * been tampered with could put anything there. The version is the one the
+ * page carries its own icons from, so the two draw alike; a test keeps them
+ * together. The README says how to work out the checksum for a new one.
+ */
+export const lucideIcons = {
+  version: "1.35.0",
+  integrity:
+    "sha384-VS7i9xWmGNVnuKKlFEHxnYhUXVb7BruHpwQqkq8WA8ktGNchDvMqVDqkNs7C9myW",
+};
+
+const iconsUrl = `https://cdn.jsdelivr.net/npm/lucide-static@${lucideIcons.version}/icon-nodes.json`;
 
 export const iconSetSlice: Slice<IconSetState, IconSetActions> = {
   initialState: { icons: null, isLoading: false, error: null },
@@ -35,7 +46,9 @@ export const iconSetSlice: Slice<IconSetState, IconSetActions> = {
       runAction(async () => {
         update({ isLoading: true, error: null });
         try {
-          const response = await fetch(iconsUrl);
+          const response = await fetch(iconsUrl, {
+            integrity: lucideIcons.integrity,
+          });
           if (!response.ok) {
             throw new Error(`jsDelivr answered ${response.status}`);
           }
