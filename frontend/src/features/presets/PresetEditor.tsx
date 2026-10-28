@@ -36,13 +36,29 @@ export function PresetEditor() {
     cancelEditing,
   } = usePresets();
   const isSoundMissing = useIsSoundMissing();
-  // The preset open in the form, rather than the list of them all.
-  const [openId, setOpenId] = useState<string | null>(null);
-  const openPreset = draft?.find((preset) => preset.id === openId) ?? null;
+  // The preset open in the form, rather than the list of them all, and how
+  // it was before, for Cancel to put back. Null for one that Add preset has
+  // only just made, which Cancel takes away again.
+  const [open, setOpen] = useState<{ id: string; before: Preset | null }>();
+  const openPreset = draft?.find((preset) => preset.id === open?.id) ?? null;
 
   const leave = (action: () => void) => {
-    setOpenId(null);
+    setOpen(undefined);
     action();
+  };
+
+  const cancelPreset = () => {
+    if (!open) {
+      return;
+    }
+
+    if (open.before) {
+      const { id, ...before } = open.before;
+      change(id, before);
+    } else {
+      remove(open.id);
+    }
+    setOpen(undefined);
   };
 
   return (
@@ -82,7 +98,7 @@ export function PresetEditor() {
                     canMoveUp={!isSaving && index > 0}
                     canMoveDown={!isSaving && index < draft.length - 1}
                     isSaving={isSaving}
-                    onOpen={() => setOpenId(preset.id)}
+                    onOpen={() => setOpen({ id: preset.id, before: preset })}
                     onMove={(by) => move(preset.id, by)}
                     onRemove={() => remove(preset.id)}
                   />
@@ -99,7 +115,7 @@ export function PresetEditor() {
               onClick={() => {
                 const preset = newPreset();
                 add(preset);
-                setOpenId(preset.id);
+                setOpen({ id: preset.id, before: null });
               }}
             >
               <Plus aria-hidden="true" />
@@ -119,13 +135,15 @@ export function PresetEditor() {
         {/* Keyed apart, so that Save doesn't turn into Try in passing. */}
         {openPreset ? (
           <Fragment key="preset">
+            {/* Just the icon, so that all four fit across a phone. */}
             <Button
               variant="outline-danger"
               className="icon-label-button me-auto"
+              aria-label="Delete"
+              title="Delete"
               onClick={() => leave(() => remove(openPreset.id))}
             >
               <Trash2 aria-hidden="true" />
-              Delete
             </Button>
             <Button
               variant="outline-dark"
@@ -136,9 +154,17 @@ export function PresetEditor() {
               Try
             </Button>
             <Button
+              variant="outline-dark"
+              className="icon-label-button"
+              onClick={cancelPreset}
+            >
+              <X aria-hidden="true" />
+              Cancel
+            </Button>
+            <Button
               variant="dark"
               className="icon-label-button"
-              onClick={() => setOpenId(null)}
+              onClick={() => setOpen(undefined)}
             >
               Done
             </Button>

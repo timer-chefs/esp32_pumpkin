@@ -1,7 +1,8 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { AppContextProvider } from "../../app/app_context.tsx";
 import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
 import { PresetEditor } from "./PresetEditor.tsx";
 import { defaultPresets } from "./presets.ts";
@@ -64,6 +65,49 @@ describe("PresetEditor", () => {
     expect(controller.actions.presets.change).toHaveBeenCalledWith(wolf.id, {
       name: "Wolf!",
     });
+  });
+
+  it("puts the open preset back as it was on Cancel", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderEditing();
+    const { id, ...asItWas } = wolf;
+
+    await user.click(screen.getByRole("button", { name: "Change Wolf" }));
+    await user.type(screen.getByLabelText("Name"), "!");
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(controller.actions.presets.change).toHaveBeenLastCalledWith(
+      id,
+      asItWas,
+    );
+    expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
+  });
+
+  it("takes a preset that was only just added away again on Cancel", async () => {
+    const user = userEvent.setup();
+    const { controller, rerender } = renderEditing();
+
+    await user.click(screen.getByRole("button", { name: "Add preset" }));
+    const [added] = vi.mocked(controller.actions.presets.add).mock.calls[0];
+    rerender(
+      <AppContextProvider
+        value={{
+          ...controller,
+          state: {
+            ...controller.state,
+            presets: { ...controller.state.presets, draft: [ghost, added] },
+          },
+        }}
+      >
+        <PresetEditor />
+      </AppContextProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(controller.actions.presets.remove).toHaveBeenCalledExactlyOnceWith(
+      added.id,
+    );
+    expect(controller.actions.presets.change).not.toHaveBeenCalled();
   });
 
   it("tries out and deletes the open preset", async () => {
