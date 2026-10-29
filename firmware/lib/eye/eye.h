@@ -2,7 +2,7 @@
 #define EYE_H
 
 #include <Arduino.h>
-#include <ESP32Servo.h>
+#include <ESP32PWM.h>
 
 // The eye's two servos.
 enum class EyeServo : uint8_t
@@ -33,7 +33,8 @@ public:
     // stays where it is until it is moved.
     void begin();
 
-    // Advances active servo movements. Call regularly from loop().
+    // Advances active servo movements, and lets go of servos that have
+    // stood still for a while. Call regularly from loop().
     void update();
 
     // Turns the eye: negative is left, 0 straight ahead, positive right.
@@ -42,7 +43,7 @@ public:
     // Opens or closes the lid: 0 is shut, 255 wide open.
     void blink(uint8_t amount);
 
-    // Holds a servo at `angle`, 0-180, ignoring its calibration. For finding
+    // Moves a servo to `angle`, 0-180, ignoring its calibration. For finding
     // the calibration in the first place.
     void move_servo(EyeServo servo, uint8_t angle);
 
@@ -67,6 +68,9 @@ private:
         uint32_t started_at_ms = 0;
         uint32_t duration_ms = 0;
 
+        uint32_t written_at_ms = 0;     //When the servo was last sent an angle.
+
+        bool holding = false;           //If the servo is being sent pulses.
         bool moving = false;            //If there is an ongoing motion.
         bool position_known = false;    //If the current_angle has been recorded at least a first time.
     };
@@ -91,7 +95,13 @@ private:
     // A zero duration moves immediately; otherwise the movement is animated.
     void move_within_calibration(EyeServo servo, float fraction, uint32_t duration_ms = 0);
 
-    Servo servos[servo_count];
+    // Sends servo `i` the pulse for `angle`, taking hold of it again if
+    // update() has let go of it.
+    void write_servo(size_t i, uint8_t angle);
+
+    // Plain PWM rather than ESP32Servo's Servo, which has no way to stop
+    // pulsing a servo: on the S3, its detach() leaves the pulses running.
+    ESP32PWM servos[servo_count];
     ServoCalibration calibrations[servo_count];
     
     bool is_calibrated[servo_count]{};
