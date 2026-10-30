@@ -85,7 +85,7 @@ constexpr int sd_card_frequency_khz = 40000;
 // Audio files live in their own directory on the card so the listing isn't
 // polluted by whatever else the card happens to carry.
 constexpr const char* sd_audio_directory = "/audio";
-constexpr uint8_t max_listed_audio_files = 32;
+constexpr uint8_t max_listed_audio_files = 128;
 constexpr uint8_t max_file_name_length = 64;
 // Room for "<sd_audio_directory>/<file name>".
 constexpr uint8_t audio_path_length = max_file_name_length + 32;
