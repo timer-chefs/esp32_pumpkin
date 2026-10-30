@@ -1,23 +1,23 @@
 import {
-    CloudLightning,
-    EyeDashed,
-    FaceGrinning,
-    FaceSlightlySmilingPlus,
-    Flame,
-    FlaskConical,
-    Ghost,
-    type LucideIcon,
-    Moon,
-    Music,
-    Skull,
-    Square,
-    Wand,
-    WandSparkles,
+  CloudLightning,
+  EyeDashed,
+  FaceGrinning,
+  FaceSlightlySmilingPlus,
+  Flame,
+  FlaskConical,
+  Ghost,
+  type LucideIcon,
+  Moon,
+  Music,
+  Skull,
+  Square,
+  Wand,
+  WandSparkles,
 } from "lucide-react";
 
 import {
-    EyeEffectId,
-    LightEffectId,
+  EyeEffectId,
+  LightEffectId,
 } from "../../generated/pumpkin/protocol.ts";
 import type { PresetScene } from "../../pumpkin_client.ts";
 
