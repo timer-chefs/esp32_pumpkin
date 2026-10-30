@@ -18,7 +18,32 @@ ffmpeg -i song.mp3 -ac 1 -ar 16000 -c:a pcm_s16le song.wav
 
 ### Presets
 
-The presets page plays its sounds from the same directory: `ghost.wav`, `witch.wav`, `scream.wav`, `wolf.wav` and `thunder.wav`. A preset whose sound isn't on the card says so on its button. The presets themselves are defined in `frontend/src/features/presets/presets.ts`.
+The presets are kept in `presets.csv` at the root of the SD card, so a card carries its presets along with the sounds they play. Back them up by copying the file off the card. It can be edited on a computer too, in a spreadsheet or a text editor.
+
+The first line names the columns, which can come in any order:
+
+| Column  | What it holds                                                                          |
+| ------- | -------------------------------------------------------------------------------------- |
+| `name`  | The name on the preset's button.                                                       |
+| `icon`  | The name of one of [Lucide's icons](https://lucide.dev/icons), like `cloud-lightning`. |
+| `light` | `candle`, `audio_reactive`, or `none` to leave the lights as they are.                 |
+| `color` | The light's color, as `#rrggbb`.                                                       |
+| `sound` | A `.wav` file in `/audio`, or empty to play nothing.                                   |
+| `eye`   | `none`, `wander`, `shifty`, `stare` or `sleep`.                                        |
+
+```csv
+name,icon,light,color,sound,eye
+Ghost,ghost,audio_reactive,#8000ff,ghost.wav,wander
+Candles,flame,candle,#ffa500,,sleep
+```
+
+Anything in the file that can't be read is pointed out on the presets page, and the rest of it still loads.
+
+A preset's icon can be any of Lucide's. The page carries six of them itself (`cloud-lightning`, `flame`, `ghost`, `moon`, `skull` and `wand-sparkles`) and fetches the rest from jsDelivr, so those need the phone to have internet. Without it, they show as a question mark.
+
+The presets can also be edited in the UI, from the Edit button under More. The changes stay in the editor until Save writes them to the card. Saving keeps the file it replaces as `presets.bak.csv`. If the presets haven't changed, neither file is touched, so the backup always holds the last presets that were different.
+
+A card without `presets.csv` starts with the built-in presets, defined in `frontend/src/features/presets/presets.ts`. Their sounds are `ghost.wav`, `witch.wav`, `scream.wav`, `wolf.wav` and `thunder.wav`. A preset whose sound isn't on the card says so on its button.
 
 ### Upload through the UI
 
@@ -72,6 +97,17 @@ pio run -d firmware -e application upload
 pio run -d firmware -e application uploadfs
 ```
 
+### Upgrade Lucide
+
+The presets page fetches most of its icons from jsDelivr, pinned in `frontend/src/features/presets/icon_set_slice.ts` to the version of `lucide-react` it's built with, along with a checksum the browser holds the file to. After upgrading `lucide-react`, put its version there, along with the checksum of that version's `icon-nodes.json` as npm has it. The checksum goes after `sha384-`:
+
+```sh
+npm pack lucide-static@<version>
+tar -xzOf lucide-static-<version>.tgz package/icon-nodes.json | openssl dgst -sha384 -binary | openssl base64 -A
+```
+
+A test fails until the two versions match.
+
 ### Client-server protocol contract
 
 The browser/device WebSocket contract is defined through the FlatBuffer specification in `protocol/pumpkin.fbs`.
@@ -81,4 +117,7 @@ After changing it, use `flatc` 25.9.23 to regenerate the TypeScript and C++ bind
 ./protocol/generate.sh
 ```
 
-All audio and control traffic use this contract except `/api/ip` which remains HTTP-only because it's used during bootstrapping of the WiFi provisioning page.
+All audio and control traffic use this contract except two HTTP-only endpoints:
+
+- `/api/ip`, because it's used during bootstrapping of the WiFi provisioning page.
+- `/api/presets`, because a WebSocket message can't be larger than 15 kB. `GET` returns `presets.csv` from the SD card (404 when there isn't one) and `PUT` replaces it. The device stores the file without reading it; its format belongs to the client.

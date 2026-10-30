@@ -63,7 +63,38 @@ export interface PresetScene {
   eye: EyeEffectId;
 }
 
+/** Where the device keeps the presets file. See getPresetsFile(). */
+const presetsUrl = "/api/presets";
+
 export default class PumpkinClient {
+  /**
+   * The presets file the device keeps on its SD card, or null when the card
+   * has none yet. Over HTTP rather than the connection, because the file can
+   * outgrow a web socket message.
+   */
+  static async getPresetsFile(): Promise<string | null> {
+    const response = await fetch(presetsUrl, { cache: "no-store" });
+    if (response.status === 404) {
+      return null;
+    }
+
+    await throwUnlessOk(response);
+    return response.text();
+  }
+
+  /**
+   * Replaces the presets file on the SD card. The file it replaces is kept
+   * as a backup, unless the two are the same.
+   */
+  static async savePresetsFile(csv: string): Promise<void> {
+    const response = await fetch(presetsUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "text/csv; charset=utf-8" },
+      body: csv,
+    });
+    await throwUnlessOk(response);
+  }
+
   static startAudioStream(connection: PumpkinConnection): void {
     connection.sendMessage(ClientPayload.StartAudioStream, (builder) =>
       StartAudioStream.createStartAudioStream(builder),
@@ -310,6 +341,19 @@ export default class PumpkinClient {
       ServerPayload.Success,
     );
   }
+}
+
+/** Throws the device's own explanation of a request it turned down. */
+async function throwUnlessOk(response: Response): Promise<void> {
+  if (response.ok) {
+    return;
+  }
+
+  const explanation = (await response.text()).trim();
+  throw new Error(
+    explanation ||
+      `The device answered ${response.status} ${response.statusText}`,
+  );
 }
 
 function createLight(

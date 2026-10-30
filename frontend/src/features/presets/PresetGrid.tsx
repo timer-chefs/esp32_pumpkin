@@ -1,41 +1,79 @@
-import { Plus } from "lucide-react";
+import { Pencil, Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
-import { Alert, Button, Modal } from "react-bootstrap";
+import { Alert, Button, Modal, Spinner } from "react-bootstrap";
 
 import { useSdCard } from "../sd_card/sd_card_slice.ts";
+import { useIconSet } from "./icon_set_slice.ts";
+import { PresetEditor } from "./PresetEditor.tsx";
 import "./presets.css";
-import { presetIcons, type Preset } from "./presets.ts";
+import { PresetIconImage } from "./PresetIconImage.tsx";
+import type { Preset } from "./presets.ts";
 import { usePresets } from "./presets_slice.ts";
+import { useIsSoundMissing } from "./use_is_sound_missing.ts";
 
 /** How many presets fit on the page; the rest are a press of "More" away. */
 const shownPresetCount = 5;
 
 export function PresetGrid() {
-  const { presets, error, play } = usePresets();
-  const { files, isLoading, refresh } = useSdCard();
+  const { presets, draft, problems, isLoading, error, load, play, edit } =
+    usePresets();
+  const { files, isLoading: isListingCard, refresh } = useSdCard();
+  const { icons, isLoading: isLoadingIcons, load: loadIcons } = useIconSet();
+  const isSoundMissing = useIsSoundMissing();
   const [isShowingAll, setIsShowingAll] = useState(false);
 
-  // Knowing what's on the card is what lets a preset say its sound is missing.
   useEffect(() => {
-    if (files === null && !isLoading) {
+    if (presets === null && !isLoading) {
+      load();
+    }
+
+    // Knowing what's on the card is what lets a preset say its sound is
+    // missing.
+    if (files === null && !isListingCard) {
       refresh();
+    }
+
+    if (icons === null && !isLoadingIcons) {
+      loadIcons();
     }
   }, []);
 
-  // The card's file system ignores case, so a preset finds its sound however
-  // the file happens to be spelled.
-  const filesOnCard =
-    files && new Set(files.map((file) => file.name.toLowerCase()));
+  if (presets === null) {
+    return (
+      <section className="control-section" aria-label="Presets">
+        <p className="empty-state mb-0">
+          {isLoading ? (
+            <Spinner
+              animation="border"
+              size="sm"
+              aria-label="Reading the presets"
+            />
+          ) : (
+            <Button
+              variant="outline-dark"
+              className="icon-label-button"
+              onClick={load}
+            >
+              <RefreshCw aria-hidden="true" />
+              Read the presets
+            </Button>
+          )}
+        </p>
+
+        {error && (
+          <Alert variant="danger" className="compact-alert" aria-live="polite">
+            {error}
+          </Alert>
+        )}
+      </section>
+    );
+  }
 
   const presetButton = (preset: Preset) => (
     <PresetButton
       key={preset.id}
       preset={preset}
-      isSoundMissing={
-        preset.sound !== null &&
-        filesOnCard !== null &&
-        !filesOnCard.has(preset.sound.toLowerCase())
-      }
+      isSoundMissing={isSoundMissing(preset)}
       onPlay={() => {
         setIsShowingAll(false);
         play(preset.id);
@@ -44,7 +82,7 @@ export function PresetGrid() {
   );
 
   return (
-    <section className="control-section" aria-labelledby="presets-heading">
+    <section className="control-section" aria-label="Presets">
       <div className="preset-grid">
         {presets.slice(0, shownPresetCount).map(presetButton)}
         <Button
@@ -65,8 +103,27 @@ export function PresetGrid() {
         </Alert>
       )}
 
+      {problems.length > 0 && (
+        <Alert variant="warning" className="compact-alert">
+          <details>
+            <summary>
+              {problems.length === 1
+                ? "Part of presets.csv couldn't be read"
+                : `${problems.length} parts of presets.csv couldn't be read`}
+            </summary>
+            <ul className="preset-problems">
+              {problems.map((problem, index) => (
+                <li key={index}>{problem}</li>
+              ))}
+            </ul>
+          </details>
+        </Alert>
+      )}
+
       <Modal
-        show={isShowingAll}
+        // Out of the way while the presets are edited, and back once that's
+        // over, saved or not.
+        show={isShowingAll && draft === null}
         onHide={() => setIsShowingAll(false)}
         animation={false}
         fullscreen
@@ -82,11 +139,25 @@ export function PresetGrid() {
           <div className="preset-grid">{presets.map(presetButton)}</div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="dark" onClick={() => setIsShowingAll(false)}>
+          <Button
+            variant="outline-dark"
+            className="icon-label-button"
+            onClick={edit}
+          >
+            <Pencil aria-hidden="true" />
+            Edit
+          </Button>
+          <Button
+            variant="dark"
+            className="icon-label-button"
+            onClick={() => setIsShowingAll(false)}
+          >
             Close
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <PresetEditor />
     </section>
   );
 }
@@ -98,7 +169,6 @@ interface PresetButtonProps {
 }
 
 function PresetButton({ preset, isSoundMissing, onPlay }: PresetButtonProps) {
-  const Icon = presetIcons[preset.icon];
   const style = {
     "--preset-color": preset.light?.color,
   } as CSSProperties;
@@ -111,7 +181,7 @@ function PresetButton({ preset, isSoundMissing, onPlay }: PresetButtonProps) {
       onClick={onPlay}
     >
       <span className="preset-icon">
-        <Icon aria-hidden="true" />
+        <PresetIconImage name={preset.icon} />
       </span>
       <span
         className={`preset-name ${isSoundMissing ? "text-danger" : "text-body-secondary"}`}

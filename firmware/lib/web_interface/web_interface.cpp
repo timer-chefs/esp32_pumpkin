@@ -5,6 +5,8 @@
 #include "command_handler.h"
 #include "command_registry.h"
 #include "device_log.h"
+#include "preset_store.h"
+#include "sd_card.h"
 #include "sd_upload.h"
 
 #include <WiFi.h>
@@ -195,6 +197,55 @@ static void handle_get_ip()
     server.send(200, "text/plain", WiFi.localIP().toString());
 }
 
+// The presets go over HTTP rather than the web socket because a web socket
+// message can't be larger than 15 kB, and nothing else limits how many
+// presets there can be.
+static void handle_get_presets()
+{
+    if(!sd_card_is_mounted())
+    {
+        server.send(503, "text/plain", "No SD card detected");
+        return;
+    }
+
+    File* file = preset_store_open();
+    if(!file)
+    {
+        // The client starts a card that has never had presets saved to it
+        // off with presets of its own.
+        server.send(404, "text/plain", "No presets are stored on the SD card");
+        return;
+    }
+
+    // Another client saving presets changes what this answers.
+    server.sendHeader("Cache-Control", "no-store");
+    server.streamFile(*file, "text/csv; charset=utf-8");
+    close_file(file);
+}
+
+static void handle_put_presets()
+{
+    // The body comes whole, as the server collected it. Taking it raw instead
+    // would hand it over in pieces, but the server reads each piece by
+    // waiting to fill a 1436-byte buffer. Short of that, it waits out the
+    // client's whole timeout (5 s, once a client has been served) first,
+    // holding up loop() all the while. That happens to the last piece of
+    // nearly every body, including all of a small one.
+    const String body = server.arg("plain");
+
+    const char* error_message = nullptr;
+    if(!preset_store_save(
+           reinterpret_cast<const uint8_t*>(body.c_str()),
+           body.length(),
+           &error_message))
+    {
+        server.send(sd_card_is_mounted() ? 500 : 503, "text/plain", error_message);
+        return;
+    }
+
+    server.send(204);
+}
+
 static const char redirect_page[] PROGMEM =
 #include "redirect_page.html"
     ; // Intentionally a semicolon here. The include file expands to a raw_string(...)
@@ -235,6 +286,8 @@ void web_interface_init()
     //Register HTTP routes
     server.on("/", HTTP_GET, handle_root);
     server.on("/api/ip", HTTP_GET, handle_get_ip);
+    server.on("/api/presets", HTTP_GET, handle_get_presets);
+    server.on("/api/presets", HTTP_PUT, handle_put_presets);
 
     //Serve static files from LittleFS:
     server.serveStatic("/", LittleFS, "/", NULL);

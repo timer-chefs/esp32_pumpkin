@@ -1,32 +1,33 @@
 import {
-  CloudLightning,
-  Flame,
-  Ghost,
-  EyeDashed,
-  Music,
-  FlaskConical,
-  FaceGrinning,
-  FaceSlightlySmilingPlus,
-  type LucideIcon,
-  Moon,
-  Skull,
-  WandSparkles,
-  Wand,
-  Square,
+    CloudLightning,
+    EyeDashed,
+    FaceGrinning,
+    FaceSlightlySmilingPlus,
+    Flame,
+    FlaskConical,
+    Ghost,
+    type LucideIcon,
+    Moon,
+    Music,
+    Skull,
+    Square,
+    Wand,
+    WandSparkles,
 } from "lucide-react";
 
 import {
-  EyeEffectId,
-  LightEffectId,
+    EyeEffectId,
+    LightEffectId,
 } from "../../generated/pumpkin/protocol.ts";
 import type { PresetScene } from "../../pumpkin_client.ts";
 
 /**
- * The icons a preset can show. A preset names its icon rather than holding
- * the component, so it stays plain data that can be stored once presets are
- * editable.
+ * The icons the page carries itself, so the presets can show these without
+ * the rest. A preset names its icon as Lucide does, which is how these are
+ * keyed.
  */
 export const presetIcons = {
+  "cloud-lightning": CloudLightning,
   flame: Flame,
   ghost: Ghost,
   eyedashed: EyeDashed,
@@ -40,14 +41,83 @@ export const presetIcons = {
   wand_sparkles: WandSparkles,
   wand: Wand,
   square: Square,
+  "wand-sparkles": WandSparkles,
 } satisfies Record<string, LucideIcon>;
 
 export type PresetIcon = keyof typeof presetIcons;
 
+export function isBuiltInIcon(name: string): name is PresetIcon {
+  return Object.hasOwn(presetIcons, name);
+}
+
 export interface Preset extends PresetScene {
   id: string;
   name: string;
-  icon: PresetIcon;
+  /** The name of one of Lucide's icons. */
+  icon: string;
+}
+
+let lastPresetId = 0;
+
+/**
+ * Tells presets apart while they're shown and edited. Not stored: where a
+ * preset is in the list is all that identifies it on the device. A counter
+ * rather than crypto.randomUUID(), which only a secure context has.
+ */
+export function newPresetId(): string {
+  lastPresetId += 1;
+  return `preset-${lastPresetId}`;
+}
+
+/** Whether two presets look and play the same. */
+export function isSamePreset(preset: Preset, other: Preset): boolean {
+  return (
+    preset.name === other.name &&
+    preset.icon === other.icon &&
+    preset.light?.effect === other.light?.effect &&
+    preset.light?.color === other.light?.color &&
+    preset.sound === other.sound &&
+    preset.eye === other.eye
+  );
+}
+
+/** What editing has done to a preset, against the presets as they're saved. */
+export function changeTo(
+  preset: Preset,
+  saved: Preset[],
+): "new" | "changed" | null {
+  const before = saved.find((savedPreset) => savedPreset.id === preset.id);
+  if (!before) {
+    return "new";
+  }
+
+  return isSamePreset(preset, before) ? null : "changed";
+}
+
+/**
+ * Whether the edited presets are any different from the saved ones: added
+ * to, changed, taken away from or put in another order.
+ */
+export function hasChanges(edited: Preset[], saved: Preset[]): boolean {
+  return (
+    edited.length !== saved.length ||
+    edited.some(
+      (preset, index) =>
+        preset.id !== saved[index].id || !isSamePreset(preset, saved[index]),
+    )
+  );
+}
+
+/** What a preset added in the editor starts off as. */
+export function newPreset(): Preset {
+  return {
+    id: newPresetId(),
+    name: "New preset",
+    icon: "ghost",
+    light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#ff8800" },
+    sound: null,
+    eye: EyeEffectId.NONE,
+  };
 }
 
 export const defaultPresets: Preset[] = [
@@ -102,7 +172,7 @@ export const defaultPresets: Preset[] = [
   {
     id: "thunder",
     name: "Thunder",
-    icon: "lightning",
+    icon: "cloud-lightning",
     light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#ffffff" },
     sound: "thunder.wav",
     eye: EyeEffectId.NONE,
@@ -110,7 +180,7 @@ export const defaultPresets: Preset[] = [
   {
     id: "witch",
     name: "Witch",
-    icon: "wand_sparkles",
+    icon: "wand-sparkles",
     light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#00FF33" },
     sound: "witch.wav",
     eye: EyeEffectId.SHIFTY,

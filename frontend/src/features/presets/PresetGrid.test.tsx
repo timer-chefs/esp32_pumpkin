@@ -2,14 +2,30 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
+import { AppContextProvider } from "../../app/app_context.tsx";
 import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
 import { PresetGrid } from "./PresetGrid.tsx";
-import { defaultPresets } from "./presets.ts";
+import { defaultPresets, type Preset } from "./presets.ts";
+import type { PresetsState } from "./presets_slice.ts";
+
+/** Renders the grid once the device has said what presets it has. */
+function renderLoaded(
+  presets: Partial<PresetsState> = {},
+  sdCard: Parameters<typeof renderWithAppContext>[1] = {},
+) {
+  return renderWithAppContext(<PresetGrid />, {
+    ...sdCard,
+    state: {
+      ...sdCard.state,
+      presets: { presets: defaultPresets, ...presets },
+    },
+  });
+}
 
 describe("PresetGrid", () => {
   it("plays the preset that is pressed", async () => {
     const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<PresetGrid />);
+    const { controller } = renderLoaded();
 
     await user.click(screen.getByRole("button", { name: /Ghost/ }));
 
@@ -19,7 +35,7 @@ describe("PresetGrid", () => {
   });
 
   it("shows the first five presets and a button for the rest", () => {
-    renderWithAppContext(<PresetGrid />);
+    renderLoaded();
 
     expect(
       screen.getAllByRole("button").map((button) => button.textContent),
@@ -58,7 +74,7 @@ describe("PresetGrid", () => {
 
   it("shows every preset when More is pressed", async () => {
     const user = userEvent.setup();
-    renderWithAppContext(<PresetGrid />);
+    renderLoaded();
 
     await user.click(screen.getByRole("button", { name: "More" }));
 
@@ -77,7 +93,7 @@ describe("PresetGrid", () => {
 
   it("plays a preset picked from all of them and goes back", async () => {
     const user = userEvent.setup();
-    const { controller } = renderWithAppContext(<PresetGrid />);
+    const { controller } = renderLoaded();
     const hiddenPreset = defaultPresets[5];
 
     await user.click(screen.getByRole("button", { name: "More" }));
@@ -93,28 +109,121 @@ describe("PresetGrid", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("lists the SD card when it hasn't been yet", () => {
+  it("edits the presets from the list of all of them", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderLoaded();
+
+    await user.click(screen.getByRole("button", { name: "More" }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+
+    expect(controller.actions.presets.edit).toHaveBeenCalledOnce();
+  });
+
+  it("goes back to the list of all presets once they've been edited", async () => {
+    const user = userEvent.setup();
+    const { controller, rerender } = renderLoaded();
+    const withDraft = (draft: Preset[] | null) => (
+      <AppContextProvider
+        value={{
+          ...controller,
+          state: {
+            ...controller.state,
+            presets: { ...controller.state.presets, draft },
+          },
+        }}
+      >
+        <PresetGrid />
+      </AppContextProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "More" }));
+    rerender(withDraft(defaultPresets));
+
+    expect(screen.queryByRole("dialog", { name: "All presets" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
+
+    rerender(withDraft(null));
+
+    expect(screen.getByRole("dialog", { name: "All presets" })).toBeVisible();
+  });
+
+  it("reads the presets when it hasn't yet", () => {
     const { controller } = renderWithAppContext(<PresetGrid />);
+
+    expect(controller.actions.presets.load).toHaveBeenCalledOnce();
+  });
+
+  it("says it is reading the presets", () => {
+    const { controller } = renderWithAppContext(<PresetGrid />, {
+      state: { presets: { isLoading: true } },
+    });
+
+    expect(screen.getByLabelText("Reading the presets")).toBeVisible();
+    expect(controller.actions.presets.load).not.toHaveBeenCalled();
+  });
+
+  it("offers to read the presets again when they couldn't be", async () => {
+    const user = userEvent.setup();
+    const { controller } = renderWithAppContext(<PresetGrid />, {
+      state: {
+        presets: { error: "Could not read the presets: No SD card detected" },
+      },
+    });
+
+    expect(
+      screen.getByText("Could not read the presets: No SD card detected"),
+    ).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Read the presets" }));
+
+    // Once on its own, and once for the press.
+    expect(controller.actions.presets.load).toHaveBeenCalledTimes(2);
+  });
+
+  it("points out what couldn't be read from the file", async () => {
+    const user = userEvent.setup();
+    renderLoaded({
+      problems: [
+        `Line 2: "wnder" isn't an eye effect`,
+        "Line 3: there's no name",
+      ],
+    });
+
+    await user.click(
+      screen.getByText("2 parts of presets.csv couldn't be read"),
+    );
+
+    expect(screen.getByText("Line 3: there's no name")).toBeVisible();
+  });
+
+  it("reads the icons when it hasn't yet", () => {
+    const { controller } = renderLoaded();
+
+    expect(controller.actions.iconSet.load).toHaveBeenCalledOnce();
+  });
+
+  it("lists the SD card when it hasn't been yet", () => {
+    const { controller } = renderLoaded();
 
     expect(controller.actions.sdCard.refresh).toHaveBeenCalledOnce();
   });
 
   it("points out a sound that isn't on the SD card", () => {
     const [onCard, missing] = defaultPresets;
-    renderWithAppContext(<PresetGrid />, {
-      state: {
-        sdCard: { files: [{ name: onCard.sound!.toUpperCase(), size: 1 }] },
+    renderLoaded(
+      {},
+      {
+        state: {
+          sdCard: { files: [{ name: onCard.sound!.toUpperCase(), size: 1 }] },
+        },
       },
-    });
+    );
 
     expect(screen.getByText(onCard.name)).not.toHaveClass("text-danger");
     expect(screen.getByText(missing.name)).toHaveClass("text-danger");
   });
 
   it("reports a preset that couldn't be played", () => {
-    renderWithAppContext(<PresetGrid />, {
-      state: { presets: { error: "Could not play Ghost: No SD card" } },
-    });
+    renderLoaded({ error: "Could not play Ghost: No SD card" });
 
     expect(screen.getByText("Could not play Ghost: No SD card")).toBeVisible();
   });

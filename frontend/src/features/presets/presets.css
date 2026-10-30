@@ -116,8 +116,148 @@
 
 /* Kept to the page's width so a desktop doesn't get one long row. */
 .all-presets .modal-header,
-.all-presets .modal-body {
+.all-presets .modal-body,
+.preset-editor .modal-header,
+.preset-editor .modal-body {
   width: 100%;
   max-width: 880px;
   margin: 0 auto;
+}
+
+.preset-problems {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+/* Doubled up to outrank .list-group-item, which loads after this. */
+.list-group-item.preset-edit-row {
+  /* Grey for a preset that leaves the lights alone. */
+  --preset-color: var(--pumpkin-line);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.preset-icon.preset-icon-small {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.preset-icon-small svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* The icon and the words, as one button that opens the preset. */
+.preset-edit-open {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0;
+  color: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+}
+
+/* What editing has done, along the row's edge as well as in its badge. */
+.list-group-item.preset-edit-row.is-changed {
+  background: rgba(var(--bs-warning-rgb), 0.1);
+  box-shadow: inset 4px 0 0 var(--bs-warning);
+}
+
+.list-group-item.preset-edit-row.is-new {
+  background: rgba(var(--bs-success-rgb), 0.08);
+  box-shadow: inset 4px 0 0 var(--bs-success);
+}
+
+.preset-edit-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.unsaved-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--bs-warning);
+  border-radius: 50%;
+}
+
+.preset-edit-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.preset-edit-actions {
+  flex: none;
+  display: flex;
+  gap: 0.125rem;
+}
+
+/* Narrow, so that four of them leave a name room on a phone. */
+.preset-edit-actions .btn {
+  padding: 0.375rem 0.4375rem;
+}
+
+.preset-edit-actions .btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preset-form fieldset {
+  margin: 0;
+}
+
+/* A label like the others, rather than the heading Bootstrap makes it. */
+.preset-form legend {
+  font-size: inherit;
+}
+
+.preset-icon-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+  gap: 0.375rem;
+}
+
+.preset-icon-choices .btn {
+  display: grid;
+  place-items: center;
+  padding: 0.5rem 0;
+}
+
+.preset-form-light {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.preset-form-light > :first-child {
+  flex: 1 1 auto;
+}
+
+.preset-form .form-control-color {
+  width: 4rem;
+}
+
+/* A question asked over the editor, which is a modal itself. Bootstrap would
+   put a second backdrop under the first modal rather than over it. */
+.modal-backdrop.confirm-backdrop {
+  z-index: 1060;
+}
+
+.modal.confirm-modal {
+  z-index: 1065;
 }
