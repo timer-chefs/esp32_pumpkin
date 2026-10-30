@@ -17,6 +17,15 @@ static constexpr uint32_t blink_duration_ms = 400;
 static constexpr uint32_t look_duration_ms = 400;
 static constexpr uint32_t look_lid_duration_ms = look_duration_ms / 2;
 
+// How long a servo holds its position after it was last moved. Held still,
+// it keeps buzzing as it corrects for tiny errors, so it is then let go of
+// by no longer sending it pulses.
+static constexpr uint32_t servo_hold_ms = 250;
+
+// Splits the pulse period into 1024 steps, about 20 us each, as
+// ESP32Servo does.
+static constexpr uint8_t servo_pwm_bits = 10;
+
 static constexpr ServoCalibration uncalibrated = {0, servo_max_angle};
 
 // By EyeServo. The names double as the servos' keys in the calibration's
@@ -57,7 +66,8 @@ void Eye::begin()
 
         // The servo stays limp until it is first written to, so it goes
         // straight to where it is told rather than via some default.
-        servos[i].attach(servo_pins[i], servo_min_pulse_us, servo_max_pulse_us);
+        servos[i].attachPin(
+            servo_pins[i], 1000000.0 / servo_pulse_period_us, servo_pwm_bits);
         if(!servos[i].attached())
         {
             device_log.printf(
@@ -90,6 +100,12 @@ void Eye::update()
 
         if(!motion.moving)
         {
+            if(motion.holding && now - motion.written_at_ms >= servo_hold_ms)
+            {
+                // A line held low, unlike any pulse, lets the servo go limp.
+                servos[i].write(0);
+                motion.holding = false;
+            }
             continue;
         }
 
@@ -111,8 +127,7 @@ void Eye::update()
                     ease_in_out(progress);
         }
 
-        servos[i].write(
-            static_cast<uint8_t>(lroundf(motion.current_angle)));
+        write_servo(i, static_cast<uint8_t>(lroundf(motion.current_angle)));
     }
 
     const Motion& lid = motions[index_of(EyeServo::Lid)];
@@ -173,7 +188,7 @@ void Eye::move_servo(EyeServo servo, uint8_t angle)
 {
     const size_t i = index_of(servo);
 
-    servos[i].write(angle);
+    write_servo(i, angle);
 
     Motion& motion = motions[i];
     motion.current_angle = static_cast<float>(angle);
@@ -246,4 +261,14 @@ void Eye::move_within_calibration(
         range.min_angle + (range.max_angle - range.min_angle) * fraction;
 
     start_motion(servo, angle, duration_ms);
+}
+
+void Eye::write_servo(size_t i, uint8_t angle)
+{
+    const uint32_t pulse_us =
+        map(angle, 0, servo_max_angle, servo_min_pulse_us, servo_max_pulse_us);
+
+    servos[i].write((pulse_us << servo_pwm_bits) / servo_pulse_period_us);
+    motions[i].written_at_ms = millis();
+    motions[i].holding = true;
 }

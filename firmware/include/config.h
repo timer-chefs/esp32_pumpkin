@@ -153,9 +153,10 @@ constexpr uint8_t pin_servo_eye_ball = GPIO_NUM_38;
 
 // Servo
 // A hobby servo reads the width of a pulse sent every 20 ms as the angle to
-// hold. 500-2500 us, spread over 0-180 degrees, is the widest range the
-// library will send. The eye's calibration narrows that down to the angles
-// its mechanism can actually reach.
+// hold. 500-2500 us, spread over 0-180 degrees, is the widest range
+// ESP32Servo will send. The eye's calibration narrows that down to the
+// angles its mechanism can actually reach.
+constexpr uint32_t servo_pulse_period_us = 20000;
 constexpr uint16_t servo_min_pulse_us = 500;
 constexpr uint16_t servo_max_pulse_us = 2500;
 constexpr uint8_t servo_max_angle = 180;
