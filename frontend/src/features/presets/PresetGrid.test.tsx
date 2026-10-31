@@ -47,7 +47,7 @@ describe("PresetGrid", () => {
   });
 
   it("uses each preset's exact light color for its glow", () => {
-    renderWithAppContext(<PresetGrid />);
+    renderLoaded();
 
     for (const preset of testPresets.slice(0, 5)) {
       const button = screen.getByRole("button", { name: preset.name });
