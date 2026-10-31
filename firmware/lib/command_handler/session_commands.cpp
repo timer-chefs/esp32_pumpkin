@@ -67,7 +67,7 @@ static CommandResult handle_play_show(
     return success(builder);
 }
 
-static bool find_effect(LightEffectId light_effect, EffectId& effect)
+bool find_effect(LightEffectId light_effect, EffectId& effect)
 {
     switch(light_effect)
     {

@@ -215,6 +215,11 @@ ServoCalibration Eye::calibration(EyeServo servo) const
     return calibrations[index_of(servo)];
 }
 
+bool Eye::is_servo_calibrated(EyeServo servo) const
+{
+    return is_calibrated[index_of(servo)];
+}
+
 bool Eye::calibrate(EyeServo servo, ServoCalibration calibration)
 {
     const char* name = servo_names[index_of(servo)];
