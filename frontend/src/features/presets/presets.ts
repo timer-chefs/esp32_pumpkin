@@ -28,19 +28,17 @@ import type { PresetScene } from "../../pumpkin_client.ts";
  */
 export const presetIcons = {
   "cloud-lightning": CloudLightning,
+  "eye-dashed": EyeDashed,
+  "face-grinning": FaceGrinning,
+  "face-slightly-smiling-plus": FaceSlightlySmilingPlus,
   flame: Flame,
+  "flask-conical": FlaskConical,
   ghost: Ghost,
-  eyedashed: EyeDashed,
-  music: Music,
-  flask: FlaskConical,
-  face_grinning: FaceGrinning,
-  face_slightly_smiling_plus: FaceSlightlySmilingPlus,
-  lightning: CloudLightning,
   moon: Moon,
+  music: Music,
   skull: Skull,
-  wand_sparkles: WandSparkles,
-  wand: Wand,
   square: Square,
+  wand: Wand,
   "wand-sparkles": WandSparkles,
 } satisfies Record<string, LucideIcon>;
 

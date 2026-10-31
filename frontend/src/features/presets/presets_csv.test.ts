@@ -100,7 +100,7 @@ describe("parsePresetsCsv", () => {
     expect(problems).toEqual([]);
     expect(preset).toMatchObject({
       name: "Häxa, the witch",
-      icon: "wand-sparkles",
+      icon: "wand",
       light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#33ff33" },
       sound: "witch.wav",
       eye: EyeEffectId.SHIFTY,
@@ -123,15 +123,18 @@ describe("parsePresetsCsv", () => {
 
   it("reads icons by Lucide's names, and by the names they had before", () => {
     const { presets, problems } = parsePresetsCsv(
-      "name,icon\nA,Cloud Lightning\nB,wand\nC,lightning\nD,cat\n",
+      "name,icon\nA,Cloud Lightning\nB,wand\nC,lightning\nD,cat\nE,face_grinning\nF,eyedashed\nG,flask\n",
     );
 
     expect(problems).toEqual([]);
     expect(presets.map((preset) => preset.icon)).toEqual([
       "cloud-lightning",
-      "wand-sparkles",
+      "wand",
       "cloud-lightning",
       "cat",
+      "face-grinning",
+      "eye-dashed",
+      "flask-conical",
     ]);
   });
 

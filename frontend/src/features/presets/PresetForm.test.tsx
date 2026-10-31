@@ -79,10 +79,17 @@ describe("PresetForm", () => {
 
     expect(shownIcons()).toEqual([
       "cloud-lightning",
+      "eye-dashed",
+      "face-grinning",
+      "face-slightly-smiling-plus",
       "flame",
+      "flask-conical",
       "ghost",
       "moon",
+      "music",
       "skull",
+      "square",
+      "wand",
       "wand-sparkles",
     ]);
   });

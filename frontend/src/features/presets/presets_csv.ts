@@ -20,10 +20,15 @@ type Column = (typeof columns)[number];
 /** For a preset without an icon, or with one that isn't an icon's name. */
 export const fallbackIcon: PresetIcon = "ghost";
 
-/** Icons by what presets called them before they took Lucide's names. */
+/**
+ * Icons by what presets called them before they took Lucide's names. Names
+ * that differ only in spaces or underscores, like face_grinning, are found
+ * anyway.
+ */
 const renamedIcons = new Map([
+  ["eyedashed", "eye-dashed"],
+  ["flask", "flask-conical"],
   ["lightning", "cloud-lightning"],
-  ["wand", "wand-sparkles"],
 ]);
 
 /** For a preset that lights the pumpkin without saying in what color. */
