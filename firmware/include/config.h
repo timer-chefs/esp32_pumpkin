@@ -23,7 +23,7 @@ constexpr uint8_t max_websocket_frames_per_loop = 8;
 // listing, and the builder grows on its own if that ever isn't enough.
 constexpr uint16_t response_builder_size = 2048;
 // Upper bound on the commands feature libraries can register between them.
-constexpr uint8_t max_registered_commands = 24;
+constexpr uint8_t max_registered_commands = 32;
 // ...and on the commands that answer after the fact.
 constexpr uint8_t max_registered_completions = 4;
 // ...and on the features watching what clients do, or with news for them.
@@ -133,6 +133,9 @@ constexpr uint16_t max_presets_file_size = 16384;
 constexpr uint8_t max_auto_mode_presets = 64;
 // Only for telling which preset auto mode is playing in the log.
 constexpr uint8_t max_preset_name_length = 48;
+// Auto mode's pauses between presets until a client picks others.
+constexpr uint32_t default_auto_mode_min_pause_ms = 15000;
+constexpr uint32_t default_auto_mode_max_pause_ms = 45000;
 
 // SDIO Pin 
 constexpr uint8_t pin_sd_clk = GPIO_NUM_12;
@@ -174,5 +177,7 @@ constexpr uint8_t servo_max_angle = 180;
 // flash, so the calibration stays with the device rather than with
 // whichever SD card is in it.
 constexpr const char* eye_calibration_namespace = "eye";
+// Auto mode's, which is how it carries on after a restart.
+constexpr const char* auto_mode_namespace = "auto_mode";
 
 #endif // ESP32_PUMPKIN_CONFIG_H

@@ -56,6 +56,8 @@ public:
     // never been calibrated moves through all of 0-180.
     ServoCalibration calibration(EyeServo servo) const;
 
+    bool is_servo_calibrated(EyeServo servo) const;
+
     // Stores a servo's calibration, where it survives a restart, and moves
     // the eye by it from now on. Returns false, changing nothing, if it
     // couldn't be stored.
