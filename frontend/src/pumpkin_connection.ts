@@ -2,6 +2,7 @@ import * as flatbuffers from "flatbuffers";
 
 import {
   AudioFileList,
+  AutoModeStatus,
   ClientMessage,
   ClientPayload,
   Error as ProtocolError,
@@ -36,6 +37,13 @@ export interface EyeCalibrationInfo {
   lid: ServoRangeInfo;
 }
 
+/** Whether the device is running auto mode, and how long it pauses. */
+export interface AutoModeInfo {
+  running: boolean;
+  minPauseS: number;
+  maxPauseS: number;
+}
+
 /** A piece of what the device has logged. See Log in the protocol. */
 export interface DeviceLogChunk {
   boot: number;
@@ -60,6 +68,8 @@ const payloadDecoders = {
     readAudioFiles(message.payload(new AudioFileList()) as AudioFileList),
   [ServerPayload.EyeCalibration]: (message: ServerMessage) =>
     readEyeCalibration(message.payload(new EyeCalibration()) as EyeCalibration),
+  [ServerPayload.AutoModeStatus]: (message: ServerMessage) =>
+    readAutoModeStatus(message.payload(new AutoModeStatus()) as AutoModeStatus),
 } as const;
 
 type DecodedPayload = keyof typeof payloadDecoders;
@@ -81,6 +91,7 @@ type DisconnectReason = "close" | "error";
 type DisconnectListener = (reason: DisconnectReason) => void;
 type ConnectListener = () => void;
 type LogListener = (chunk: DeviceLogChunk) => void;
+type NoticeListener = (value: ResponseData) => void;
 
 const REQUEST_TIMEOUT_MS = 5000;
 
@@ -91,6 +102,10 @@ export class PumpkinConnection {
   private readonly disconnectListeners = new Set<DisconnectListener>();
   private readonly connectListeners = new Set<ConnectListener>();
   private readonly logListeners = new Set<LogListener>();
+  private readonly noticeListeners = new Map<
+    ServerPayload,
+    Set<NoticeListener>
+  >();
   private nextRequestId = 1;
 
   constructor(private readonly hostname: string) {
@@ -183,6 +198,25 @@ export class PumpkinConnection {
     return () => this.logListeners.delete(listener);
   }
 
+  /**
+   * Subscribes to a payload the device sends every client unasked, such as
+   * auto mode having stopped by itself. Returns an unsubscribe function.
+   */
+  onNotice<Payload extends DecodedPayload>(
+    payloadType: Payload,
+    listener: (value: ResponseValue<Payload>) => void,
+  ): () => void {
+    let listeners = this.noticeListeners.get(payloadType);
+    if (!listeners) {
+      listeners = new Set();
+      this.noticeListeners.set(payloadType, listeners);
+    }
+
+    const untyped = listener as NoticeListener;
+    listeners.add(untyped);
+    return () => listeners.delete(untyped);
+  }
+
   sendMessage(payloadType: ClientPayload, createPayload: CreatePayload): void {
     this.socket.send(this.encodeMessage(payloadType, createPayload, 0));
   }
@@ -260,6 +294,16 @@ export class PumpkinConnection {
     }
 
     const response = decodeResponse(message);
+    if (response.requestId === 0) {
+      const { value } = response;
+      if (value !== undefined) {
+        this.noticeListeners
+          .get(response.payloadType)
+          ?.forEach((listener) => listener(value));
+      }
+      return;
+    }
+
     const pending = this.pendingRequests.get(response.requestId);
     if (!pending) {
       return;
@@ -418,6 +462,14 @@ function readEyeCalibration(payload: EyeCalibration): EyeCalibrationInfo {
 
 function readServoRange(range: ServoRange | null): ServoRangeInfo {
   return { min: range?.minAngle() ?? 0, max: range?.maxAngle() ?? 0 };
+}
+
+function readAutoModeStatus(payload: AutoModeStatus): AutoModeInfo {
+  return {
+    running: payload.running(),
+    minPauseS: payload.minPauseS(),
+    maxPauseS: payload.maxPauseS(),
+  };
 }
 
 function readLog(payload: Log): DeviceLogChunk {
