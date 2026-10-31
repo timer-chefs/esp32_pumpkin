@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 import { audioSourceSlice } from "../features/audio_source/audio_source_slice.ts";
+import { autoModeSlice } from "../features/auto_mode/auto_mode_slice.ts";
 import { calibrationSlice } from "../features/calibration/calibration_slice.ts";
 import { eyeSlice } from "../features/eye/eye_slice.ts";
 import { logSlice } from "../features/log/log_slice.ts";
@@ -24,6 +25,7 @@ const slices: {
   [Name in keyof AppState]: Slice<AppState[Name], AppActions[Name]>;
 } = {
   audioSource: audioSourceSlice,
+  autoMode: autoModeSlice,
   calibration: calibrationSlice,
   eye: eyeSlice,
   iconSet: iconSetSlice,
@@ -92,7 +94,11 @@ export function useAppController(): AppController {
   useEffect(() => {
     const connection = getPumpkinConnection(location.hostname);
     actions.volume.load();
-    return actions.log.listen(connection);
+    const stopListening = [
+      actions.log.listen(connection),
+      actions.autoMode.listen(connection),
+    ];
+    return () => stopListening.forEach((stop) => stop());
   }, []);
 
   return { state: currentState, actions };
