@@ -15,6 +15,9 @@ static size_t completion_count = 0;
 static CommandObserverFn observers[max_registered_observers];
 static size_t observer_count = 0;
 
+static NoticeFn notices[max_registered_notices];
+static size_t notice_count = 0;
+
 void register_commands(const CommandBinding* new_bindings, size_t count)
 {
     for(size_t i = 0; i < count; ++i)
@@ -64,6 +67,32 @@ void register_command_observer(CommandObserverFn observer)
     }
 
     observers[observer_count++] = observer;
+}
+
+void register_notice(NoticeFn notice)
+{
+    if(notice_count == max_registered_notices)
+    {
+        device_log.println("Notice registry is full; raise max_registered_notices");
+        return;
+    }
+
+    notices[notice_count++] = notice;
+}
+
+bool take_notice(
+    CommandResult& result,
+    flatbuffers::FlatBufferBuilder& builder)
+{
+    for(size_t i = 0; i < notice_count; ++i)
+    {
+        if(notices[i](result, builder))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void command_handler_init()

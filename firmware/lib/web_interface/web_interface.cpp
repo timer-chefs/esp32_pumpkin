@@ -82,9 +82,8 @@ static void filesystem_init()
     }
 }
 
-// Sends a payload already built into response_builder.
-static void send_server_message(
-    uint8_t client_num,
+// Wraps a payload already built into response_builder in a whole message.
+static void finish_server_message(
     uint32_t request_id,
     const CommandResult& result)
 {
@@ -98,7 +97,15 @@ static void send_server_message(
         MessageBody_ServerMessage,
         server_message.Union());
     FinishMessageBuffer(response_builder, message);
+}
 
+// Sends a payload already built into response_builder.
+static void send_server_message(
+    uint8_t client_num,
+    uint32_t request_id,
+    const CommandResult& result)
+{
+    finish_server_message(request_id, result);
     webSocket.sendBIN(
         client_num,
         response_builder.GetBufferPointer(),
@@ -335,6 +342,23 @@ static void service_deferred_response()
     deferred_request_id = 0;
 }
 
+// Sends every client the news no request asked for. A client that connects
+// later asks for what it needs to know instead.
+static void service_notices()
+{
+    response_builder.Clear();
+    CommandResult result;
+    if(!take_notice(result, response_builder))
+    {
+        return;
+    }
+
+    finish_server_message(0, result);
+    webSocket.broadcastBIN(
+        response_builder.GetBufferPointer(),
+        response_builder.GetSize());
+}
+
 static void send_log(uint8_t client_num, uint32_t position, size_t length)
 {
     response_builder.Clear();
@@ -387,5 +411,6 @@ void web_interface_service() {
         webSocket.loop();
     }
 
+    service_notices();
     service_log();
 }

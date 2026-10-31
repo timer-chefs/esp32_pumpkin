@@ -53,6 +53,19 @@ using CommandObserverFn = void (*)(Pumpkin::Protocol::ClientPayload payload_type
 
 void register_command_observer(CommandObserverFn observer);
 
+// Reports news that every client is sent unasked, such as a feature having
+// changed by itself. Returns false while there is none.
+using NoticeFn = bool (*)(
+    CommandResult& result,
+    flatbuffers::FlatBufferBuilder& builder);
+
+void register_notice(NoticeFn notice);
+
+// Polled by the transport: fills in news for every client, if there is any.
+bool take_notice(
+    CommandResult& result,
+    flatbuffers::FlatBufferBuilder& builder);
+
 // Takes the whole table, so the count can't drift from what's in it.
 template <size_t Count>
 inline void register_commands(const CommandBinding (&bindings)[Count])

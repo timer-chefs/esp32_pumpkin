@@ -26,8 +26,9 @@ constexpr uint16_t response_builder_size = 2048;
 constexpr uint8_t max_registered_commands = 24;
 // ...and on the commands that answer after the fact.
 constexpr uint8_t max_registered_completions = 4;
-// ...and on the features watching what clients do.
+// ...and on the features watching what clients do, or with news for them.
 constexpr uint8_t max_registered_observers = 2;
+constexpr uint8_t max_registered_notices = 2;
 // Largest chunk of streamed audio a client may send in one message.
 constexpr uint16_t max_audio_chunk_size = 512;
 
