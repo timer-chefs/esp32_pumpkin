@@ -16,6 +16,7 @@ static constexpr uint8_t lid_wide_open = 255;
 static constexpr uint32_t blink_duration_ms = 400;
 static constexpr uint32_t look_duration_ms = 400;
 static constexpr uint32_t look_lid_duration_ms = look_duration_ms / 2;
+static constexpr uint32_t glance_duration_ms = 120;
 
 // How long a servo holds its position after it was last moved. Held still,
 // it keeps buzzing as it corrects for tiny errors, so it is then let go of
@@ -153,11 +154,7 @@ void Eye::update()
 
 void Eye::look(int8_t at)
 {
-    const int clamped = std::max<int>(at, -look_reach);
-
-    move_within_calibration(
-        EyeServo::Ball,
-        (clamped + look_reach) / (2.0f * look_reach), look_duration_ms);
+    move_within_calibration(EyeServo::Ball, look_fraction(at), look_duration_ms);
 
     const size_t lid = index_of(EyeServo::Lid);
 
@@ -170,6 +167,11 @@ void Eye::look(int8_t at)
     move_within_calibration(EyeServo::Lid, 0.0f, look_lid_duration_ms);     //0.0f selects the calibrated "closed" endpoint, even when the servo is mounted in reverse.
 
     lid_phase = LidPhase::Closing;
+}
+
+void Eye::glance(int8_t at)
+{
+    move_within_calibration(EyeServo::Ball, look_fraction(at), glance_duration_ms);
 }
 
 void Eye::blink(uint8_t amount)
@@ -199,6 +201,13 @@ void Eye::move_servo(EyeServo servo, uint8_t angle)
     {
         lid_phase = LidPhase::Idle;
     }
+}
+
+float Eye::look_fraction(int8_t at)
+{
+    const int clamped = std::max<int>(at, -look_reach);
+
+    return (clamped + look_reach) / (2.0f * look_reach);
 }
 
 ServoCalibration Eye::calibration(EyeServo servo) const
