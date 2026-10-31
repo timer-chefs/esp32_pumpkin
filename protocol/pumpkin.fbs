@@ -145,6 +145,26 @@ table SaveServoCalibration {
   range:ServoRange (required);
 }
 
+// Has the device play the presets in presets.csv that have a sound at
+// random, each followed by a pause of between `min_pause_s` and
+// `max_pause_s` seconds. It reads the file afresh for each round of them,
+// so presets saved meanwhile play from the next round on. The eye follows
+// the beat of what plays, whatever eye effect the presets ask for.
+//
+// It runs on the device until StopAutoMode or something else is played --
+// a preset, a file, a voice -- and carries on after a restart. Sent while
+// running, it changes the pause without cutting off what is playing. Fails
+// if presets.csv has no preset with a sound.
+table StartAutoMode {
+  min_pause_s:ushort;
+  max_pause_s:ushort;
+}
+
+// Stops auto mode, and the preset it is playing, if any.
+table StopAutoMode {}
+
+table GetAutoMode {}
+
 union ClientPayload {
   StartAudioStream,
   StopAudioStream,
@@ -165,7 +185,10 @@ union ClientPayload {
   PreviewServoAngle,
   GetEyeCalibration,
   SaveServoCalibration,
-  SetLight
+  SetLight,
+  StartAutoMode,
+  StopAutoMode,
+  GetAutoMode
 }
 
 table ClientMessage {
@@ -230,13 +253,22 @@ table Log {
   uptime_us:ulong;
 }
 
+// Answers GetAutoMode, and is sent unasked to every client whenever auto
+// mode starts or stops by itself.
+table AutoModeStatus {
+  running:bool;
+  min_pause_s:ushort;
+  max_pause_s:ushort;
+}
+
 union ServerPayload {
   Success,
   Error,
   Volume,
   AudioFileList,
   EyeCalibration,
-  Log
+  Log,
+  AutoModeStatus
 }
 
 // A request_id of 0 marks a message that no request asked for.
