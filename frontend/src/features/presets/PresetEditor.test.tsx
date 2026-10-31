@@ -4,11 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AppContextProvider } from "../../app/app_context.tsx";
 import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
+import { testPresets } from "../../test/test_presets.ts";
 import { PresetEditor } from "./PresetEditor.tsx";
-import { defaultPresets } from "./presets.ts";
 import type { PresetsState } from "./presets_slice.ts";
 
-const [ghost, scream, wolf] = defaultPresets;
+const [ghost, scream, wolf] = testPresets;
 
 function renderEditing(presets: Partial<PresetsState> = {}) {
   return renderWithAppContext(<PresetEditor />, {

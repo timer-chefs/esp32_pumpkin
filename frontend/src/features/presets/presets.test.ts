@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { LightEffectId } from "../../generated/pumpkin/protocol.ts";
-import { changeTo, defaultPresets, hasChanges } from "./presets.ts";
+import { testPresets } from "../../test/test_presets.ts";
+import { changeTo, hasChanges } from "./presets.ts";
 
-const [ghost, scream, wolf] = defaultPresets;
+const [ghost, scream, wolf] = testPresets;
 const saved = [ghost, scream, wolf];
 
 describe("changeTo", () => {

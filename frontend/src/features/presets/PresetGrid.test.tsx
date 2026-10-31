@@ -4,8 +4,9 @@ import { describe, expect, it } from "vitest";
 
 import { AppContextProvider } from "../../app/app_context.tsx";
 import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
+import { testPresets } from "../../test/test_presets.ts";
 import { PresetGrid } from "./PresetGrid.tsx";
-import { defaultPresets, type Preset } from "./presets.ts";
+import { type Preset } from "./presets.ts";
 import type { PresetsState } from "./presets_slice.ts";
 
 /** Renders the grid once the device has said what presets it has. */
@@ -17,7 +18,7 @@ function renderLoaded(
     ...sdCard,
     state: {
       ...sdCard.state,
-      presets: { presets: defaultPresets, ...presets },
+      presets: { presets: testPresets, ...presets },
     },
   });
 }
@@ -40,7 +41,7 @@ describe("PresetGrid", () => {
     expect(
       screen.getAllByRole("button").map((button) => button.textContent),
     ).toEqual([
-      ...defaultPresets.slice(0, 5).map((preset) => preset.name),
+      ...testPresets.slice(0, 5).map((preset) => preset.name),
       "More",
     ]);
   });
@@ -48,7 +49,7 @@ describe("PresetGrid", () => {
   it("uses each preset's exact light color for its glow", () => {
     renderWithAppContext(<PresetGrid />);
 
-    for (const preset of defaultPresets.slice(0, 5)) {
+    for (const preset of testPresets.slice(0, 5)) {
       const button = screen.getByRole("button", { name: preset.name });
       expect(button).toHaveClass("preset-button--lit");
       expect(button.style.getPropertyValue("--preset-color")).toBe(
@@ -62,7 +63,7 @@ describe("PresetGrid", () => {
   });
 
   it("keeps presets without a light neutral", () => {
-    const preset = { ...defaultPresets[0], light: null };
+    const preset = { ...testPresets[0], light: null };
     renderWithAppContext(<PresetGrid />, {
       state: { presets: { presets: [preset] } },
     });
@@ -79,7 +80,7 @@ describe("PresetGrid", () => {
     await user.click(screen.getByRole("button", { name: "More" }));
 
     const dialog = screen.getByRole("dialog", { name: "All presets" });
-    for (const preset of defaultPresets) {
+    for (const preset of testPresets) {
       const button = within(dialog).getByRole("button", { name: preset.name });
       expect(button).toBeVisible();
       if (preset.light) {
@@ -94,7 +95,7 @@ describe("PresetGrid", () => {
   it("plays a preset picked from all of them and goes back", async () => {
     const user = userEvent.setup();
     const { controller } = renderLoaded();
-    const hiddenPreset = defaultPresets[5];
+    const hiddenPreset = testPresets[5];
 
     await user.click(screen.getByRole("button", { name: "More" }));
     await user.click(
@@ -137,7 +138,7 @@ describe("PresetGrid", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "More" }));
-    rerender(withDraft(defaultPresets));
+    rerender(withDraft(testPresets));
 
     expect(screen.queryByRole("dialog", { name: "All presets" })).toBeNull();
     expect(screen.getByRole("dialog", { name: "Edit presets" })).toBeVisible();
@@ -208,7 +209,7 @@ describe("PresetGrid", () => {
   });
 
   it("points out a sound that isn't on the SD card", () => {
-    const [onCard, missing] = defaultPresets;
+    const [onCard, missing] = testPresets;
     renderLoaded(
       {},
       {
