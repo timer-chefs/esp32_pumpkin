@@ -12,6 +12,9 @@ static size_t binding_count = 0;
 static CompletionFn completions[max_registered_completions];
 static size_t completion_count = 0;
 
+static CommandObserverFn observers[max_registered_observers];
+static size_t observer_count = 0;
+
 void register_commands(const CommandBinding* new_bindings, size_t count)
 {
     for(size_t i = 0; i < count; ++i)
@@ -50,6 +53,17 @@ bool take_completed_command(
     }
 
     return false;
+}
+
+void register_command_observer(CommandObserverFn observer)
+{
+    if(observer_count == max_registered_observers)
+    {
+        device_log.println("Observer registry is full; raise max_registered_observers");
+        return;
+    }
+
+    observers[observer_count++] = observer;
 }
 
 void command_handler_init()
@@ -97,5 +111,14 @@ CommandResult handle_command(
             "Unsupported client message");
     }
 
-    return binding->handle(context, message, builder);
+    const CommandResult result = binding->handle(context, message, builder);
+    if(result.payload_type != ServerPayload_Error)
+    {
+        for(size_t i = 0; i < observer_count; ++i)
+        {
+            observers[i](message.payload_type());
+        }
+    }
+
+    return result;
 }

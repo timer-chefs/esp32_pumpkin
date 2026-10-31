@@ -47,6 +47,12 @@ bool take_completed_command(
     CommandResult& result,
     flatbuffers::FlatBufferBuilder& builder);
 
+// Told about each client message that has been handled without an error,
+// for a feature that has to know what clients do beyond what it answers.
+using CommandObserverFn = void (*)(Pumpkin::Protocol::ClientPayload payload_type);
+
+void register_command_observer(CommandObserverFn observer);
+
 // Takes the whole table, so the count can't drift from what's in it.
 template <size_t Count>
 inline void register_commands(const CommandBinding (&bindings)[Count])
