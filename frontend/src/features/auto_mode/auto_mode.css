@@ -1,0 +1,23 @@
+.auto-mode-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Doubled up to outrank .btn, whose stylesheet loads after this one. */
+.btn.auto-mode-toggle {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.auto-mode-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.form-select.auto-mode-pause {
+  width: auto;
+}

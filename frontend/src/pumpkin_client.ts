@@ -11,6 +11,7 @@ import {
   type EyeEffectId,
   EyeServoId,
   FinishAudioUpload,
+  GetAutoMode,
   GetEyeCalibration,
   GetVolume,
   Light,
@@ -28,16 +29,19 @@ import {
   ServoRange,
   SetLight,
   StartAudioStream,
+  StartAutoMode,
   StopAudioStream,
+  StopAutoMode,
 } from "./generated/pumpkin/protocol.ts";
 import type {
   AudioFileInfo,
+  AutoModeInfo,
   EyeCalibrationInfo,
   PumpkinConnection,
   ServoRangeInfo,
 } from "./pumpkin_connection.ts";
 
-export type { AudioFileInfo, EyeCalibrationInfo, ServoRangeInfo };
+export type { AudioFileInfo, AutoModeInfo, EyeCalibrationInfo, ServoRangeInfo };
 
 /** One of the eye's servos, named as in EyeCalibrationInfo. */
 export type EyeServo = keyof EyeCalibrationInfo;
@@ -61,6 +65,12 @@ export interface PresetScene {
   /** A file in the SD card's audio directory, or null to play nothing. */
   sound: string | null;
   eye: EyeEffectId;
+}
+
+/** How long auto mode pauses after each preset, picked at random in between. */
+export interface PauseRange {
+  minS: number;
+  maxS: number;
 }
 
 /** Where the device keeps the presets file. See getPresetsFile(). */
@@ -263,6 +273,43 @@ export default class PumpkinClient {
         return PlayPreset.endPlayPreset(builder);
       },
       ServerPayload.Success,
+    );
+  }
+
+  /**
+   * Has the device play the presets in its presets file at random, pausing
+   * after each, until stopped or something else is played. It runs on the
+   * device, so it carries on with the page closed, and after a restart.
+   * Sent while running, it changes the pause without cutting off what is
+   * playing.
+   */
+  static startAutoMode(
+    connection: PumpkinConnection,
+    pause: PauseRange,
+  ): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.StartAutoMode,
+      (builder) =>
+        StartAutoMode.createStartAutoMode(builder, pause.minS, pause.maxS),
+      ServerPayload.Success,
+    );
+  }
+
+  /** Stops auto mode, and the preset it is playing. */
+  static stopAutoMode(connection: PumpkinConnection): Promise<void> {
+    return connection.sendRequest(
+      ClientPayload.StopAutoMode,
+      (builder) => StopAutoMode.createStopAutoMode(builder),
+      ServerPayload.Success,
+    );
+  }
+
+  /** Whether the device is running auto mode, and how long it pauses. */
+  static getAutoMode(connection: PumpkinConnection): Promise<AutoModeInfo> {
+    return connection.sendRequest(
+      ClientPayload.GetAutoMode,
+      (builder) => GetAutoMode.createGetAutoMode(builder),
+      ServerPayload.AutoModeStatus,
     );
   }
 

@@ -3,6 +3,10 @@ import type {
   AudioSourceState,
 } from "../features/audio_source/audio_source_slice.ts";
 import type {
+  AutoModeActions,
+  AutoModeState,
+} from "../features/auto_mode/auto_mode_slice.ts";
+import type {
   CalibrationActions,
   CalibrationState,
 } from "../features/calibration/calibration_slice.ts";
@@ -39,6 +43,7 @@ import type { StatusActions, StatusState } from "./status_slice.ts";
 
 export interface AppState {
   audioSource: AudioSourceState;
+  autoMode: AutoModeState;
   calibration: CalibrationState;
   eye: EyeState;
   iconSet: IconSetState;
@@ -53,6 +58,7 @@ export interface AppState {
 
 export interface AppActions {
   audioSource: AudioSourceActions;
+  autoMode: AutoModeActions;
   calibration: CalibrationActions;
   eye: EyeActions;
   iconSet: IconSetActions;

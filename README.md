@@ -65,6 +65,14 @@ The speech engine and voice are about 100 MB, far more than the ESP32's flash ho
 
 The voice effect picked on the presets page (Demon, Ghost or Witch) is used both for the Say box and for "Hold to talk". It changes the voice's pitch and adds echo, growl or a waver to it before it's sent. The Say box also changes the pace, which a live voice can't have. The effects are defined, and can be tuned, in `frontend/src/features/voice_effect/effects.ts`.
 
+### Auto mode
+
+"Auto mode" on the presets page leaves the pumpkin to play the presets in `presets.csv` that have a sound by itself, in a random order, with a random pause after each, picked next to it. Every preset gets a turn before any comes round again. The file is read afresh for each round, so presets saved in the editor play from the next round on.
+
+It runs on the pumpkin until "Auto mode" is pressed again or something is played by hand -- a preset, a file, a voice. It carries on with the phone locked or the page closed, and after the pumpkin restarts. A card without `presets.csv` gives it nothing to play, so make some presets in the editor first.
+
+While a preset plays, the eye glances to a random spot on the beat, more or less: the pumpkin listens for sudden rises in the low end of what it plays, like drum hits or syllables. It leaves the eye alone until it has been calibrated.
+
 ## Development
 
 ### Dependencies
