@@ -126,6 +126,13 @@ constexpr const char* presets_backup_path = "/presets.bak.csv";
 // A save lands here, and only takes presets_path's place once all of it
 // has arrived.
 constexpr const char* presets_temporary_path = "/.presets.tmp";
+// Auto mode reads presets_path whole, so it reads no bigger a file than
+// this...
+constexpr uint16_t max_presets_file_size = 16384;
+// ...and plays at most this many of the presets in it, the first ones.
+constexpr uint8_t max_auto_mode_presets = 64;
+// Only for telling which preset auto mode is playing in the log.
+constexpr uint8_t max_preset_name_length = 48;
 
 // SDIO Pin 
 constexpr uint8_t pin_sd_clk = GPIO_NUM_12;

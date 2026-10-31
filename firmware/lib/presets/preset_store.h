@@ -6,8 +6,10 @@
 #include "sd_card.h"
 
 // The presets, kept on the card in one file that the client reads and
-// writes whole. The device never looks inside it: the client owns the
-// format, so the presets can change shape without touching the firmware.
+// writes whole. The client owns the format. The device only looks inside it
+// for auto mode, which reads what playing a preset takes (see
+// preset_reader.h), so the presets can otherwise change shape without
+// touching the firmware.
 
 // Clears away what a save cut short by a reset left behind.
 void preset_store_init();
