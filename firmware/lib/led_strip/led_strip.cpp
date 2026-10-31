@@ -6,7 +6,6 @@ CRGB led_strip[num_leds];
 
 void led_strip_init()
 {
-    FastLED.addLeds<WS2812B, pin_led_strip, RGB>(led_strip, num_leds);
+    FastLED.addLeds<WS2812B, pin_led_strip, LED_COLOR_ORDER>(led_strip, num_leds);
     FastLED.setBrightness(max_brightness);
 }
-
