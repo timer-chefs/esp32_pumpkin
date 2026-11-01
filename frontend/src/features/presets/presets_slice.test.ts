@@ -4,7 +4,8 @@ import type { AppAccess } from "../../app/slice.ts";
 import { EyeEffectId } from "../../generated/pumpkin/protocol.ts";
 import api from "../../pumpkin_client.ts";
 import type { PumpkinConnection } from "../../pumpkin_connection.ts";
-import { defaultPresets, newPreset } from "./presets.ts";
+import { testPresets } from "../../test/test_presets.ts";
+import { newPreset } from "./presets.ts";
 import { presetsToCsv } from "./presets_csv.ts";
 import { presetsSlice, type PresetsState } from "./presets_slice.ts";
 
@@ -55,14 +56,14 @@ describe("presetsSlice.load", () => {
     expect(state().error).toBeNull();
   });
 
-  it("starts a card that has no presets off with the built-in ones", async () => {
+  it("starts a card that has no presets off with none", async () => {
     vi.mocked(api.getPresetsFile).mockResolvedValue(null);
     const { actions, state } = createPresets({ problems: ["stale"] });
 
     actions.load();
 
     await vi.waitFor(() => expect(state().isLoading).toBe(false));
-    expect(state().presets).toBe(defaultPresets);
+    expect(state().presets).toEqual([]);
     expect(state().problems).toEqual([]);
   });
 
@@ -83,7 +84,7 @@ describe("presetsSlice.load", () => {
 });
 
 describe("presetsSlice editing", () => {
-  const [ghost, scream, wolf] = defaultPresets;
+  const [ghost, scream, wolf] = testPresets;
   const names = (presets: readonly { name: string }[] | null) =>
     presets?.map((preset) => preset.name);
 
@@ -217,7 +218,7 @@ describe("presetsSlice editing", () => {
   it("saves unchanged presets, which a card without a file needs", async () => {
     vi.mocked(api.savePresetsFile).mockResolvedValue();
     const { actions, state } = createPresets({
-      presets: defaultPresets,
+      presets: testPresets,
       problems: ["Line 2: there's no name"],
     });
 
@@ -226,7 +227,7 @@ describe("presetsSlice editing", () => {
 
     await vi.waitFor(() => expect(state().draft).toBeNull());
     expect(api.savePresetsFile).toHaveBeenCalledExactlyOnceWith(
-      presetsToCsv(defaultPresets),
+      presetsToCsv(testPresets),
     );
     // What was saved is all there is now, and every bit of it reads.
     expect(state().problems).toEqual([]);

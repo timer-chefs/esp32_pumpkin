@@ -39,11 +39,11 @@ Candles,flame,candle,#ffa500,,sleep
 
 Anything in the file that can't be read is pointed out on the presets page, and the rest of it still loads.
 
-A preset's icon can be any of Lucide's. The page carries six of them itself (`cloud-lightning`, `flame`, `ghost`, `moon`, `skull` and `wand-sparkles`) and fetches the rest from jsDelivr, so those need the phone to have internet. Without it, they show as a question mark.
+A preset's icon can be any of Lucide's. The page carries a few of them itself (they're listed in `presetIcons` in `frontend/src/features/presets/presets.ts`) and fetches the rest from jsDelivr, so those need the phone to have internet. Without it, they show as a question mark.
 
 The presets can also be edited in the UI, from the Edit button under More. The changes stay in the editor until Save writes them to the card. Saving keeps the file it replaces as `presets.bak.csv`. If the presets haven't changed, neither file is touched, so the backup always holds the last presets that were different.
 
-A card without `presets.csv` starts with the built-in presets, defined in `frontend/src/features/presets/presets.ts`. Their sounds are `ghost.wav`, `witch.wav`, `scream.wav`, `wolf.wav` and `thunder.wav`. A preset whose sound isn't on the card says so on its button.
+A card without `presets.csv` starts with no presets; add them in the editor. A preset whose sound isn't on the card says so on its button.
 
 ### Upload through the UI
 
@@ -64,6 +64,14 @@ The speech engine and voice are about 100 MB, far more than the ESP32's flash ho
 ### Voice effects
 
 The voice effect picked on the presets page (Demon, Ghost or Witch) is used both for the Say box and for "Hold to talk". It changes the voice's pitch and adds echo, growl or a waver to it before it's sent. The Say box also changes the pace, which a live voice can't have. The effects are defined, and can be tuned, in `frontend/src/features/voice_effect/effects.ts`.
+
+### Auto mode
+
+"Auto mode" on the presets page leaves the pumpkin to play the presets in `presets.csv` that have a sound by itself, in a random order, with a pause after each of a random length between the shortest and longest set under the gear next to it. Every preset gets a turn before any comes round again. The file is read afresh for each round, so presets saved in the editor play from the next round on.
+
+It runs on the pumpkin until "Auto mode" is pressed again or something is played by hand -- a preset, a file, a voice. It carries on with the phone locked or the page closed, and after the pumpkin restarts. A card without `presets.csv` gives it nothing to play, so make some presets in the editor first.
+
+While a preset plays, the eye glances to a random spot on the beat, more or less: the pumpkin listens for sudden rises in the low end of what it plays, like drum hits or syllables. It leaves the eye alone until it has been calibrated.
 
 ## Development
 
@@ -120,4 +128,4 @@ After changing it, use `flatc` 25.9.23 to regenerate the TypeScript and C++ bind
 All audio and control traffic use this contract except two HTTP-only endpoints:
 
 - `/api/ip`, because it's used during bootstrapping of the WiFi provisioning page.
-- `/api/presets`, because a WebSocket message can't be larger than 15 kB. `GET` returns `presets.csv` from the SD card (404 when there isn't one) and `PUT` replaces it. The device stores the file without reading it; its format belongs to the client.
+- `/api/presets`, because a WebSocket message can't be larger than 15 kB. `GET` returns `presets.csv` from the SD card (404 when there isn't one) and `PUT` replaces it. Its format belongs to the client; the device only reads the columns auto mode needs.

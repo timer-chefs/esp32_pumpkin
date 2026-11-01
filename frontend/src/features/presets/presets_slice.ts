@@ -2,7 +2,7 @@ import { useSlice } from "../../app/app_context.tsx";
 import { runAction, type Slice } from "../../app/slice.ts";
 import api from "../../pumpkin_client.ts";
 import { toError } from "../../to_error.ts";
-import { defaultPresets, type Preset } from "./presets.ts";
+import type { Preset } from "./presets.ts";
 import { parsePresetsCsv, presetsToCsv } from "./presets_csv.ts";
 
 export interface PresetsState {
@@ -80,11 +80,10 @@ export const presetsSlice: Slice<PresetsState, PresetsActions> = {
           update({ isLoading: true, error: null });
           try {
             const csv = await api.getPresetsFile();
-            // A card that has never had presets saved to it starts off with
-            // these.
+            // A card that has never had presets saved to it has none.
             update(
               csv === null
-                ? { presets: defaultPresets, problems: [] }
+                ? { presets: [], problems: [] }
                 : parsePresetsCsv(csv),
             );
           } catch (error) {

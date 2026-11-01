@@ -5,8 +5,10 @@ import {
 import { newPresetId, type Preset, type PresetIcon } from "./presets.ts";
 
 // The presets as the device stores them: a CSV file on the SD card, which
-// is also how they're backed up and edited on a computer. The device never
-// reads it, so this is the only place that knows the format.
+// is also how they're backed up and edited on a computer. The device reads
+// it only for auto mode, and only the name, light, color and sound columns,
+// the way this does (see firmware/lib/presets/preset_reader.cpp), so a
+// change to how those are read has to be made there too.
 //
 // The first row names the columns, so they can come in any order, and a
 // column a file doesn't have takes its default. Effects are written by
@@ -20,10 +22,15 @@ type Column = (typeof columns)[number];
 /** For a preset without an icon, or with one that isn't an icon's name. */
 export const fallbackIcon: PresetIcon = "ghost";
 
-/** Icons by what presets called them before they took Lucide's names. */
+/**
+ * Icons by what presets called them before they took Lucide's names. Names
+ * that differ only in spaces or underscores, like face_grinning, are found
+ * anyway.
+ */
 const renamedIcons = new Map([
+  ["eyedashed", "eye-dashed"],
+  ["flask", "flask-conical"],
   ["lightning", "cloud-lightning"],
-  ["wand", "wand-sparkles"],
 ]);
 
 /** For a preset that lights the pumpkin without saying in what color. */

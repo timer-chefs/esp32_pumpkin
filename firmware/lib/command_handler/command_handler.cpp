@@ -12,6 +12,12 @@ static size_t binding_count = 0;
 static CompletionFn completions[max_registered_completions];
 static size_t completion_count = 0;
 
+static CommandObserverFn observers[max_registered_observers];
+static size_t observer_count = 0;
+
+static NoticeFn notices[max_registered_notices];
+static size_t notice_count = 0;
+
 void register_commands(const CommandBinding* new_bindings, size_t count)
 {
     for(size_t i = 0; i < count; ++i)
@@ -44,6 +50,43 @@ bool take_completed_command(
     for(size_t i = 0; i < completion_count; ++i)
     {
         if(completions[i](result, builder))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void register_command_observer(CommandObserverFn observer)
+{
+    if(observer_count == max_registered_observers)
+    {
+        device_log.println("Observer registry is full; raise max_registered_observers");
+        return;
+    }
+
+    observers[observer_count++] = observer;
+}
+
+void register_notice(NoticeFn notice)
+{
+    if(notice_count == max_registered_notices)
+    {
+        device_log.println("Notice registry is full; raise max_registered_notices");
+        return;
+    }
+
+    notices[notice_count++] = notice;
+}
+
+bool take_notice(
+    CommandResult& result,
+    flatbuffers::FlatBufferBuilder& builder)
+{
+    for(size_t i = 0; i < notice_count; ++i)
+    {
+        if(notices[i](result, builder))
         {
             return true;
         }
@@ -97,5 +140,14 @@ CommandResult handle_command(
             "Unsupported client message");
     }
 
-    return binding->handle(context, message, builder);
+    const CommandResult result = binding->handle(context, message, builder);
+    if(result.payload_type != ServerPayload_Error)
+    {
+        for(size_t i = 0; i < observer_count; ++i)
+        {
+            observers[i](message.payload_type());
+        }
+    }
+
+    return result;
 }

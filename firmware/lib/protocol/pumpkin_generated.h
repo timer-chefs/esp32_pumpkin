@@ -83,6 +83,15 @@ struct GetEyeCalibrationBuilder;
 struct SaveServoCalibration;
 struct SaveServoCalibrationBuilder;
 
+struct StartAutoMode;
+struct StartAutoModeBuilder;
+
+struct StopAutoMode;
+struct StopAutoModeBuilder;
+
+struct GetAutoMode;
+struct GetAutoModeBuilder;
+
 struct ClientMessage;
 struct ClientMessageBuilder;
 
@@ -106,6 +115,9 @@ struct EyeCalibrationBuilder;
 
 struct Log;
 struct LogBuilder;
+
+struct AutoModeStatus;
+struct AutoModeStatusBuilder;
 
 struct ServerMessage;
 struct ServerMessageBuilder;
@@ -234,11 +246,14 @@ enum ClientPayload : uint8_t {
   ClientPayload_GetEyeCalibration = 18,
   ClientPayload_SaveServoCalibration = 19,
   ClientPayload_SetLight = 20,
+  ClientPayload_StartAutoMode = 21,
+  ClientPayload_StopAutoMode = 22,
+  ClientPayload_GetAutoMode = 23,
   ClientPayload_MIN = ClientPayload_NONE,
-  ClientPayload_MAX = ClientPayload_SetLight
+  ClientPayload_MAX = ClientPayload_GetAutoMode
 };
 
-inline const ClientPayload (&EnumValuesClientPayload())[21] {
+inline const ClientPayload (&EnumValuesClientPayload())[24] {
   static const ClientPayload values[] = {
     ClientPayload_NONE,
     ClientPayload_StartAudioStream,
@@ -260,13 +275,16 @@ inline const ClientPayload (&EnumValuesClientPayload())[21] {
     ClientPayload_PreviewServoAngle,
     ClientPayload_GetEyeCalibration,
     ClientPayload_SaveServoCalibration,
-    ClientPayload_SetLight
+    ClientPayload_SetLight,
+    ClientPayload_StartAutoMode,
+    ClientPayload_StopAutoMode,
+    ClientPayload_GetAutoMode
   };
   return values;
 }
 
 inline const char * const *EnumNamesClientPayload() {
-  static const char * const names[22] = {
+  static const char * const names[25] = {
     "NONE",
     "StartAudioStream",
     "StopAudioStream",
@@ -288,13 +306,16 @@ inline const char * const *EnumNamesClientPayload() {
     "GetEyeCalibration",
     "SaveServoCalibration",
     "SetLight",
+    "StartAutoMode",
+    "StopAutoMode",
+    "GetAutoMode",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameClientPayload(ClientPayload e) {
-  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_SetLight)) return "";
+  if (::flatbuffers::IsOutRange(e, ClientPayload_NONE, ClientPayload_GetAutoMode)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesClientPayload()[index];
 }
@@ -383,6 +404,18 @@ template<> struct ClientPayloadTraits<Pumpkin::Protocol::SetLight> {
   static const ClientPayload enum_value = ClientPayload_SetLight;
 };
 
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::StartAutoMode> {
+  static const ClientPayload enum_value = ClientPayload_StartAutoMode;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::StopAutoMode> {
+  static const ClientPayload enum_value = ClientPayload_StopAutoMode;
+};
+
+template<> struct ClientPayloadTraits<Pumpkin::Protocol::GetAutoMode> {
+  static const ClientPayload enum_value = ClientPayload_GetAutoMode;
+};
+
 bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *obj, ClientPayload type);
 bool VerifyClientPayloadVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
@@ -430,11 +463,12 @@ enum ServerPayload : uint8_t {
   ServerPayload_AudioFileList = 4,
   ServerPayload_EyeCalibration = 5,
   ServerPayload_Log = 6,
+  ServerPayload_AutoModeStatus = 7,
   ServerPayload_MIN = ServerPayload_NONE,
-  ServerPayload_MAX = ServerPayload_Log
+  ServerPayload_MAX = ServerPayload_AutoModeStatus
 };
 
-inline const ServerPayload (&EnumValuesServerPayload())[7] {
+inline const ServerPayload (&EnumValuesServerPayload())[8] {
   static const ServerPayload values[] = {
     ServerPayload_NONE,
     ServerPayload_Success,
@@ -442,13 +476,14 @@ inline const ServerPayload (&EnumValuesServerPayload())[7] {
     ServerPayload_Volume,
     ServerPayload_AudioFileList,
     ServerPayload_EyeCalibration,
-    ServerPayload_Log
+    ServerPayload_Log,
+    ServerPayload_AutoModeStatus
   };
   return values;
 }
 
 inline const char * const *EnumNamesServerPayload() {
-  static const char * const names[8] = {
+  static const char * const names[9] = {
     "NONE",
     "Success",
     "Error",
@@ -456,13 +491,14 @@ inline const char * const *EnumNamesServerPayload() {
     "AudioFileList",
     "EyeCalibration",
     "Log",
+    "AutoModeStatus",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameServerPayload(ServerPayload e) {
-  if (::flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_Log)) return "";
+  if (::flatbuffers::IsOutRange(e, ServerPayload_NONE, ServerPayload_AutoModeStatus)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesServerPayload()[index];
 }
@@ -493,6 +529,10 @@ template<> struct ServerPayloadTraits<Pumpkin::Protocol::EyeCalibration> {
 
 template<> struct ServerPayloadTraits<Pumpkin::Protocol::Log> {
   static const ServerPayload enum_value = ServerPayload_Log;
+};
+
+template<> struct ServerPayloadTraits<Pumpkin::Protocol::AutoModeStatus> {
+  static const ServerPayload enum_value = ServerPayload_AutoModeStatus;
 };
 
 bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *obj, ServerPayload type);
@@ -1500,6 +1540,115 @@ inline ::flatbuffers::Offset<SaveServoCalibration> CreateSaveServoCalibration(
   return builder_.Finish();
 }
 
+struct StartAutoMode FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef StartAutoModeBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_MIN_PAUSE_S = 4,
+    VT_MAX_PAUSE_S = 6
+  };
+  uint16_t min_pause_s() const {
+    return GetField<uint16_t>(VT_MIN_PAUSE_S, 0);
+  }
+  uint16_t max_pause_s() const {
+    return GetField<uint16_t>(VT_MAX_PAUSE_S, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_MIN_PAUSE_S, 2) &&
+           VerifyField<uint16_t>(verifier, VT_MAX_PAUSE_S, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct StartAutoModeBuilder {
+  typedef StartAutoMode Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_min_pause_s(uint16_t min_pause_s) {
+    fbb_.AddElement<uint16_t>(StartAutoMode::VT_MIN_PAUSE_S, min_pause_s, 0);
+  }
+  void add_max_pause_s(uint16_t max_pause_s) {
+    fbb_.AddElement<uint16_t>(StartAutoMode::VT_MAX_PAUSE_S, max_pause_s, 0);
+  }
+  explicit StartAutoModeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<StartAutoMode> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<StartAutoMode>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<StartAutoMode> CreateStartAutoMode(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t min_pause_s = 0,
+    uint16_t max_pause_s = 0) {
+  StartAutoModeBuilder builder_(_fbb);
+  builder_.add_max_pause_s(max_pause_s);
+  builder_.add_min_pause_s(min_pause_s);
+  return builder_.Finish();
+}
+
+struct StopAutoMode FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef StopAutoModeBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct StopAutoModeBuilder {
+  typedef StopAutoMode Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit StopAutoModeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<StopAutoMode> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<StopAutoMode>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<StopAutoMode> CreateStopAutoMode(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  StopAutoModeBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct GetAutoMode FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef GetAutoModeBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct GetAutoModeBuilder {
+  typedef GetAutoMode Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit GetAutoModeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<GetAutoMode> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<GetAutoMode>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<GetAutoMode> CreateGetAutoMode(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  GetAutoModeBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
 struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ClientMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1576,6 +1725,15 @@ struct ClientMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   const Pumpkin::Protocol::SetLight *payload_as_SetLight() const {
     return payload_type() == Pumpkin::Protocol::ClientPayload_SetLight ? static_cast<const Pumpkin::Protocol::SetLight *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::StartAutoMode *payload_as_StartAutoMode() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_StartAutoMode ? static_cast<const Pumpkin::Protocol::StartAutoMode *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::StopAutoMode *payload_as_StopAutoMode() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_StopAutoMode ? static_cast<const Pumpkin::Protocol::StopAutoMode *>(payload()) : nullptr;
+  }
+  const Pumpkin::Protocol::GetAutoMode *payload_as_GetAutoMode() const {
+    return payload_type() == Pumpkin::Protocol::ClientPayload_GetAutoMode ? static_cast<const Pumpkin::Protocol::GetAutoMode *>(payload()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1665,6 +1823,18 @@ template<> inline const Pumpkin::Protocol::SaveServoCalibration *ClientMessage::
 
 template<> inline const Pumpkin::Protocol::SetLight *ClientMessage::payload_as<Pumpkin::Protocol::SetLight>() const {
   return payload_as_SetLight();
+}
+
+template<> inline const Pumpkin::Protocol::StartAutoMode *ClientMessage::payload_as<Pumpkin::Protocol::StartAutoMode>() const {
+  return payload_as_StartAutoMode();
+}
+
+template<> inline const Pumpkin::Protocol::StopAutoMode *ClientMessage::payload_as<Pumpkin::Protocol::StopAutoMode>() const {
+  return payload_as_StopAutoMode();
+}
+
+template<> inline const Pumpkin::Protocol::GetAutoMode *ClientMessage::payload_as<Pumpkin::Protocol::GetAutoMode>() const {
+  return payload_as_GetAutoMode();
 }
 
 struct ClientMessageBuilder {
@@ -2096,6 +2266,67 @@ inline ::flatbuffers::Offset<Log> CreateLogDirect(
       uptime_us);
 }
 
+struct AutoModeStatus FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef AutoModeStatusBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_RUNNING = 4,
+    VT_MIN_PAUSE_S = 6,
+    VT_MAX_PAUSE_S = 8
+  };
+  bool running() const {
+    return GetField<uint8_t>(VT_RUNNING, 0) != 0;
+  }
+  uint16_t min_pause_s() const {
+    return GetField<uint16_t>(VT_MIN_PAUSE_S, 0);
+  }
+  uint16_t max_pause_s() const {
+    return GetField<uint16_t>(VT_MAX_PAUSE_S, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_RUNNING, 1) &&
+           VerifyField<uint16_t>(verifier, VT_MIN_PAUSE_S, 2) &&
+           VerifyField<uint16_t>(verifier, VT_MAX_PAUSE_S, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct AutoModeStatusBuilder {
+  typedef AutoModeStatus Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_running(bool running) {
+    fbb_.AddElement<uint8_t>(AutoModeStatus::VT_RUNNING, static_cast<uint8_t>(running), 0);
+  }
+  void add_min_pause_s(uint16_t min_pause_s) {
+    fbb_.AddElement<uint16_t>(AutoModeStatus::VT_MIN_PAUSE_S, min_pause_s, 0);
+  }
+  void add_max_pause_s(uint16_t max_pause_s) {
+    fbb_.AddElement<uint16_t>(AutoModeStatus::VT_MAX_PAUSE_S, max_pause_s, 0);
+  }
+  explicit AutoModeStatusBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<AutoModeStatus> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<AutoModeStatus>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<AutoModeStatus> CreateAutoModeStatus(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    bool running = false,
+    uint16_t min_pause_s = 0,
+    uint16_t max_pause_s = 0) {
+  AutoModeStatusBuilder builder_(_fbb);
+  builder_.add_max_pause_s(max_pause_s);
+  builder_.add_min_pause_s(min_pause_s);
+  builder_.add_running(running);
+  return builder_.Finish();
+}
+
 struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ServerMessageBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -2131,6 +2362,9 @@ struct ServerMessage FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const Pumpkin::Protocol::Log *payload_as_Log() const {
     return payload_type() == Pumpkin::Protocol::ServerPayload_Log ? static_cast<const Pumpkin::Protocol::Log *>(payload()) : nullptr;
   }
+  const Pumpkin::Protocol::AutoModeStatus *payload_as_AutoModeStatus() const {
+    return payload_type() == Pumpkin::Protocol::ServerPayload_AutoModeStatus ? static_cast<const Pumpkin::Protocol::AutoModeStatus *>(payload()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_REQUEST_ID, 4) &&
@@ -2163,6 +2397,10 @@ template<> inline const Pumpkin::Protocol::EyeCalibration *ServerMessage::payloa
 
 template<> inline const Pumpkin::Protocol::Log *ServerMessage::payload_as<Pumpkin::Protocol::Log>() const {
   return payload_as_Log();
+}
+
+template<> inline const Pumpkin::Protocol::AutoModeStatus *ServerMessage::payload_as<Pumpkin::Protocol::AutoModeStatus>() const {
+  return payload_as_AutoModeStatus();
 }
 
 struct ServerMessageBuilder {
@@ -2355,6 +2593,18 @@ inline bool VerifyClientPayload(::flatbuffers::Verifier &verifier, const void *o
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::SetLight *>(obj);
       return verifier.VerifyTable(ptr);
     }
+    case ClientPayload_StartAutoMode: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::StartAutoMode *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_StopAutoMode: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::StopAutoMode *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ClientPayload_GetAutoMode: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::GetAutoMode *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
     default: return true;
   }
 }
@@ -2398,6 +2648,10 @@ inline bool VerifyServerPayload(::flatbuffers::Verifier &verifier, const void *o
     }
     case ServerPayload_Log: {
       auto ptr = reinterpret_cast<const Pumpkin::Protocol::Log *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ServerPayload_AutoModeStatus: {
+      auto ptr = reinterpret_cast<const Pumpkin::Protocol::AutoModeStatus *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

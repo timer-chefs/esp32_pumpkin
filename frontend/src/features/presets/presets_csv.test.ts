@@ -4,7 +4,8 @@ import {
   EyeEffectId,
   LightEffectId,
 } from "../../generated/pumpkin/protocol.ts";
-import { defaultPresets, type Preset } from "./presets.ts";
+import { testPresets } from "../../test/test_presets.ts";
+import { type Preset } from "./presets.ts";
 import { fallbackIcon, parsePresetsCsv, presetsToCsv } from "./presets_csv.ts";
 
 /** Ids are handed out afresh on every read, so they're left out. */
@@ -20,19 +21,19 @@ function onlyPreset(text: string) {
 
 describe("presetsToCsv", () => {
   it("writes a header, then a row per preset, as a person would read it", () => {
-    const lines = presetsToCsv(defaultPresets).split("\r\n");
+    const lines = presetsToCsv(testPresets).split("\r\n");
 
     expect(lines.slice(0, 2)).toEqual([
       "﻿name,icon,light,color,sound,eye",
       "Ghost,ghost,audio_reactive,#8000ff,ghost.wav,wander",
     ]);
     expect(lines).toContain("Candles,flame,candle,#ffa500,,sleep");
-    expect(lines).toHaveLength(defaultPresets.length + 2);
+    expect(lines).toHaveLength(testPresets.length + 2);
     expect(lines.at(-1)).toBe("");
   });
 
   it("writes a preset that leaves the lights alone without a color", () => {
-    const [ghost] = defaultPresets;
+    const [ghost] = testPresets;
 
     expect(presetsToCsv([{ ...ghost, light: null }])).toContain(
       "Ghost,ghost,none,,ghost.wav,wander",
@@ -40,7 +41,7 @@ describe("presetsToCsv", () => {
   });
 
   it("quotes a name that would otherwise split the row", () => {
-    const [ghost] = defaultPresets;
+    const [ghost] = testPresets;
     const name = 'Boo, the "friendly"; one';
 
     expect(presetsToCsv([{ ...ghost, name }])).toContain(
@@ -51,15 +52,15 @@ describe("presetsToCsv", () => {
   it("writes the same presets the same way every time", () => {
     // The device compares what it's sent with what it has, and only keeps a
     // backup when they differ.
-    expect(presetsToCsv(defaultPresets)).toBe(presetsToCsv(defaultPresets));
+    expect(presetsToCsv(testPresets)).toBe(presetsToCsv(testPresets));
   });
 });
 
 describe("parsePresetsCsv", () => {
   it("reads back what was written", () => {
     const presets = [
-      ...defaultPresets,
-      { ...defaultPresets[0], name: 'Boo, the "friendly"\none', light: null },
+      ...testPresets,
+      { ...testPresets[0], name: 'Boo, the "friendly"\none', light: null },
     ];
 
     const parsed = parsePresetsCsv(presetsToCsv(presets));
@@ -69,10 +70,10 @@ describe("parsePresetsCsv", () => {
   });
 
   it("gives every preset an id of its own", () => {
-    const { presets } = parsePresetsCsv(presetsToCsv(defaultPresets));
+    const { presets } = parsePresetsCsv(presetsToCsv(testPresets));
 
     expect(new Set(presets.map((preset) => preset.id)).size).toBe(
-      defaultPresets.length,
+      testPresets.length,
     );
   });
 
@@ -99,7 +100,7 @@ describe("parsePresetsCsv", () => {
     expect(problems).toEqual([]);
     expect(preset).toMatchObject({
       name: "Häxa, the witch",
-      icon: "wand-sparkles",
+      icon: "wand",
       light: { effect: LightEffectId.AUDIO_REACTIVE, color: "#33ff33" },
       sound: "witch.wav",
       eye: EyeEffectId.SHIFTY,
@@ -122,15 +123,18 @@ describe("parsePresetsCsv", () => {
 
   it("reads icons by Lucide's names, and by the names they had before", () => {
     const { presets, problems } = parsePresetsCsv(
-      "name,icon\nA,Cloud Lightning\nB,wand\nC,lightning\nD,cat\n",
+      "name,icon\nA,Cloud Lightning\nB,wand\nC,lightning\nD,cat\nE,face_grinning\nF,eyedashed\nG,flask\n",
     );
 
     expect(problems).toEqual([]);
     expect(presets.map((preset) => preset.icon)).toEqual([
       "cloud-lightning",
-      "wand-sparkles",
+      "wand",
       "cloud-lightning",
       "cat",
+      "face-grinning",
+      "eye-dashed",
+      "flask-conical",
     ]);
   });
 

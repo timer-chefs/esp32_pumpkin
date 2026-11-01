@@ -6,6 +6,12 @@
 #include "sd_audio.h"
 #include "show_manager.h"
 
+// sd_audio.h includes this. sd_audio registers its commands here, so the two
+// libraries depend on each other, and PlatformIO gives a library only the
+// directory of a dependency that leads back to it -- which one that is
+// depends on which it comes across first.
+#include "sd_card.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -61,7 +67,7 @@ static CommandResult handle_play_show(
     return success(builder);
 }
 
-static bool find_effect(LightEffectId light_effect, EffectId& effect)
+bool find_effect(LightEffectId light_effect, EffectId& effect)
 {
     switch(light_effect)
     {

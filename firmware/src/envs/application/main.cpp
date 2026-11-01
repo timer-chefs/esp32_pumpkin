@@ -9,6 +9,7 @@
 #include "show_manager.h"
 #include "command_handler.h"
 #include "eye_commands.h"
+#include "auto_mode_commands.h"
 #include "preset_shows.h"
 #include "preset_store.h"
 #include "sd_audio.h"
@@ -21,6 +22,7 @@ bool is_audio_ready = false;
 EffectManager effect_manager;
 ShowManager show_manager(effect_manager);
 Eye eye;
+AutoMode auto_mode(show_manager, eye);
 
 void setup()
 {
@@ -32,10 +34,12 @@ void setup()
 
     command_handler_init();
     register_eye_commands(eye);
+    register_auto_mode_commands(auto_mode);
 
     sd_card_init();
     sd_audio_init();
     preset_store_init();
+    auto_mode.begin();
 
     wifi_manager_init();
 
@@ -80,6 +84,8 @@ void loop()
         {
             show_manager.set_current_show(0);
         }
+
+        auto_mode.update();
 
         audio_service();
         effect_manager.update(led_strip, num_leds);

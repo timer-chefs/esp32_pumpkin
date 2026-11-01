@@ -7,11 +7,12 @@ import {
   LightEffectId,
 } from "../../generated/pumpkin/protocol.ts";
 import { renderWithAppContext } from "../../test/render_with_app_context.tsx";
+import { testPresets } from "../../test/test_presets.ts";
 import type { IconSetState } from "./icon_set_slice.ts";
 import { PresetForm } from "./PresetForm.tsx";
-import { defaultPresets, type Preset } from "./presets.ts";
+import { type Preset } from "./presets.ts";
 
-const [ghost] = defaultPresets;
+const [ghost] = testPresets;
 
 function renderForm(
   preset: Preset = ghost,
@@ -78,10 +79,17 @@ describe("PresetForm", () => {
 
     expect(shownIcons()).toEqual([
       "cloud-lightning",
+      "eye-dashed",
+      "face-grinning",
+      "face-slightly-smiling-plus",
       "flame",
+      "flask-conical",
       "ghost",
       "moon",
+      "music",
       "skull",
+      "square",
+      "wand",
       "wand-sparkles",
     ]);
   });

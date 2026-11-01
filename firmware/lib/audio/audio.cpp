@@ -11,6 +11,8 @@ static I2SStream i2s;
 VolumeStream volume(i2s);
 
 static bool is_playback_running = false;
+static uint32_t start_count = 0;
+static uint32_t last_active_ms = 0;
 
 static constexpr size_t bytes_per_frame = (bits_per_sample / 8) * channels;
 static constexpr size_t bytes_per_ms = (sample_rate * bytes_per_frame) / 1000;
@@ -167,11 +169,14 @@ void audio_write(const uint8_t* payload, size_t length)
 {
     write_to_fft(payload, length);
     audio_buffer.write(payload, length);
+    last_active_ms = millis();
 }
 
 void audio_started()
 {
     is_playback_running = true;
+    start_count++;
+    last_active_ms = millis();
 }
 
 void audio_stoped()
@@ -183,6 +188,16 @@ void audio_stoped()
 bool is_audio_running()
 {
     return is_playback_running;
+}
+
+uint32_t audio_start_count()
+{
+    return start_count;
+}
+
+uint32_t audio_last_active_ms()
+{
+    return last_active_ms;
 }
 
 void audio_service()

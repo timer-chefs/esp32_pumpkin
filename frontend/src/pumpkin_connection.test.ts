@@ -2,6 +2,7 @@ import * as flatbuffers from "flatbuffers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  AutoModeStatus,
   Log,
   Message,
   MessageBody,
@@ -65,6 +66,27 @@ function encodeLog(
   return builder.asUint8Array().slice().buffer;
 }
 
+/** Wraps a payload the way the device sends it. */
+function encodeServerMessage(
+  requestId: number,
+  payloadType: ServerPayload,
+  createPayload: (builder: flatbuffers.Builder) => flatbuffers.Offset,
+): ArrayBuffer {
+  const builder = new flatbuffers.Builder();
+  const payload = createPayload(builder);
+  const serverMessage = ServerMessage.createServerMessage(
+    builder,
+    requestId,
+    payloadType,
+    payload,
+  );
+  Message.finishMessageBuffer(
+    builder,
+    Message.createMessage(builder, MessageBody.ServerMessage, serverMessage),
+  );
+  return builder.asUint8Array().slice().buffer;
+}
+
 beforeEach(() => {
   vi.stubGlobal("WebSocket", FakeWebSocket);
 });
@@ -110,5 +132,24 @@ describe("PumpkinConnection", () => {
 
     expect(listener).toHaveBeenCalledOnce();
     expect(connection.isOpen).toBe(true);
+  });
+
+  it("hands news the device sends unasked to whoever listens for it", () => {
+    const connection = new PumpkinConnection("pumpkin.local");
+    const listener = vi.fn();
+    connection.onNotice(ServerPayload.AutoModeStatus, listener);
+    FakeWebSocket.latest.open();
+
+    FakeWebSocket.latest.receive(
+      encodeServerMessage(0, ServerPayload.AutoModeStatus, (builder) =>
+        AutoModeStatus.createAutoModeStatus(builder, false, 15, 45),
+      ),
+    );
+
+    expect(listener).toHaveBeenCalledExactlyOnceWith({
+      running: false,
+      minPauseS: 15,
+      maxPauseS: 45,
+    });
   });
 });

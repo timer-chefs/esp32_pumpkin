@@ -40,6 +40,11 @@ public:
     // Turns the eye: negative is left, 0 straight ahead, positive right.
     void look(int8_t at);
 
+    // Turns the eye as look() does, only quicker and leaving the lid alone,
+    // for keeping up with a beat that look()'s blinking would turn into a
+    // flutter.
+    void glance(int8_t at);
+
     // Opens or closes the lid: 0 is shut, 255 wide open.
     void blink(uint8_t amount);
 
@@ -51,6 +56,8 @@ public:
     // never been calibrated moves through all of 0-180.
     ServoCalibration calibration(EyeServo servo) const;
 
+    bool is_servo_calibrated(EyeServo servo) const;
+
     // Stores a servo's calibration, where it survives a restart, and moves
     // the eye by it from now on. Returns false, changing nothing, if it
     // couldn't be stored.
@@ -58,6 +65,9 @@ public:
 
 private:
     static constexpr size_t servo_count = 2;
+
+    // Maps look()'s range onto the ball's calibration.
+    static float look_fraction(int8_t at);
 
     struct Motion
     {

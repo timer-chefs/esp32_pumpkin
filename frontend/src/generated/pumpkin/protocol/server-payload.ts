@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import { AudioFileList } from '../../pumpkin/protocol/audio-file-list.js';
+import { AutoModeStatus } from '../../pumpkin/protocol/auto-mode-status.js';
 import { Error } from '../../pumpkin/protocol/error.js';
 import { EyeCalibration } from '../../pumpkin/protocol/eye-calibration.js';
 import { Log } from '../../pumpkin/protocol/log.js';
@@ -17,13 +18,14 @@ export enum ServerPayload {
   Volume = 3,
   AudioFileList = 4,
   EyeCalibration = 5,
-  Log = 6
+  Log = 6,
+  AutoModeStatus = 7
 }
 
 export function unionToServerPayload(
   type: ServerPayload,
-  accessor: (obj:AudioFileList|Error|EyeCalibration|Log|Success|Volume) => AudioFileList|Error|EyeCalibration|Log|Success|Volume|null
-): AudioFileList|Error|EyeCalibration|Log|Success|Volume|null {
+  accessor: (obj:AudioFileList|AutoModeStatus|Error|EyeCalibration|Log|Success|Volume) => AudioFileList|AutoModeStatus|Error|EyeCalibration|Log|Success|Volume|null
+): AudioFileList|AutoModeStatus|Error|EyeCalibration|Log|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(new Success())! as Success;
@@ -32,15 +34,16 @@ export function unionToServerPayload(
     case 'AudioFileList': return accessor(new AudioFileList())! as AudioFileList;
     case 'EyeCalibration': return accessor(new EyeCalibration())! as EyeCalibration;
     case 'Log': return accessor(new Log())! as Log;
+    case 'AutoModeStatus': return accessor(new AutoModeStatus())! as AutoModeStatus;
     default: return null;
   }
 }
 
 export function unionListToServerPayload(
   type: ServerPayload, 
-  accessor: (index: number, obj:AudioFileList|Error|EyeCalibration|Log|Success|Volume) => AudioFileList|Error|EyeCalibration|Log|Success|Volume|null, 
+  accessor: (index: number, obj:AudioFileList|AutoModeStatus|Error|EyeCalibration|Log|Success|Volume) => AudioFileList|AutoModeStatus|Error|EyeCalibration|Log|Success|Volume|null, 
   index: number
-): AudioFileList|Error|EyeCalibration|Log|Success|Volume|null {
+): AudioFileList|AutoModeStatus|Error|EyeCalibration|Log|Success|Volume|null {
   switch(ServerPayload[type]) {
     case 'NONE': return null; 
     case 'Success': return accessor(index, new Success())! as Success;
@@ -49,6 +52,7 @@ export function unionListToServerPayload(
     case 'AudioFileList': return accessor(index, new AudioFileList())! as AudioFileList;
     case 'EyeCalibration': return accessor(index, new EyeCalibration())! as EyeCalibration;
     case 'Log': return accessor(index, new Log())! as Log;
+    case 'AutoModeStatus': return accessor(index, new AutoModeStatus())! as AutoModeStatus;
     default: return null;
   }
 }

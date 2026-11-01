@@ -10,6 +10,7 @@ import {
   PreviewServoAngle,
   SaveServoCalibration,
   SetLight,
+  StartAutoMode,
 } from "./generated/pumpkin/protocol.ts";
 import api, { type PresetScene } from "./pumpkin_client.ts";
 import type { PumpkinConnection } from "./pumpkin_connection.ts";
@@ -75,6 +76,30 @@ describe("PumpkinClient.playPreset", () => {
     expect(() => createPayload(new flatbuffers.Builder())).toThrow(
       'Expected a color like #ff8800, got "orange"',
     );
+  });
+});
+
+describe("PumpkinClient.startAutoMode", () => {
+  it("encodes the pause", async () => {
+    const sendRequest = vi.fn().mockResolvedValue(undefined);
+    await api.startAutoMode({ sendRequest } as unknown as PumpkinConnection, {
+      minS: 15,
+      maxS: 45,
+    });
+
+    const [payloadType, createPayload] = sendRequest.mock.calls[0] as [
+      ClientPayload,
+      CreatePayload,
+    ];
+    expect(payloadType).toBe(ClientPayload.StartAutoMode);
+
+    const builder = new flatbuffers.Builder();
+    builder.finish(createPayload(builder));
+    const start = StartAutoMode.getRootAsStartAutoMode(
+      new flatbuffers.ByteBuffer(builder.asUint8Array()),
+    );
+    expect(start.minPauseS()).toBe(15);
+    expect(start.maxPauseS()).toBe(45);
   });
 });
 
